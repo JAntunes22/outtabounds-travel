@@ -1,0 +1,151 @@
+/* Navbar.css */
+.navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  padding: 1rem 0;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.navbar-scrolled {
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+.navbar-container {
+  max-width: 100%;
+  margin: 0 15%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.navbar-container.menu-active {
+  flex-direction: column; /* Apply column layout when menu is active */
+  position: relative;
+}
+
+.logo {
+  display: flex;
+  align-items: center; /* Vertical alignment */
+}
+
+.logo a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Space between logo and text */
+  text-decoration: none;
+}
+
+.navbar-logo {
+  height: 60px; /* Adjust based on your logo's aspect ratio */
+  width: auto;
+}
+
+.brand-text {
+  font-family: 'Rufina', serif; /* Use Rufina font */
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+  text-transform: uppercase;
+  text-decoration: none;
+  line-height: 1; /* Ensure proper vertical alignment */
+  margin-top: 5px; /* Adjust spacing to align with links */
+}
+
+.nav-menu {
+  display: flex;
+  list-style: none;
+  gap: 2rem;
+  align-items: center; /* Align links vertically with the logo text */
+  transition: all 0.3s ease;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #ccc;
+}
+
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  position: absolute;
+  right: 2rem; /* Position to the right of the navbar */
+  top: 50%; /* Center vertically */
+  transform: translateY(-50%); /* Perfect vertical centering */
+  z-index: 1001;
+}
+
+.hamburger-line {
+  display: block;
+  width: 25px;
+  height: 2px;
+  background-color: white;
+  margin: 5px 0;
+  transition: all 0.3s ease;
+}
+
+/* Mobile Styles */
+@media (max-width: 1050px) {
+  .navbar-container {
+    position: relative; 
+    margin: 0 5%;
+  }
+
+  .nav-menu.active + .navbar-container {
+    flex-direction: column; /* Ensure column layout when menu is active */
+  }
+
+  .logo {
+    margin-bottom: 1rem;
+  }
+
+  .nav-menu {
+    flex-direction: column;
+    width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    text-align: center;
+    padding: 0;
+  }
+
+  .nav-menu.active {
+    max-height: 500px;
+    padding: 1rem 0;
+  }
+
+  .brand-text {
+    margin-top: 17px; /* Adjust spacing to align with links */
+  }
+
+  .hamburger {
+    display: block; /* Show hamburger on smaller screens */
+    position: absolute;
+    top: 50%; /* Center vertically */
+    right: 0.5rem; /* Reduce from 2rem to 1rem */
+    transform: translateY(-50%); /* Perfect vertical centering */
+    z-index: 1001;
+  }
+
+  .hamburger.active .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+  }
+
+  .hamburger.active .hamburger-line:nth-child(2) {
+    opacity: 0;
+  }
+
+  .hamburger.active .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -6px);
+  }
+}
