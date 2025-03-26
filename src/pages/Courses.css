@@ -1,0 +1,122 @@
+.courses {
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+}
+
+.courses h1 {
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.course-list {
+  display: grid; /* Use grid layout for rows */
+  grid-template-columns: repeat(4, 1fr); /* Ensure 4 courses per row */
+  gap: 60px 30px; /* Add 30px vertical gap between rows */
+  margin: 100px 15%; /* Center the list horizontally */
+  max-width: 1200px; /* Limit the width of the list */
+}
+
+.course-item {
+  overflow: hidden;
+  background-color: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.course-item:hover {
+  transform: translateY(-5px);
+}
+
+.course-item img {
+  width: 100%;
+  height: 150px; /* Adjust height for consistency */
+  object-fit: cover;
+  transition: transform 0.3s ease; /* Add transition for zoom effect */
+}
+
+.course-item:hover img {
+  transform: scale(1.1); /* Slight zoom effect */
+}
+
+.course-item .course-content {
+  padding: 10px;
+}
+
+.course-item h2 {
+  font-size: 1.2rem;
+  margin: 5px 0;
+  color: #333;
+  font-weight: 600;
+  transition: color 0.3s ease; /* Add transition for font color */
+}
+
+.course-item h3 {
+  font-size: 0.9rem;
+  color: #777;
+  margin-bottom: 5px;
+  transition: color 0.3s ease; /* Add transition for font color */
+}
+
+.course-item p {
+  font-size: 0.8rem;
+  color: #555;
+  margin-bottom: 10px;
+  transition: color 0.3s ease; /* Add transition for font color */
+}
+
+.course-item .course-location {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #186d00;
+  margin-bottom: 10px;
+}
+
+.course-item:hover h2,
+.course-item:hover h3,
+.course-item:hover p {
+  color: #186d00; /* Turn font green on hover */
+}
+
+.hero-courses {
+  position: relative;
+  background: url('../assets/hero/courses-hero.jpg') no-repeat center center/cover; /* Replace with the correct hero image path */
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+  margin-bottom: 10%; /* Add spacing below the hero section */
+  filter: saturate(0.7); /* Reduce saturation to 70% */
+
+}
+
+.hero-courses::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%; /* Full screen height */
+    width: 100%; /* Full screen width */
+    background-color: rgba(0, 0, 0, 0.3); /* Reduced contrast */
+    backdrop-filter: blur(2px); /* Added blur effect */
+    z-index: 1; /* Ensure it appears above the image */
+  }
+
+.hero-courses-content {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-courses-content h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  font-family: 'Poppins', sans-serif;
+  color: white; /* Make the text white */
+}
+
+.hero-courses-content p {
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  font-family: 'Poppins', sans-serif;
+}

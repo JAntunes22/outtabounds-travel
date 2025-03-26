@@ -47,7 +47,7 @@
   font-family: 'Rufina', serif; /* Use Rufina font */
   font-size: 1.5rem;
   font-weight: bold;
-  color: white;
+  color: white; /* Ensure text is white */
   text-transform: uppercase;
   text-decoration: none;
   line-height: 1; /* Ensure proper vertical alignment */
@@ -98,7 +98,7 @@
 /* Mobile Styles */
 @media (max-width: 1050px) {
   .navbar-container {
-    position: relative; 
+    position: relative;
     margin: 0 5%;
   }
 

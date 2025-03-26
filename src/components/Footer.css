@@ -1,0 +1,35 @@
+.footer {
+  background-color: #333;
+  color: #fff;
+  text-align: left;
+  padding: 40px 15%;
+  font-family: 'Poppins', sans-serif;
+}
+
+.footer-content h1{
+  font-size: 2rem !important;
+  font-weight: bold !important;
+  margin-bottom: 20px !important;
+  color: white !important; /* Enforce white color */
+}
+
+.footer-content p {
+  font-size: 1rem;
+  margin: 5px 0;
+  color: #ccc;
+}
+
+.footer-bottom {
+  margin-top: 20px;
+}
+
+.footer-bottom hr {
+  border: 0;
+  border-top: 1px solid #555;
+  margin: 20px 0;
+}
+
+.footer-bottom p {
+  font-size: 0.9rem;
+  color: #ccc;
+}
