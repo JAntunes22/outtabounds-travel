@@ -1,4 +1,5 @@
 import React from "react";
+import Footer from "../components/Footer";
 import "./Home.css"; // Ensure you create and style this CSS file
 
 const Home = () => {
@@ -28,6 +29,7 @@ const Home = () => {
           </div>
         </div>
       </section>
+      <Footer /> {/* Add Footer */}
     </div>
   );
 };
