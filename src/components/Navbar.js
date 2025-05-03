@@ -32,6 +32,20 @@ const Navbar = () => {
     }
   };
 
+  // Function to close menu when a navigation link is clicked
+  const closeMenu = () => {
+    if (isMenuOpen) {
+      setTimeout(() => {
+        setHamburgerMenuActive(false);
+      }, 300);
+      setIsMenuOpen(false);
+      isMenuOpenRef.current = false;
+      if (window.scrollY === 0) {
+        setNavbarBackground(false);
+      }
+    }
+  };
+
   const changeBackground = () => {
     if (window.scrollY > 0) {
       setNavbarBackground(true);
@@ -67,7 +81,7 @@ const Navbar = () => {
       <div ref={menuRef} className={`navbar-container ${hamburgerMenuActive ? 'menu-active' : ''}`}>
         {/* Logo and Text */}
         <div className="logo">
-          <Link to="/">
+          <Link to="/" onClick={closeMenu}>
             <img src={logo} alt="Outtabounds Logo" className="navbar-logo" />
             <span className="brand-text">Outtabounds</span>
           </Link>
@@ -76,22 +90,22 @@ const Navbar = () => {
         {/* Navigation Links */}
         <ul className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
           <li className="nav-item">
-            <Link to="/" className="nav-link">Home</Link>
+            <Link to="/" className="nav-link" onClick={closeMenu}>Home</Link>
           </li>
           <li className="nav-item">
-            <Link to="/courses" className="nav-link">Courses</Link>
+            <Link to="/courses" className="nav-link" onClick={closeMenu}>Courses</Link>
           </li>
           <li className="nav-item">
-            <Link to="/experiences" className="nav-link">Experiences</Link>
+            <Link to="/experiences" className="nav-link" onClick={closeMenu}>Experiences</Link>
           </li>
           <li className="nav-item">
-            <Link to="/houses" className="nav-link">Houses</Link>
+            <Link to="/houses" className="nav-link" onClick={closeMenu}>Houses</Link>
           </li>
           <li className="nav-item">
-            <Link to="/about" className="nav-link">About</Link>
+            <Link to="/about" className="nav-link" onClick={closeMenu}>About</Link>
           </li>
           <li className="nav-item">
-            <Link to="/contact" className="nav-link">Contact</Link>
+            <Link to="/contact" className="nav-link" onClick={closeMenu}>Contact</Link>
           </li>
         </ul>
 
