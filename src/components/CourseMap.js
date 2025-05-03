@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -56,6 +56,9 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
           
           return (
             <Marker key={course.id} position={position}>
+              <Tooltip permanent direction="top" offset={[0, -20]} className="course-tooltip">
+                {course.name}
+              </Tooltip>
               <Popup>
                 <div className="popup-content">
                   <h3>{course.name}</h3>

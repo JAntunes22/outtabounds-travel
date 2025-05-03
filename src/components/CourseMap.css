@@ -179,4 +179,22 @@
 
 .leaflet-popup-content {
   margin: 10px;
+}
+
+.course-tooltip {
+  background-color: rgba(24, 109, 0, 0.8) !important;
+  border: none !important;
+  color: white !important;
+  font-family: 'Poppins', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  white-space: nowrap !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Remove the tooltip arrow */
+.course-tooltip:before {
+  display: none !important;
 } 
