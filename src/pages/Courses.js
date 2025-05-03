@@ -5,13 +5,29 @@ import './Courses.css';
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
-  const [error, setError] = useState(null); // Add error state
+  const [filteredCourses, setFilteredCourses] = useState([]);
+  const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState("default");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [locations, setLocations] = useState([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(true);
 
   useEffect(() => {
     const getCourses = async () => {
       try {
         const fetchedCourses = await fetchCourses();
-        setCourses(fetchedCourses);
+        // Add mock popularity and rating data if not available
+        const enhancedCourses = fetchedCourses.map((course) => ({
+          ...course,
+          popularity: course.popularity || Math.floor(Math.random() * 100),
+          rating: course.rating || (Math.random() * 3 + 2).toFixed(1) // Random rating between 2.0 and 5.0
+        }));
+        setCourses(enhancedCourses);
+        setFilteredCourses(enhancedCourses);
+        
+        // Extract unique locations for filter
+        const uniqueLocations = [...new Set(enhancedCourses.map(course => course.location))];
+        setLocations(uniqueLocations);
       } catch (err) {
         console.error("Error fetching courses:", err);
         setError("Failed to fetch courses. Please try again later.");
@@ -19,6 +35,48 @@ const Courses = () => {
     };
     getCourses();
   }, []);
+
+  // Effect to handle filtering and sorting
+  useEffect(() => {
+    let result = [...courses];
+    
+    // Apply location filter
+    if (locationFilter) {
+      result = result.filter(course => course.location === locationFilter);
+    }
+    
+    // Apply sorting
+    switch (sortBy) {
+      case "popularity":
+        result.sort((a, b) => b.popularity - a.popularity);
+        break;
+      case "rating":
+        result.sort((a, b) => b.rating - a.rating);
+        break;
+      default:
+        // Keep default order
+        break;
+    }
+    
+    setFilteredCourses(result);
+  }, [courses, sortBy, locationFilter]);
+
+  const handleSortChange = (e) => {
+    setSortBy(e.target.value);
+  };
+  
+  const handleLocationChange = (e) => {
+    setLocationFilter(e.target.value);
+  };
+  
+  const clearFilters = () => {
+    setSortBy("default");
+    setLocationFilter("");
+  };
+
+  const toggleFilter = () => {
+    setIsFilterOpen(!isFilterOpen);
+  };
 
   return (
     <div className="courses">
@@ -28,22 +86,64 @@ const Courses = () => {
           <p>Explore the best golf courses curated just for you.</p>
         </div>
       </header>
+      
       {error ? (
         <p className="error-message">{error}</p>
       ) : (
-        <div className="course-list">
-          {courses.map((course) => (
-            <div key={course.id} className="course-item">
-              <img src={course.url} alt={course.name} />
-              <div className="course-content">
-                <h2>{course.name}</h2>
-                <h3>{course.location}</h3>
-                <p>{course.description}</p>
-              </div>
+        <div className="courses-container">
+          <button className="filter-toggle" onClick={toggleFilter}>
+            {isFilterOpen ? "Hide Filters" : "Show Filters"}
+          </button>
+          
+          <div className={`filter-sidebar ${isFilterOpen ? 'open' : 'closed'}`}>
+            <div className="filter-section">
+              <h3>Sort By</h3>
+              <select value={sortBy} onChange={handleSortChange}>
+                <option value="default">Default</option>
+                <option value="popularity">Most Popular</option>
+                <option value="rating">Highest Rated</option>
+              </select>
             </div>
-          ))}
+            
+            <div className="filter-section">
+              <h3>Filter By Location</h3>
+              <select value={locationFilter} onChange={handleLocationChange}>
+                <option value="">All Locations</option>
+                {locations.map((location, index) => (
+                  <option key={index} value={location}>{location}</option>
+                ))}
+              </select>
+            </div>
+            
+            {(sortBy !== "default" || locationFilter) && (
+              <button className="clear-filters" onClick={clearFilters}>
+                Clear Filters
+              </button>
+            )}
+          </div>
+          
+          <div className="course-list">
+            {filteredCourses.map((course) => (
+              <div key={course.id} className="course-item">
+                <img src={course.url} alt={course.name} />
+                <div className="course-content">
+                  <h2>{course.name}</h2>
+                  <h3>{course.location}</h3>
+                  <p>{course.description}</p>
+                  {course.rating && <div className="course-rating">Rating: {course.rating}★</div>}
+                </div>
+              </div>
+            ))}
+            
+            {filteredCourses.length === 0 && (
+              <div className="no-results">
+                <p>No courses match your filters. Try different criteria.</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
+      
       <Footer />
     </div>
   );
