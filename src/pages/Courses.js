@@ -28,7 +28,15 @@ const Courses = () => {
           ...course,
           popularity: course.popularity || Math.floor(Math.random() * 100),
           rating: course.rating || (Math.random() * 3 + 2).toFixed(1), // Random rating between 2.0 and 5.0
-          normalizedLocation: normalizeLocation(course.location) // Add normalized location
+          normalizedLocation: normalizeLocation(course.location), // Add normalized location
+          // Add default features if none are provided
+          features: course.features || [
+            "Professional golf lessons available",
+            "Club rentals and golf carts",
+            "Restaurant and bar on premises",
+            "18-hole championship course",
+            "Practice facilities"
+          ]
         }));
         setCourses(enhancedCourses);
         setFilteredCourses(enhancedCourses);
