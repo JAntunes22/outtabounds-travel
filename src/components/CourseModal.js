@@ -2,6 +2,16 @@ import React, { useEffect } from 'react';
 import './CourseModal.css';
 
 const CourseModal = ({ course, onClose }) => {
+  // Prevent scrolling when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    
+    // Cleanup function to restore scrolling when modal is closed
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
   // Handle click outside modal to close it
   const handleOverlayClick = (e) => {
     if (e.target.classList.contains('modal-overlay')) {
