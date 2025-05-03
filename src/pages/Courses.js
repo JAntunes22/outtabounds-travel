@@ -12,6 +12,11 @@ const Courses = () => {
   const [locations, setLocations] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(true);
 
+  // Helper function to normalize location strings
+  const normalizeLocation = (location) => {
+    return location.trim().toLowerCase();
+  };
+
   useEffect(() => {
     const getCourses = async () => {
       try {
@@ -20,13 +25,21 @@ const Courses = () => {
         const enhancedCourses = fetchedCourses.map((course) => ({
           ...course,
           popularity: course.popularity || Math.floor(Math.random() * 100),
-          rating: course.rating || (Math.random() * 3 + 2).toFixed(1) // Random rating between 2.0 and 5.0
+          rating: course.rating || (Math.random() * 3 + 2).toFixed(1), // Random rating between 2.0 and 5.0
+          normalizedLocation: normalizeLocation(course.location) // Add normalized location
         }));
         setCourses(enhancedCourses);
         setFilteredCourses(enhancedCourses);
         
-        // Extract unique locations for filter
-        const uniqueLocations = [...new Set(enhancedCourses.map(course => course.location))];
+        // Extract unique locations for filter - group by normalized locations
+        const locationMap = {};
+        enhancedCourses.forEach(course => {
+          const normalized = normalizeLocation(course.location);
+          // Keep the original formatting for display, but use normalized for comparison
+          locationMap[normalized] = course.location;
+        });
+        
+        const uniqueLocations = Object.values(locationMap);
         setLocations(uniqueLocations);
       } catch (err) {
         console.error("Error fetching courses:", err);
@@ -42,7 +55,8 @@ const Courses = () => {
     
     // Apply location filter
     if (locationFilter) {
-      result = result.filter(course => course.location === locationFilter);
+      const normalizedFilter = normalizeLocation(locationFilter);
+      result = result.filter(course => normalizeLocation(course.location) === normalizedFilter);
     }
     
     // Apply sorting
