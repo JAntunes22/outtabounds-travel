@@ -1,18 +1,18 @@
 {
   "files": {
-    "main.css": "/static/css/main.b4993fd8.css",
+    "main.css": "/static/css/main.fa070ea2.css",
     "main.js": "/static/js/main.188cf8d1.js",
     "static/js/488.4584590b.chunk.js": "/static/js/488.4584590b.chunk.js",
     "static/media/courses-hero.jpg": "/static/media/courses-hero.8321c97bd61ba5b41fa1.jpg",
     "static/media/hero.jpg": "/static/media/hero.8321c97bd61ba5b41fa1.jpg",
     "static/media/logo.png": "/static/media/logo.4c4a51b10b67e96f31d7.png",
     "index.html": "/index.html",
-    "main.b4993fd8.css.map": "/static/css/main.b4993fd8.css.map",
+    "main.fa070ea2.css.map": "/static/css/main.fa070ea2.css.map",
     "main.188cf8d1.js.map": "/static/js/main.188cf8d1.js.map",
     "488.4584590b.chunk.js.map": "/static/js/488.4584590b.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.b4993fd8.css",
+    "static/css/main.fa070ea2.css",
     "static/js/main.188cf8d1.js"
   ]
 }
