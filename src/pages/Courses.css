@@ -11,36 +11,6 @@
   color: #333;
 }
 
-.course-list {
-  display: grid; /* Use grid layout for rows */
-  grid-template-columns: repeat(4, minmax(200px, 1fr)); /* Responsive 4 courses per row */
-  gap: 60px 30px; /* Add 30px vertical gap between rows */
-  max-width: 1200px; /* Limit the width of the list */
-  margin: 100px auto; /* Center the list horizontally with auto margins */
-  padding: 0 20px; /* Add some padding on the sides for smaller screens */
-  width: 100%; /* Take full width up to max-width */
-  box-sizing: border-box; /* Include padding in width calculation */
-}
-
-/* Add media queries for responsiveness */
-@media (max-width: 1200px) {
-  .course-list {
-    grid-template-columns: repeat(3, 1fr); /* 3 per row on medium screens */
-  }
-}
-
-@media (max-width: 900px) {
-  .course-list {
-    grid-template-columns: repeat(2, 1fr); /* 2 per row on smaller screens */
-  }
-}
-
-@media (max-width: 600px) {
-  .course-list {
-    grid-template-columns: 1fr; /* 1 per row on very small screens */
-  }
-}
-
 .course-item {
   overflow: hidden;
   background-color: #fff;
@@ -105,14 +75,14 @@
 .course-item .course-location {
   font-size: 0.9rem;
   font-weight: bold;
-  color: #186d00;
+  color: #def1d9;
   margin-bottom: 10px;
 }
 
 .course-item:hover h2,
 .course-item:hover h3,
 .course-item:hover p {
-  color: #186d00; /* Changed to match the Explore Now button color */
+  color: #b0d7a5; /* Changed to match the Explore Now button color */
 }
 
 .hero-courses {
@@ -164,7 +134,7 @@
   max-width: 1400px;
   margin: 0 auto 100px;
   position: relative;
-  padding: 0 20px;
+  padding: 0 30px; /* Increased padding from 20px to 30px */
   width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
@@ -247,10 +217,12 @@
 
 .course-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 30px;
   width: 100%;
   margin: 0;
+  padding-right: 5px; /* Add extra padding on the right side */
+  box-sizing: border-box;
 }
 
 .no-results {
@@ -265,8 +237,33 @@
 .course-rating {
   font-size: 0.95rem;
   font-weight: bold;
-  color: #186d00;
+  color: #ffdd57;
   margin-top: 8px;
+}
+
+/* Add responsive media queries */
+@media (min-width: 1200px) {
+  .course-list {
+    grid-template-columns: repeat(4, 1fr); /* 4 per row on large screens */
+  }
+}
+
+@media (max-width: 1199px) and (min-width: 901px) {
+  .course-list {
+    grid-template-columns: repeat(3, 1fr); /* 3 per row on medium screens */
+  }
+}
+
+@media (max-width: 900px) and (min-width: 601px) {
+  .course-list {
+    grid-template-columns: repeat(2, 1fr); /* 2 per row on smaller screens */
+  }
+}
+
+@media (max-width: 600px) {
+  .course-list {
+    grid-template-columns: 1fr; /* 1 per row on very small screens */
+  }
 }
 
 /* Responsive adjustments */
