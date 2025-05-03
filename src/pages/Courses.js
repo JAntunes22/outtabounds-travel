@@ -153,7 +153,6 @@ const Courses = () => {
                 <div className="course-content">
                   <h2>{course.name}</h2>
                   <h3>{course.location}</h3>
-                  <p>{course.description}</p>
                   {course.rating && <div className="course-rating">Rating: {course.rating}★</div>}
                 </div>
               </div>
