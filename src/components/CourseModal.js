@@ -2,13 +2,25 @@ import React, { useEffect } from 'react';
 import './CourseModal.css';
 
 const CourseModal = ({ course, onClose }) => {
-  // Prevent scrolling when modal is open
+  // Prevent scrolling when modal is open - more robust approach
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
+    // Store the current scroll position
+    const scrollY = window.scrollY;
+    
+    // Add the modal-open class to body
+    document.body.classList.add('modal-open');
+    
+    // Set the body position to maintain scroll position
+    document.body.style.top = `-${scrollY}px`;
     
     // Cleanup function to restore scrolling when modal is closed
     return () => {
-      document.body.style.overflow = 'auto';
+      // Remove the modal-open class
+      document.body.classList.remove('modal-open');
+      
+      // Restore the scroll position
+      document.body.style.top = '';
+      window.scrollTo(0, scrollY);
     };
   }, []);
 
