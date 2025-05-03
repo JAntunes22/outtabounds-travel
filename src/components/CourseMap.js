@@ -1,29 +1,19 @@
-import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import React, { useEffect, useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import './CourseMap.css';
 
-// Fix for Leaflet default icon issue
-let DefaultIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41]
-});
+// Set the Mapbox access token
+mapboxgl.accessToken = 'pk.eyJ1Ijoiam9hb2FudHVuZXMiLCJhIjoiY21hOG1wMTQxMTc2cjJtczg4ZjV0MHh3YiJ9.at1W4xUfM8x-c51nNZFyUw';
 
-L.Marker.prototype.options.icon = DefaultIcon;
-
-// Function to parse position string format "latitude,longitude" to [lat, lng] array
+// Function to parse position string format "latitude,longitude" to [lng, lat] array
 const parsePosition = (positionString) => {
   if (!positionString) return null;
   
   try {
     // Split by comma and convert to floating point numbers
     const [latitude, longitude] = positionString.split(',').map(coord => parseFloat(coord.trim()));
-    return [latitude, longitude]; // Return as array for Leaflet
+    return [longitude, latitude]; // Return as array for Mapbox (note: Mapbox uses [lng, lat] order)
   } catch (error) {
     console.error("Error parsing position:", error);
     return null;
@@ -31,51 +21,198 @@ const parsePosition = (positionString) => {
 };
 
 const CourseMap = ({ courses = [], onCourseSelect }) => {
-  // Default center - Portugal
-  const center = [38.7223, -9.1393];
-  
+  // Center on Algarve, Portugal (note: Mapbox uses [lng, lat] order)
+  const center = [-8.2, 37.1]; // Center of Algarve region
+  const mapContainer = useRef(null);
+  const map = useRef(null);
+  const [mapInitialized, setMapInitialized] = useState(false);
+  const markers = useRef([]);
+  const containerRef = useRef(null);
+
+  // Initialize map when component mounts
+  useEffect(() => {
+    console.log("CourseMap component mounted");
+    
+    // Check if map container exists and map not already initialized
+    if (mapContainer.current && !map.current) {
+      console.log("Initializing map...");
+      
+      try {
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: center,
+          zoom: 8.5 // Zoom level to show Algarve from east to west
+        });
+
+        // Add navigation controls
+        map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        
+        // Set map initialized flag when the map is loaded
+        map.current.on('load', () => {
+          console.log("Map loaded successfully");
+          setMapInitialized(true);
+          
+          // Force resize once the map is loaded
+          if (map.current) {
+            console.log("Forcing initial resize");
+            map.current.resize();
+          }
+        });
+      } catch (error) {
+        console.error("Error initializing map:", error);
+      }
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (map.current) {
+        console.log("Removing map instance");
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, []);
+
+  // This effect ensures the map resizes properly when the container becomes visible
+  useEffect(() => {
+    const handleResize = () => {
+      if (map.current) {
+        console.log("Resizing map");
+        map.current.resize();
+      }
+    };
+
+    // Add resize event listener
+    window.addEventListener('resize', handleResize);
+    
+    // Create a MutationObserver to detect when the map container becomes visible
+    if (containerRef.current) {
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const mapView = document.querySelector('.map-view');
+            if (mapView && mapView.classList.contains('active')) {
+              console.log("Map view became active");
+              
+              // Force multiple resize calls with increasing delays to ensure proper rendering
+              setTimeout(handleResize, 0);
+              setTimeout(handleResize, 100);
+              setTimeout(handleResize, 300);
+              setTimeout(handleResize, 500);
+            }
+          }
+        });
+      });
+      
+      // Start observing parent nodes up to 3 levels for changes in the 'class' attribute
+      let parent = containerRef.current.parentNode;
+      for (let i = 0; i < 3 && parent; i++) {
+        observer.observe(parent, { attributes: true, attributeFilter: ['class'] });
+        parent = parent.parentNode;
+      }
+      
+      // Clean up observer
+      return () => observer.disconnect();
+    }
+    
+    // Force resize after delays to ensure the container is visible
+    const resizeTimers = [
+      setTimeout(handleResize, 0),
+      setTimeout(handleResize, 100),
+      setTimeout(handleResize, 300),
+      setTimeout(handleResize, 500),
+      setTimeout(handleResize, 1000)
+    ];
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      resizeTimers.forEach(timer => clearTimeout(timer));
+    };
+  }, [mapInitialized]);
+
+  // Add markers when courses change or map is initialized
+  useEffect(() => {
+    if (!map.current || !mapInitialized || !courses.length) return;
+
+    console.log("Adding markers for", courses.length, "courses");
+    
+    // Clear previous markers
+    markers.current.forEach(marker => marker.remove());
+    markers.current = [];
+
+    // Add new markers
+    courses.forEach(course => {
+      const position = parsePosition(course.position);
+      if (!position) {
+        console.log("Invalid position for course:", course.name);
+        return;
+      }
+
+      console.log("Adding marker for", course.name, "at position", position);
+
+      // Create custom popup
+      const popupContent = document.createElement('div');
+      popupContent.className = 'popup-content';
+      
+      const title = document.createElement('h3');
+      title.textContent = course.name;
+      title.style.marginTop = '5px'; // Add margin to top of title
+      
+      const location = document.createElement('p');
+      location.textContent = course.location;
+      
+      const button = document.createElement('button');
+      button.className = 'view-details-btn';
+      button.textContent = 'View Details';
+      button.onclick = () => onCourseSelect && onCourseSelect(course);
+      
+      popupContent.appendChild(title);
+      popupContent.appendChild(location);
+      popupContent.appendChild(button);
+
+      // Create popup with offset and correct positioning
+      const popup = new mapboxgl.Popup({ 
+        offset: 25,
+        closeButton: true,
+        closeOnClick: false
+      })
+        .setDOMContent(popupContent);
+
+      // Create marker with default Mapbox marker color instead of a custom element
+      // This avoids the need for external marker images
+      const marker = new mapboxgl.Marker({
+        color: '#186d00', // Match the green color used in the app
+      })
+        .setLngLat(position)
+        .setPopup(popup)
+        .addTo(map.current);
+        
+      // Add a tooltip as a child of the mapboxgl-marker element
+      const markerElement = marker.getElement();
+      const tooltipElement = document.createElement('div');
+      tooltipElement.className = 'course-tooltip';
+      tooltipElement.textContent = course.name;
+      markerElement.appendChild(tooltipElement);
+        
+      // Store marker reference for later cleanup
+      markers.current.push(marker);
+    });
+  }, [courses, onCourseSelect, mapInitialized]);
+
   return (
-    <div className="course-map-container">
-      <MapContainer 
-        center={center} 
-        zoom={6} 
-        style={{ height: '100%', width: '100%', borderRadius: '12px' }}
-        zoomControl={true} 
-        scrollWheelZoom={true}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
-        {courses.map(course => {
-          const position = parsePosition(course.position);
-          
-          // Only render marker if position is valid
-          if (!position) return null;
-          
-          return (
-            <Marker key={course.id} position={position}>
-              <Tooltip permanent direction="top" offset={[0, -20]} className="course-tooltip">
-                {course.name}
-              </Tooltip>
-              <Popup>
-                <div className="popup-content">
-                  <h3>{course.name}</h3>
-                  <p>{course.location}</p>
-                  <button 
-                    className="view-details-btn"
-                    onClick={() => onCourseSelect && onCourseSelect(course)}
-                  >
-                    View Details
-                  </button>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
-        
-      </MapContainer>
+    <div className="course-map-container" ref={containerRef}>
+      <div 
+        ref={mapContainer} 
+        className="mapbox-container"
+        style={{ 
+          position: 'absolute', 
+          top: 0, 
+          bottom: 0, 
+          left: 0, 
+          right: 0 
+        }} 
+      />
     </div>
   );
 };
