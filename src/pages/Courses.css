@@ -351,6 +351,9 @@
 
 .map-view {
   display: none;
+  height: 75vh;
+  width: 100%;
+  margin-top: 60px;
 }
 
 .map-view.active {
