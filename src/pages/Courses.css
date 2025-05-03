@@ -1,6 +1,8 @@
 .courses {
   text-align: center;
   font-family: 'Poppins', sans-serif;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .courses h1 {
@@ -160,9 +162,12 @@
 .courses-container {
   display: flex;
   max-width: 1400px;
-  margin: 0 auto 100px; /* Add bottom margin */
+  margin: 0 auto 100px;
   position: relative;
   padding: 0 20px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .filter-sidebar {
