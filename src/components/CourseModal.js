@@ -84,13 +84,15 @@ const CourseModal = ({ course, onClose }) => {
             
             <div className="modal-features">
               <h3>Features</h3>
-              <ul>
-                <li>Professional golf lessons available</li>
-                <li>Club rentals and golf carts</li>
-                <li>Restaurant and bar on premises</li>
-                <li>18-hole championship course</li>
-                <li>Practice facilities</li>
-              </ul>
+              {course.features && course.features.length > 0 ? (
+                <ul>
+                  {course.features.map((feature, index) => (
+                    <li key={index}>{feature}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No features available for this course.</p>
+              )}
             </div>
             
             <div className="modal-cta">
