@@ -242,7 +242,7 @@ const Courses = () => {
           
           {/* Map view */}
           <div className={`map-view ${viewMode === "map" ? "active" : ""}`}>
-            <CourseMap />
+            <CourseMap courses={filteredCourses} onCourseSelect={openCourseModal} />
           </div>
         </div>
       )}
