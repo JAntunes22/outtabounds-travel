@@ -19,11 +19,13 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add subtle shadow */
   position: relative; /* For positioning the content overlay */
   aspect-ratio: 3/4; /* Create a taller card with fixed aspect ratio */
+  z-index: 1; /* Base z-index */
 }
 
 .course-item:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
+  z-index: 10; /* Higher z-index on hover to ensure it appears above other elements */
 }
 
 .course-item img {
