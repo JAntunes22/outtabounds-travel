@@ -3,8 +3,8 @@ import ReactMapGL from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './CourseMap.css';
 
-// Mapbox token - replace with your own from mapbox.com
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiZGVtb3VzZXIiLCJhIjoiY2pnemR1YjUwMGF6OTJ3bGI4b3l2bWpvYiJ9.DUrLTPS66-MoF9W-Nj3i9w';
+// Use a valid Mapbox token - you should replace this with your own token from mapbox.com
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
 
 const CourseMap = () => {
   const [viewport, setViewport] = useState({
@@ -23,6 +23,10 @@ const CourseMap = () => {
         mapStyle="mapbox://styles/mapbox/light-v10"
         onViewportChange={setViewport}
       />
+      <div className="map-notice">
+        <p>Interactive map of golf courses.</p>
+        <p>Zoom and pan to explore locations.</p>
+      </div>
     </div>
   );
 };
