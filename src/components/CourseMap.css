@@ -7,6 +7,71 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Map placeholder */
+.map-placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  background-color: #f8f8f8;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+  background-size: cover;
+  background-position: center;
+}
+
+.placeholder-content {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 600px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.placeholder-content h2 {
+  color: #186d00;
+  margin-bottom: 15px;
+  font-size: 24px;
+}
+
+.placeholder-content > p {
+  margin-bottom: 25px;
+  color: #555;
+}
+
+.location-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  text-align: left;
+}
+
+.location-item {
+  background-color: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.location-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.location-item h3 {
+  color: #333;
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.location-item p {
+  color: #666;
+  margin: 0;
+  font-size: 14px;
+}
+
 /* Map loading indicator */
 .map-loading {
   display: flex;
@@ -45,12 +110,22 @@
   margin-bottom: 0;
 }
 
-/* Override Mapbox token warning */
-.mapboxgl-missing-css, 
-.mapboxgl-map canvas.mapboxgl-canvas[width="0"] {
-  display: none;
+/* Error message styling */
+.map-error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  background-color: #f8f8f8;
+  color: #666;
+  text-align: center;
+  padding: 20px;
 }
 
-.mapboxgl-ctrl-attrib-inner {
-  display: none !important;
+.map-error h3 {
+  color: #d32f2f;
+  margin-bottom: 10px;
+  font-size: 18px;
 } 
