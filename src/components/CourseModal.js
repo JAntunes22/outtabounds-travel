@@ -84,11 +84,15 @@ const CourseModal = ({ course, onClose }) => {
             
             <div className="modal-features">
               <h3>Features</h3>
-              {course.features && course.features.length > 0 ? (
+              {console.log("Rendering features:", course.features)}
+              {Array.isArray(course.features) && course.features.length > 0 ? (
                 <ul>
-                  {course.features.map((feature, index) => (
-                    <li key={index}>{feature}</li>
-                  ))}
+                  {course.features.map((feature, index) => {
+                    console.log(`Rendering feature ${index}:`, feature);
+                    return (
+                      <li key={index}>{feature}</li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <p>No features available for this course.</p>
