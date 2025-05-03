@@ -2,7 +2,8 @@
   text-align: center;
   font-family: 'Poppins', sans-serif;
   width: 100%;
-  overflow-x: hidden;
+  overflow-y: visible; /* Allow vertical overflow */
+  overflow-x: hidden; /* Maintain horizontal containment */
 }
 
 .courses h1 {
@@ -20,12 +21,13 @@
   position: relative; /* For positioning the content overlay */
   aspect-ratio: 3/4; /* Create a taller card with fixed aspect ratio */
   z-index: 1; /* Base z-index */
+  transform-origin: center bottom; /* Ensure transform happens from bottom */
 }
 
 .course-item:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
-  z-index: 10; /* Higher z-index on hover to ensure it appears above other elements */
+  z-index: 100; /* Much higher z-index on hover to ensure it appears above everything */
 }
 
 .course-item img {
@@ -96,7 +98,7 @@
   justify-content: center;
   color: white;
   text-align: center;
-  margin-bottom: 80px; /* Reduced spacing below hero */
+  margin-bottom: 100px; /* Increased spacing below hero */
   filter: saturate(0.7); /* Reduce saturation to 70% */
 }
 
@@ -136,10 +138,10 @@
   max-width: 1400px;
   margin: 0 auto 100px;
   position: relative;
-  padding: 0 30px; /* Increased padding from 20px to 30px */
+  padding: 10px 30px 0; /* Add top padding */
   width: 100%;
   box-sizing: border-box;
-  overflow-x: hidden;
+  overflow: visible; /* Change from overflow-x: hidden to allow visible overflow */
 }
 
 .filter-sidebar {
@@ -223,8 +225,9 @@
   gap: 30px;
   width: 100%;
   margin: 0;
-  padding-right: 5px; /* Add extra padding on the right side */
+  padding: 8px 5px 0 0; /* Add padding to top and right */
   box-sizing: border-box;
+  position: relative;
 }
 
 .no-results {
