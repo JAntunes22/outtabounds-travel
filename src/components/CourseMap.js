@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
+import Supercluster from 'supercluster';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './CourseMap.css';
 
@@ -20,13 +21,24 @@ const parsePosition = (positionString) => {
   }
 };
 
+// Create a cluster marker element
+const createClusterMarker = (count) => {
+  const el = document.createElement('div');
+  el.className = 'cluster-marker';
+  el.innerHTML = `<div class="cluster-count">${count}</div>`;
+  return el;
+};
+
 const CourseMap = ({ courses = [], onCourseSelect }) => {
   // Center on Algarve, Portugal (note: Mapbox uses [lng, lat] order)
   const center = [-8.2, 37.1]; // Center of Algarve region
   const mapContainer = useRef(null);
   const map = useRef(null);
   const [mapInitialized, setMapInitialized] = useState(false);
-  const markers = useRef([]);
+  const markers = useRef([]); // Individual markers
+  const clusterMarkers = useRef([]); // Cluster markers
+  const supercluster = useRef(null); // Reference to the supercluster instance
+  const featuresRef = useRef([]); // Reference to the GeoJSON features
   const containerRef = useRef(null);
 
   // Initialize map when component mounts
@@ -48,6 +60,13 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
         // Add navigation controls
         map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
         
+        // Create supercluster instance
+        supercluster.current = new Supercluster({
+          radius: 60, // Radius of each cluster when clustering points (defaults to 40)
+          maxZoom: 16, // Maximum zoom level at which clusters are generated (defaults to 16)
+          minPoints: 2 // Minimum number of points to form a cluster (defaults to 2)
+        });
+        
         // Set map initialized flag when the map is loaded
         map.current.on('load', () => {
           console.log("Map loaded successfully");
@@ -59,6 +78,11 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
             map.current.resize();
           }
         });
+        
+        // Add map move events to update clusters
+        map.current.on('moveend', () => updateClusters());
+        map.current.on('zoomend', () => updateClusters());
+        
       } catch (error) {
         console.error("Error initializing map:", error);
       }
@@ -74,12 +98,132 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
     };
   }, []);
 
+  // Update clusters based on current map bounds and zoom level
+  const updateClusters = () => {
+    if (!map.current || !supercluster.current || featuresRef.current.length === 0) return;
+    
+    // Clear all existing markers
+    markers.current.forEach(marker => marker.remove());
+    markers.current = [];
+    
+    clusterMarkers.current.forEach(marker => marker.remove());
+    clusterMarkers.current = [];
+    
+    // Get the current bounds of the map
+    const bounds = map.current.getBounds();
+    const bbox = [
+      bounds.getWest(),
+      bounds.getSouth(),
+      bounds.getEast(),
+      bounds.getNorth()
+    ];
+    
+    // Get the current zoom level
+    const zoom = Math.floor(map.current.getZoom());
+    
+    // Get clusters based on the current zoom and bounds
+    const clusters = supercluster.current.getClusters(bbox, zoom);
+    
+    // Add cluster markers or individual markers
+    clusters.forEach(cluster => {
+      if (cluster.properties.cluster) {
+        // This is a cluster
+        const count = cluster.properties.point_count;
+        
+        // Create a marker for the cluster
+        const el = createClusterMarker(count);
+        
+        const marker = new mapboxgl.Marker({
+          element: el
+        })
+          .setLngLat(cluster.geometry.coordinates)
+          .addTo(map.current);
+          
+        // Add click event to zoom in when cluster is clicked
+        el.addEventListener('click', () => {
+          const expansionZoom = Math.min(
+            supercluster.current.getClusterExpansionZoom(cluster.properties.cluster_id),
+            20
+          );
+          
+          map.current.flyTo({
+            center: cluster.geometry.coordinates,
+            zoom: expansionZoom,
+            speed: 1.5,
+            curve: 1.5
+          });
+        });
+        
+        clusterMarkers.current.push(marker);
+      } else {
+        // This is an individual point
+        const course = courses.find(c => c.id === cluster.properties.id);
+        if (!course) return;
+        
+        // Create a marker for the individual point
+        addMarkerForCourse(course, [cluster.geometry.coordinates[0], cluster.geometry.coordinates[1]]);
+      }
+    });
+  };
+
+  // Add individual marker for a course
+  const addMarkerForCourse = (course, position) => {
+    // Create custom popup
+    const popupContent = document.createElement('div');
+    popupContent.className = 'popup-content';
+    
+    const title = document.createElement('h3');
+    title.textContent = course.name;
+    title.style.marginTop = '5px'; // Add margin to top of title
+    
+    const location = document.createElement('p');
+    location.textContent = course.location;
+    
+    const button = document.createElement('button');
+    button.className = 'view-details-btn';
+    button.textContent = 'View Details';
+    button.onclick = () => onCourseSelect && onCourseSelect(course);
+    
+    popupContent.appendChild(title);
+    popupContent.appendChild(location);
+    popupContent.appendChild(button);
+
+    // Create popup with offset and correct positioning
+    const popup = new mapboxgl.Popup({ 
+      offset: 25,
+      closeButton: true,
+      closeOnClick: false
+    })
+      .setDOMContent(popupContent);
+
+    // Create marker with default Mapbox marker color instead of a custom element
+    const marker = new mapboxgl.Marker({
+      color: '#186d00', // Match the green color used in the app
+    })
+      .setLngLat(position)
+      .setPopup(popup)
+      .addTo(map.current);
+      
+    // Add a tooltip as a child of the mapboxgl-marker element
+    const markerElement = marker.getElement();
+    const tooltipElement = document.createElement('div');
+    tooltipElement.className = 'course-tooltip';
+    tooltipElement.textContent = course.name;
+    markerElement.appendChild(tooltipElement);
+      
+    // Store marker reference for later cleanup
+    markers.current.push(marker);
+  };
+
   // This effect ensures the map resizes properly when the container becomes visible
   useEffect(() => {
     const handleResize = () => {
       if (map.current) {
         console.log("Resizing map");
         map.current.resize();
+        
+        // Also update clusters when resizing
+        updateClusters();
       }
     };
 
@@ -133,71 +277,46 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
 
   // Add markers when courses change or map is initialized
   useEffect(() => {
-    if (!map.current || !mapInitialized || !courses.length) return;
+    if (!map.current || !mapInitialized || !courses.length || !supercluster.current) return;
 
-    console.log("Adding markers for", courses.length, "courses");
+    console.log("Processing", courses.length, "courses for clustering");
     
     // Clear previous markers
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
-
-    // Add new markers
-    courses.forEach(course => {
+    
+    clusterMarkers.current.forEach(marker => marker.remove());
+    clusterMarkers.current = [];
+    
+    // Convert courses to GeoJSON features for the supercluster
+    const features = courses.map(course => {
       const position = parsePosition(course.position);
       if (!position) {
         console.log("Invalid position for course:", course.name);
-        return;
+        return null;
       }
-
-      console.log("Adding marker for", course.name, "at position", position);
-
-      // Create custom popup
-      const popupContent = document.createElement('div');
-      popupContent.className = 'popup-content';
       
-      const title = document.createElement('h3');
-      title.textContent = course.name;
-      title.style.marginTop = '5px'; // Add margin to top of title
-      
-      const location = document.createElement('p');
-      location.textContent = course.location;
-      
-      const button = document.createElement('button');
-      button.className = 'view-details-btn';
-      button.textContent = 'View Details';
-      button.onclick = () => onCourseSelect && onCourseSelect(course);
-      
-      popupContent.appendChild(title);
-      popupContent.appendChild(location);
-      popupContent.appendChild(button);
-
-      // Create popup with offset and correct positioning
-      const popup = new mapboxgl.Popup({ 
-        offset: 25,
-        closeButton: true,
-        closeOnClick: false
-      })
-        .setDOMContent(popupContent);
-
-      // Create marker with default Mapbox marker color instead of a custom element
-      // This avoids the need for external marker images
-      const marker = new mapboxgl.Marker({
-        color: '#186d00', // Match the green color used in the app
-      })
-        .setLngLat(position)
-        .setPopup(popup)
-        .addTo(map.current);
-        
-      // Add a tooltip as a child of the mapboxgl-marker element
-      const markerElement = marker.getElement();
-      const tooltipElement = document.createElement('div');
-      tooltipElement.className = 'course-tooltip';
-      tooltipElement.textContent = course.name;
-      markerElement.appendChild(tooltipElement);
-        
-      // Store marker reference for later cleanup
-      markers.current.push(marker);
-    });
+      return {
+        type: 'Feature',
+        properties: {
+          id: course.id
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: position
+        }
+      };
+    }).filter(Boolean); // Remove null values
+    
+    // Store the features for later use
+    featuresRef.current = features;
+    
+    // Load the features into the supercluster
+    supercluster.current.load(features);
+    
+    // Update clusters based on current view
+    updateClusters();
+    
   }, [courses, onCourseSelect, mapInitialized]);
 
   return (
