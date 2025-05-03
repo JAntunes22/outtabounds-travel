@@ -1,6 +1,9 @@
 import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 import './CourseMap.css';
 
 // Sample golf courses with their locations
@@ -12,10 +15,6 @@ const sampleCourses = [
 ];
 
 // Fix for Leaflet default icon issue
-import L from 'leaflet';
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-
 let DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
