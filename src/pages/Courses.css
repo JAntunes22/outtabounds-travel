@@ -105,14 +105,14 @@
 .course-item .course-location {
   font-size: 0.9rem;
   font-weight: bold;
-  color: #8aff7d;
+  color: #186d00;
   margin-bottom: 10px;
 }
 
 .course-item:hover h2,
 .course-item:hover h3,
 .course-item:hover p {
-  color: #8aff7d; /* Lighter green on hover for better visibility against dark background */
+  color: #186d00; /* Changed to match the Explore Now button color */
 }
 
 .hero-courses {
@@ -265,7 +265,7 @@
 .course-rating {
   font-size: 0.95rem;
   font-weight: bold;
-  color: #ffdd57;
+  color: #186d00;
   margin-top: 8px;
 }
 
