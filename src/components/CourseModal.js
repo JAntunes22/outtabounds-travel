@@ -64,7 +64,7 @@ const CourseModal = ({ course, onClose }) => {
               </div>
             )}
             
-            {course.popularity && (
+            {typeof course.popularity !== 'undefined' && (
               <div className="modal-popularity">
                 <span className="label">Popularity:</span>
                 <div className="popularity-bar">
@@ -73,6 +73,7 @@ const CourseModal = ({ course, onClose }) => {
                     style={{ width: `${course.popularity}%` }}
                   ></div>
                 </div>
+                <span className="popularity-percentage">{course.popularity}%</span>
               </div>
             )}
             

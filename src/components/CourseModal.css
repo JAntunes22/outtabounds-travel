@@ -105,18 +105,33 @@
   font-size: 1.2rem;
 }
 
+.modal-popularity {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  font-size: 1.1rem;
+  flex-wrap: wrap;
+}
+
 .popularity-bar {
   width: 70%;
   height: 10px;
   background-color: #eee;
   border-radius: 5px;
   overflow: hidden;
+  margin-right: 10px;
 }
 
 .popularity-fill {
   height: 100%;
   background-color: #186d00;
   border-radius: 5px;
+}
+
+.popularity-percentage {
+  font-size: 0.9rem;
+  color: #186d00;
+  font-weight: 600;
 }
 
 .modal-description, .modal-features {
