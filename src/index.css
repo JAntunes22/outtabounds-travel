@@ -1,5 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&family=Poppins:wght@300;400;600&display=swap');
 
+/* Apply box-sizing and prevent horizontal overflow globally */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   margin: 0;
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -7,6 +19,11 @@ body {
     sans-serif; /* Set Poppins as the default font */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  overflow-x: hidden;
 }
 
 code {
