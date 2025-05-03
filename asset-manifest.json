@@ -1,0 +1,18 @@
+{
+  "files": {
+    "main.css": "/outtabounds-travel/static/css/main.299d3d1f.css",
+    "main.js": "/outtabounds-travel/static/js/main.02ac6041.js",
+    "static/js/488.4584590b.chunk.js": "/outtabounds-travel/static/js/488.4584590b.chunk.js",
+    "static/media/courses-hero.jpg": "/outtabounds-travel/static/media/courses-hero.8321c97bd61ba5b41fa1.jpg",
+    "static/media/hero.jpg": "/outtabounds-travel/static/media/hero.8321c97bd61ba5b41fa1.jpg",
+    "static/media/logo.png": "/outtabounds-travel/static/media/logo.4c4a51b10b67e96f31d7.png",
+    "index.html": "/outtabounds-travel/index.html",
+    "main.299d3d1f.css.map": "/outtabounds-travel/static/css/main.299d3d1f.css.map",
+    "main.02ac6041.js.map": "/outtabounds-travel/static/js/main.02ac6041.js.map",
+    "488.4584590b.chunk.js.map": "/outtabounds-travel/static/js/488.4584590b.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.299d3d1f.css",
+    "static/js/main.02ac6041.js"
+  ]
+}
