@@ -39,7 +39,7 @@
 }
 
 .course-item:hover img {
-  transform: scale(1.05); /* Slight zoom effect */
+  transform: scale(1.15); /* Increased zoom effect */
 }
 
 .course-item .course-content {
@@ -80,14 +80,14 @@
 .course-item .course-location {
   font-size: 0.9rem;
   font-weight: bold;
-  color: #def1d9;
+  color: #ffffff;
   margin-bottom: 10px;
 }
 
 .course-item:hover h2,
 .course-item:hover h3,
 .course-item:hover p {
-  color: #b0d7a5; /* Changed to match the Explore Now button color */
+  color: #ffffff; /* Changed to match the Explore Now button color */
 }
 
 .hero-courses {
