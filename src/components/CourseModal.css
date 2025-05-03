@@ -16,9 +16,9 @@
 .course-modal {
   background-color: white;
   border-radius: 15px;
-  width: 90%;
-  max-width: 1000px;
-  max-height: 90vh;
+  width: 95%;
+  max-width: 1400px;
+  max-height: 95vh;
   overflow-y: auto;
   position: relative;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -57,7 +57,7 @@
 
 .modal-image-container {
   width: 100%;
-  height: 300px;
+  height: 400px;
   overflow: hidden;
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
@@ -70,14 +70,14 @@
 }
 
 .modal-details {
-  padding: 25px;
+  padding: 30px 40px;
 }
 
 .modal-title {
-  font-size: 2.4rem;
+  font-size: 2.8rem;
   color: #333;
   margin-top: 0;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   font-weight: 600;
 }
 
@@ -224,17 +224,17 @@
   }
   
   .modal-image-container {
-    width: 50%;
+    width: 55%;
     height: auto;
-    max-height: 600px;
+    max-height: 700px;
     border-top-right-radius: 0;
     border-bottom-left-radius: 15px;
   }
   
   .modal-details {
-    width: 50%;
+    width: 45%;
     overflow-y: auto;
-    max-height: 600px;
+    max-height: 700px;
   }
 }
 
