@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { fetchCourses } from "../utils/firebaseUtils";
 import Footer from "../components/Footer";
 import CourseModal from "../components/CourseModal";
+import CourseMap from "../components/CourseMap";
 import './Courses.css';
 
 const Courses = () => {
@@ -13,6 +14,7 @@ const Courses = () => {
   const [locations, setLocations] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [viewMode, setViewMode] = useState("list"); // "list" or "map"
 
   // Helper function to normalize location strings
   const normalizeLocation = (location) => {
@@ -149,6 +151,11 @@ const Courses = () => {
     setSelectedCourse(null);
   };
 
+  // Function to toggle between list and map views
+  const toggleView = (mode) => {
+    setViewMode(mode);
+  };
+
   return (
     <div className="courses">
       <header className="hero-courses">
@@ -161,55 +168,81 @@ const Courses = () => {
       {error ? (
         <p className="error-message">{error}</p>
       ) : (
-        <div className="courses-container">
-          <button className="filter-toggle" onClick={toggleFilter}>
-            {isFilterOpen ? "Hide Filters" : "Show Filters"}
-          </button>
-          
-          <div className={`filter-sidebar ${isFilterOpen ? 'open' : 'closed'}`}>
-            <div className="filter-section">
-              <h3>Sort By</h3>
-              <select value={sortBy} onChange={handleSortChange}>
-                <option value="default">Default</option>
-                <option value="popularity">Most Popular</option>
-                <option value="rating">Highest Rated</option>
-              </select>
-            </div>
-            
-            <div className="filter-section">
-              <h3>Filter By Location</h3>
-              <select value={locationFilter} onChange={handleLocationChange}>
-                <option value="">All Locations</option>
-                {locations.map((location, index) => (
-                  <option key={index} value={location}>{location}</option>
-                ))}
-              </select>
-            </div>
-            
-            {(sortBy !== "default" || locationFilter) && (
-              <button className="clear-filters" onClick={clearFilters}>
-                Clear Filters
+        <div className="courses-content">
+          {/* View toggle buttons */}
+          <div className="view-toggle">
+            <button 
+              className={viewMode === "list" ? "active" : ""} 
+              onClick={() => toggleView("list")}
+            >
+              List View
+            </button>
+            <button 
+              className={viewMode === "map" ? "active" : ""} 
+              onClick={() => toggleView("map")}
+            >
+              Map View
+            </button>
+          </div>
+
+          {/* List view */}
+          <div className={`list-view ${viewMode === "list" ? "active" : "hidden"}`}>
+            <div className="courses-container">
+              <button className="filter-toggle" onClick={toggleFilter}>
+                {isFilterOpen ? "Hide Filters" : "Show Filters"}
               </button>
-            )}
+              
+              <div className={`filter-sidebar ${isFilterOpen ? 'open' : 'closed'}`}>
+                <div className="filter-section">
+                  <h3>Sort By</h3>
+                  <select value={sortBy} onChange={handleSortChange}>
+                    <option value="default">Default</option>
+                    <option value="popularity">Most Popular</option>
+                    <option value="rating">Highest Rated</option>
+                  </select>
+                </div>
+                
+                <div className="filter-section">
+                  <h3>Filter By Location</h3>
+                  <select value={locationFilter} onChange={handleLocationChange}>
+                    <option value="">All Locations</option>
+                    {locations.map((location, index) => (
+                      <option key={index} value={location}>{location}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                {(sortBy !== "default" || locationFilter) && (
+                  <button className="clear-filters" onClick={clearFilters}>
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+              
+              <div className="course-list">
+                {filteredCourses.map((course) => (
+                  <div key={course.id} className="course-item" onClick={() => openCourseModal(course)}>
+                    <img src={course.url} alt={course.name} />
+                    <div className="course-content">
+                      <h2>{course.name}</h2>
+                      <h3>{course.location}</h3>
+                      {course.rating && <div className="course-rating">Rating: {course.rating}★</div>}
+                    </div>
+                  </div>
+                ))}
+                
+                {filteredCourses.length === 0 && (
+                  <div className="no-results">
+                    <p>No courses match your filters. Try different criteria.</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           
-          <div className="course-list">
-            {filteredCourses.map((course) => (
-              <div key={course.id} className="course-item" onClick={() => openCourseModal(course)}>
-                <img src={course.url} alt={course.name} />
-                <div className="course-content">
-                  <h2>{course.name}</h2>
-                  <h3>{course.location}</h3>
-                  {course.rating && <div className="course-rating">Rating: {course.rating}★</div>}
-                </div>
-              </div>
-            ))}
-            
-            {filteredCourses.length === 0 && (
-              <div className="no-results">
-                <p>No courses match your filters. Try different criteria.</p>
-              </div>
-            )}
+          {/* Map view */}
+          <div className={`map-view ${viewMode === "map" ? "active" : ""}`}>
+            <CourseMap />
           </div>
         </div>
       )}

@@ -1,0 +1,21 @@
+.course-map-container {
+  width: 100%;
+  height: 75vh;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Style for mapbox canvas */
+.mapboxgl-canvas {
+  outline: none;
+}
+
+/* Style for popup */
+.mapboxgl-popup-content {
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-family: 'Poppins', sans-serif;
+} 
