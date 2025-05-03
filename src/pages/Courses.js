@@ -130,7 +130,19 @@ const Courses = () => {
   };
 
   const openCourseModal = (course) => {
-    setSelectedCourse(course);
+    console.log("Opening modal for course:", course);
+    // Make sure course has a features array even if undefined in the original data
+    const courseWithFeatures = {
+      ...course,
+      features: course.features || [
+        "Professional golf lessons available",
+        "Club rentals and golf carts",
+        "Restaurant and bar on premises",
+        "18-hole championship course",
+        "Practice facilities"
+      ]
+    };
+    setSelectedCourse(courseWithFeatures);
   };
 
   const closeCourseModal = () => {
