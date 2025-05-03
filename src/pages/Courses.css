@@ -11,70 +11,106 @@
 
 .course-list {
   display: grid; /* Use grid layout for rows */
-  grid-template-columns: repeat(4, 1fr); /* Ensure 4 courses per row */
+  grid-template-columns: repeat(4, minmax(200px, 1fr)); /* Responsive 4 courses per row */
   gap: 60px 30px; /* Add 30px vertical gap between rows */
-  margin: 100px 15%; /* Center the list horizontally */
   max-width: 1200px; /* Limit the width of the list */
+  margin: 100px auto; /* Center the list horizontally with auto margins */
+  padding: 0 20px; /* Add some padding on the sides for smaller screens */
+  width: 100%; /* Take full width up to max-width */
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
+/* Add media queries for responsiveness */
+@media (max-width: 1200px) {
+  .course-list {
+    grid-template-columns: repeat(3, 1fr); /* 3 per row on medium screens */
+  }
+}
+
+@media (max-width: 900px) {
+  .course-list {
+    grid-template-columns: repeat(2, 1fr); /* 2 per row on smaller screens */
+  }
+}
+
+@media (max-width: 600px) {
+  .course-list {
+    grid-template-columns: 1fr; /* 1 per row on very small screens */
+  }
 }
 
 .course-item {
   overflow: hidden;
   background-color: #fff;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 12px; /* Add rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add subtle shadow */
+  position: relative; /* For positioning the content overlay */
+  aspect-ratio: 3/4; /* Create a taller card with fixed aspect ratio */
 }
 
 .course-item:hover {
   transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
 }
 
 .course-item img {
   width: 100%;
-  height: 150px; /* Adjust height for consistency */
+  height: 100%; /* Fill the entire card */
   object-fit: cover;
-  transition: transform 0.3s ease; /* Add transition for zoom effect */
+  transition: transform 0.3s ease;
 }
 
 .course-item:hover img {
-  transform: scale(1.1); /* Slight zoom effect */
+  transform: scale(1.05); /* Slight zoom effect */
 }
 
 .course-item .course-content {
-  padding: 10px;
+  position: absolute; /* Position over the image */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0) 100%); /* Gradient overlay for readability */
+  color: white;
+  text-align: left;
 }
 
 .course-item h2 {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   margin: 5px 0;
-  color: #333;
+  color: white;
   font-weight: 600;
-  transition: color 0.3s ease; /* Add transition for font color */
+  transition: color 0.3s ease;
 }
 
 .course-item h3 {
-  font-size: 0.9rem;
-  color: #777;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 5px;
-  transition: color 0.3s ease; /* Add transition for font color */
+  transition: color 0.3s ease;
 }
 
 .course-item p {
-  font-size: 0.8rem;
-  color: #555;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
   margin-bottom: 10px;
-  transition: color 0.3s ease; /* Add transition for font color */
+  transition: color 0.3s ease;
+  max-height: 80px;
+  overflow: hidden;
 }
 
 .course-item .course-location {
   font-size: 0.9rem;
   font-weight: bold;
-  color: #186d00;
+  color: #8aff7d;
   margin-bottom: 10px;
 }
 
 .course-item:hover h2,
 .course-item:hover h3,
 .course-item:hover p {
-  color: #186d00; /* Turn font green on hover */
+  color: #8aff7d; /* Lighter green on hover for better visibility against dark background */
 }
 
 .hero-courses {
