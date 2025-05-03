@@ -23,21 +23,48 @@ const Courses = () => {
     const getCourses = async () => {
       try {
         const fetchedCourses = await fetchCourses();
+        console.log("Fetched courses from Firebase:", fetchedCourses);
+        // Log the first course to check its structure
+        if (fetchedCourses && fetchedCourses.length > 0) {
+          console.log("First course data:", fetchedCourses[0]);
+          console.log("Features data type:", typeof fetchedCourses[0].features);
+          console.log("Features value:", fetchedCourses[0].features);
+        }
+        
         // Add mock popularity and rating data if not available
-        const enhancedCourses = fetchedCourses.map((course) => ({
-          ...course,
-          popularity: course.popularity || Math.floor(Math.random() * 100),
-          rating: course.rating || (Math.random() * 3 + 2).toFixed(1), // Random rating between 2.0 and 5.0
-          normalizedLocation: normalizeLocation(course.location), // Add normalized location
-          // Add default features if none are provided
-          features: course.features || [
-            "Professional golf lessons available",
-            "Club rentals and golf carts",
-            "Restaurant and bar on premises",
-            "18-hole championship course",
-            "Practice facilities"
-          ]
-        }));
+        const enhancedCourses = fetchedCourses.map((course) => {
+          console.log(`Processing course ${course.id}: ${course.name}`);
+          console.log(`Features for ${course.name}:`, course.features);
+          
+          // Handle features properly, ensuring it's an array
+          let courseFeatures = [];
+          if (course.features) {
+            // If features exists, make sure it's an array
+            if (Array.isArray(course.features)) {
+              courseFeatures = course.features;
+            } else if (typeof course.features === 'string') {
+              // If it's a string, try to parse it as JSON
+              try {
+                const parsed = JSON.parse(course.features);
+                courseFeatures = Array.isArray(parsed) ? parsed : [course.features];
+              } catch (e) {
+                courseFeatures = [course.features]; // Use as single string feature
+              }
+            } else {
+              // If it's another type, convert to string
+              courseFeatures = [String(course.features)];
+            }
+          }
+          
+          return {
+            ...course,
+            popularity: course.popularity || Math.floor(Math.random() * 100),
+            rating: course.rating || (Math.random() * 3 + 2).toFixed(1),
+            normalizedLocation: normalizeLocation(course.location),
+            features: courseFeatures.length > 0 ? courseFeatures : ["No features available"]
+          };
+        });
+        
         setCourses(enhancedCourses);
         setFilteredCourses(enhancedCourses);
         
