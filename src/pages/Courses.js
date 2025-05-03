@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchCourses } from "../utils/firebaseUtils";
 import Footer from "../components/Footer";
+import CourseModal from "../components/CourseModal";
 import './Courses.css';
 
 const Courses = () => {
@@ -11,6 +12,7 @@ const Courses = () => {
   const [locationFilter, setLocationFilter] = useState("");
   const [locations, setLocations] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(true);
+  const [selectedCourse, setSelectedCourse] = useState(null);
 
   // Helper function to normalize location strings
   const normalizeLocation = (location) => {
@@ -92,6 +94,14 @@ const Courses = () => {
     setIsFilterOpen(!isFilterOpen);
   };
 
+  const openCourseModal = (course) => {
+    setSelectedCourse(course);
+  };
+
+  const closeCourseModal = () => {
+    setSelectedCourse(null);
+  };
+
   return (
     <div className="courses">
       <header className="hero-courses">
@@ -138,7 +148,7 @@ const Courses = () => {
           
           <div className="course-list">
             {filteredCourses.map((course) => (
-              <div key={course.id} className="course-item">
+              <div key={course.id} className="course-item" onClick={() => openCourseModal(course)}>
                 <img src={course.url} alt={course.name} />
                 <div className="course-content">
                   <h2>{course.name}</h2>
@@ -156,6 +166,13 @@ const Courses = () => {
             )}
           </div>
         </div>
+      )}
+
+      {selectedCourse && (
+        <CourseModal 
+          course={selectedCourse} 
+          onClose={closeCourseModal} 
+        />
       )}
       
       <Footer />

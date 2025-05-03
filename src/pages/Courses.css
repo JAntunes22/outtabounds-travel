@@ -22,6 +22,7 @@
   aspect-ratio: 3/4; /* Create a taller card with fixed aspect ratio */
   z-index: 1; /* Base z-index */
   transform-origin: center bottom; /* Ensure transform happens from bottom */
+  cursor: pointer; /* Add pointer cursor to indicate clickable */
 }
 
 .course-item:hover {
