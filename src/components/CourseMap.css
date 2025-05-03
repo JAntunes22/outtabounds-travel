@@ -7,16 +7,16 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Style for mapbox canvas */
-.mapboxgl-canvas {
-  outline: none;
-}
-
-/* Style for popup */
-.mapboxgl-popup-content {
-  padding: 12px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+/* Map loading indicator */
+.map-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  background-color: #f8f8f8;
+  color: #666;
+  font-size: 16px;
   font-family: 'Poppins', sans-serif;
 }
 
