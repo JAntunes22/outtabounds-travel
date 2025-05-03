@@ -92,7 +92,7 @@
 
 .hero-courses {
   position: relative;
-  background: url('../assets/hero/courses-hero.jpg') no-repeat center center/cover; /* Replace with the correct hero image path */
+  background: url('https://i.imgur.com/qQeOsvY.jpeg') no-repeat center center/cover; /* Updated hero image URL */
   height: 60vh;
   display: flex;
   align-items: center;
