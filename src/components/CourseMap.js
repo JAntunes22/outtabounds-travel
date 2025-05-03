@@ -52,10 +52,6 @@ const CourseMap = () => {
         ))}
         
       </MapContainer>
-      <div className="map-notice">
-        <p>Interactive map of golf courses.</p>
-        <p>Click markers to see course details.</p>
-      </div>
     </div>
   );
 };
