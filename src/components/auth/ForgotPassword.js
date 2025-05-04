@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import './Auth.css';
@@ -9,6 +9,24 @@ export default function ForgotPassword() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const authCardRef = useRef(null);
+
+  // Add a subtle parallax effect on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (authCardRef.current) {
+        const scrollPos = window.scrollY;
+        // Very subtle movement for the card
+        if (scrollPos < window.innerHeight) {
+          const scale = 1 + (scrollPos * 0.0002); // Very small scale change
+          authCardRef.current.style.transform = `scale(${scale})`;
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -28,7 +46,7 @@ export default function ForgotPassword() {
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
+      <div className="auth-card" ref={authCardRef}>
         <h2>Password Reset</h2>
         {error && <div className="auth-error">{error}</div>}
         {message && <div className="auth-success">{message}</div>}

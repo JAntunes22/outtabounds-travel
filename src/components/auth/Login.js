@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import './Auth.css';
@@ -11,6 +11,24 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const authCardRef = useRef(null);
+
+  // Add a subtle parallax effect on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (authCardRef.current) {
+        const scrollPos = window.scrollY;
+        // Very subtle movement for the card
+        if (scrollPos < window.innerHeight) {
+          const scale = 1 + (scrollPos * 0.0002); // Very small scale change
+          authCardRef.current.style.transform = `scale(${scale})`;
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Redirect to intended page or homepage after login
   const from = location.state?.from?.pathname || '/';
@@ -32,7 +50,7 @@ export default function Login() {
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
+      <div className="auth-card" ref={authCardRef}>
         <h2>Log In</h2>
         {error && <div className="auth-error">{error}</div>}
         <form onSubmit={handleSubmit}>
