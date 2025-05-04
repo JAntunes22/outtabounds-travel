@@ -2,7 +2,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 85vh;
+  min-height: 100vh;
   padding: 20px;
   background: url('https://i.imgur.com/ZxWn29Y.jpeg') no-repeat center center/cover;
   background-attachment: fixed; /* Creates parallax effect */
