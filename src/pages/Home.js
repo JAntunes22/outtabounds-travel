@@ -1,11 +1,36 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import "./Home.css"; // Ensure you create and style this CSS file
 
 const Home = () => {
+  const heroContentRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (heroContentRef.current) {
+        // Calculate how far down the page we've scrolled
+        const scrollPos = window.scrollY;
+        // Apply a parallax effect to the hero content
+        // Move it up slightly as we scroll down
+        if (scrollPos < window.innerHeight) {
+          const translateY = scrollPos * 0.4; // Adjust this value to control effect intensity
+          heroContentRef.current.style.transform = `translateY(${translateY}px)`;
+        }
+      }
+    };
+
+    // Add scroll event listener
+    window.addEventListener('scroll', handleScroll);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   return (
     <div className="home">
       <header className="hero">
-        <div className="hero-content">
+        <div className="hero-content" ref={heroContentRef}>
           <h1>Welcome to OuttaBounds Travel</h1>
           <p>Your gateway to unforgettable adventures and experiences.</p>
           <a href="#explore" className="btn-primary">Explore Now</a>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { fetchCourses } from "../utils/firebaseUtils";
 import CourseModal from "../components/CourseModal";
 import CourseMap from "../components/CourseMap";
@@ -14,11 +14,36 @@ const Courses = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [viewMode, setViewMode] = useState("list"); // "list" or "map"
+  const heroContentRef = useRef(null);
 
   // Helper function to normalize location strings
   const normalizeLocation = (location) => {
     return location.trim().toLowerCase();
   };
+
+  // Add parallax effect for hero section
+  useEffect(() => {
+    const handleScroll = () => {
+      if (heroContentRef.current) {
+        // Calculate how far down the page we've scrolled
+        const scrollPos = window.scrollY;
+        // Apply a parallax effect to the hero content
+        // Move it up slightly as we scroll down
+        if (scrollPos < window.innerHeight) {
+          const translateY = scrollPos * 0.4; // Adjust this value to control effect intensity
+          heroContentRef.current.style.transform = `translateY(${translateY}px)`;
+        }
+      }
+    };
+
+    // Add scroll event listener
+    window.addEventListener('scroll', handleScroll);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   useEffect(() => {
     const getCourses = async () => {
@@ -158,7 +183,7 @@ const Courses = () => {
   return (
     <div className="courses">
       <header className="hero hero-courses">
-        <div className="hero-courses-content">
+        <div className="hero-courses-content" ref={heroContentRef}>
           <h1>Our Golf Courses</h1>
           <p>Explore the best golf courses curated just for you.</p>
         </div>

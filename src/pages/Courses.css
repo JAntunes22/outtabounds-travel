@@ -93,6 +93,7 @@
 .hero-courses {
   position: relative;
   background: url('https://i.imgur.com/qQeOsvY.jpeg') no-repeat center center/cover; /* Updated hero image URL */
+  background-attachment: fixed; /* This creates the parallax effect */
   height: 60vh;
   display: flex;
   align-items: center;
@@ -101,6 +102,7 @@
   text-align: center;
   margin-bottom: 100px; /* Increased spacing below hero */
   filter: saturate(0.7); /* Reduce saturation to 70% */
+  z-index: 0; /* Ensure proper stacking */
 }
 
 .hero-courses::before {
@@ -119,6 +121,8 @@
   position: relative;
   z-index: 2;
   padding-top: 20px; /* Add space to move content down from navbar */
+  transform: translateY(0); /* Starting position for animation */
+  transition: transform 0.5s ease-out; /* Smooth transition for scroll effect */
 }
 
 .hero-courses-content h1 {
@@ -397,7 +401,9 @@
   }
   
   .hero-courses {
-    height: 50vh;
+    height: 40vh;
+    margin-bottom: 60px;
+    background-attachment: scroll; /* Disable parallax on mobile for better performance */
   }
   
   .hero-courses-content h1 {
