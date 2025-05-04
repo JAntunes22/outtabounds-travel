@@ -348,20 +348,12 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
         // Add navigation controls
         map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
         
-        // Create supercluster instance
-        supercluster.current = new Supercluster({
-          radius: 50, // Reduce radius for tighter clusters
-          maxZoom: 20, // Increase max zoom level to ensure all points can be shown
-          minPoints: 2, // Minimum number of points to form a cluster
-          extent: 512,
-          nodeSize: 64
-        });
+        // Create supercluster instance is now handled in a separate useEffect
         
         // Set map initialized flag when the map is loaded
         map.current.on('load', () => {
           console.log("Map loaded successfully");
           setMapInitialized(true);
-          lastZoom.current = map.current.getZoom();
           
           // Force resize once the map is loaded
           if (map.current) {
@@ -433,9 +425,7 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
 
   // Update clusters based on current map bounds and zoom level
   const updateClusters = () => {
-    if (!map.current || !supercluster.current || featuresRef.current.length === 0 || isUpdating.current) return;
-    
-    isUpdating.current = true;
+    if (!map.current || !clusterIndex.current || markerData.current.length === 0) return;
     
     try {
       console.log("Updating clusters at zoom level", map.current.getZoom());
@@ -457,7 +447,7 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
       console.log(`Getting clusters for zoom level ${zoom} and bounds ${bbox.join(', ')}`);
       
       // Get clusters based on the current zoom and bounds
-      const clusters = supercluster.current.getClusters(bbox, zoom);
+      const clusters = clusterIndex.current.getClusters(bbox, zoom);
       console.log(`Found ${clusters.length} clusters/points`);
       
       // Add cluster markers or individual markers
@@ -482,7 +472,7 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
           el.addEventListener('click', () => {
             try {
               const expansionZoom = Math.min(
-                supercluster.current.getClusterExpansionZoom(clusterId),
+                clusterIndex.current.getClusterExpansionZoom(clusterId),
                 20
               );
               
@@ -519,8 +509,6 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
       });
     } catch (err) {
       console.error("Error updating clusters:", err);
-    } finally {
-      isUpdating.current = false;
     }
   };
 
