@@ -425,31 +425,14 @@
   z-index: 999;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.1s ease, visibility 0s linear 0s;
   visibility: hidden;
-  will-change: opacity, backdrop-filter;
 }
 
 .mobile-menu-backdrop.visible {
   opacity: 1;
   pointer-events: auto;
   visibility: visible;
-  transition: opacity 0.1s ease;
-}
-
-/* Prevent body scrolling when menu is open */
-html.scroll-locked {
-  overflow: hidden;
-}
-
-body.menu-open {
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  touch-action: none; /* Prevent scrolling on touch devices */
-  top: 0;
-  left: 0;
 }
 
 /* Responsive Adjustments */

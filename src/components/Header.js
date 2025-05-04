@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './Header.css';
@@ -8,6 +8,7 @@ export default function Header() {
   const { currentUser, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [backdropVisible, setBackdropVisible] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -28,52 +29,46 @@ export default function Header() {
     };
   }, []);
 
-  // Prevent body scrolling when menu is open
+  // Prevent body scrolling when menu is open, but keep the page content visible
   useEffect(() => {
-    const html = document.documentElement;
-    
-    if (menuOpen) {
-      // Store current scroll position
+    if (menuOpen || backdropVisible) {
+      // Get current scroll position
       const scrollY = window.scrollY;
-      sessionStorage.setItem('scrollPosition', scrollY);
       
-      // Add classes to lock scrolling
-      html.classList.add('scroll-locked');
-      document.body.classList.add('menu-open');
-      
-      // Set the body's top position to negative scroll amount
-      // This keeps the page visually in the same place
+      // Apply a style to the body that maintains the visual position
+      document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
     } else {
-      // Remove classes to unlock scrolling
-      html.classList.remove('scroll-locked');
-      document.body.classList.remove('menu-open');
+      // Get the saved position from the body's top
+      const scrollY = document.body.style.top;
       
-      // Get the stored scroll position
-      const scrollY = sessionStorage.getItem('scrollPosition');
+      // Reset the styles
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      
+      // Scroll back to the original position
       if (scrollY) {
-        // Reset the body's top position
-        document.body.style.top = '';
-        // Scroll back to the original position
-        window.scrollTo(0, parseInt(scrollY));
-        // Clear stored position
-        sessionStorage.removeItem('scrollPosition');
+        window.scrollTo(0, parseInt(scrollY.replace('-', '').replace('px', '')));
       }
     }
     
-    // Cleanup function
+    // Clean up in case component unmounts while menu is open
     return () => {
-      html.classList.remove('scroll-locked');
-      document.body.classList.remove('menu-open');
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
       document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
       
-      const scrollY = sessionStorage.getItem('scrollPosition');
       if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY));
-        sessionStorage.removeItem('scrollPosition');
+        window.scrollTo(0, parseInt(scrollY.replace('-', '').replace('px', '')));
       }
     };
-  }, [menuOpen]);
+  }, [menuOpen, backdropVisible]);
 
   async function handleLogout() {
     try {
@@ -90,7 +85,7 @@ export default function Header() {
     const handleClickOutside = (event) => {
       if (menuOpen && !event.target.closest('.hamburger-menu') && 
           !event.target.closest('.mobile-menu')) {
-        setMenuOpen(false);
+        handleCloseMenu(event);
       }
       
       if (accountMenuOpen && !event.target.closest('.account-icon') && 
@@ -109,25 +104,27 @@ export default function Header() {
     };
   }, [menuOpen, accountMenuOpen, languageMenuOpen]);
 
-  // Update toggleMenu to be more deliberate about scroll prevention
-  const toggleMenu = (e) => {
-    // Update menu state without causing scroll
-    setMenuOpen(prevState => !prevState);
-  };
-
-  // Update hamburger menu click handler to be more specific about preventing default behavior
+  // Handle hamburger menu click - Two step process
   const handleHamburgerClick = (e) => {
     // Prevent all default behaviors and stop event propagation
     if (e && e.preventDefault) e.preventDefault();
     if (e && e.stopPropagation) e.stopPropagation();
     
-    // Save scroll position only when opening the menu
-    if (!menuOpen && typeof window !== 'undefined') {
-      sessionStorage.setItem('scrollPosition', window.scrollY);
+    if (!menuOpen) {
+      // Step 1: Show backdrop first
+      setBackdropVisible(true);
+      
+      // Step 2: After a small delay, show the menu
+      setTimeout(() => {
+        setMenuOpen(true);
+      }, 100); // 100ms delay to ensure backdrop is visible first
+    } else {
+      // When closing, hide menu first then backdrop
+      setMenuOpen(false);
+      setTimeout(() => {
+        setBackdropVisible(false);
+      }, 300); // Wait for menu animation to complete
     }
-    
-    // Use a callback to ensure we're working with the latest state
-    setMenuOpen(prevState => !prevState);
     
     // Return false to prevent any other handlers
     return false;
@@ -139,8 +136,13 @@ export default function Header() {
     if (e && e.preventDefault) e.preventDefault();
     if (e && e.stopPropagation) e.stopPropagation();
     
-    // Close the menu
+    // First close the menu
     setMenuOpen(false);
+    
+    // Then after the menu animation completes, hide the backdrop
+    setTimeout(() => {
+      setBackdropVisible(false);
+    }, 300);
     
     // Return false to prevent any other handlers
     return false;
@@ -148,9 +150,8 @@ export default function Header() {
 
   // Handler for mobile menu links
   const handleMenuLinkClick = () => {
-    // Just close the menu without preventing default behavior
-    // This ensures navigation happens but prevents scrolling to top
-    setMenuOpen(false);
+    // Just close the menu
+    handleCloseMenu({});
   };
 
   return (
@@ -265,9 +266,9 @@ export default function Header() {
         </div>
       </div>
       
-      {/* Mobile menu backdrop */}
+      {/* Mobile menu backdrop - Add it before the menu to ensure it appears first */}
       <div 
-        className={`mobile-menu-backdrop ${menuOpen ? 'visible' : ''}`}
+        className={`mobile-menu-backdrop ${backdropVisible ? 'visible' : ''}`}
         onClick={handleCloseMenu}
       ></div>
       
