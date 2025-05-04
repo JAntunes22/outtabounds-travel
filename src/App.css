@@ -7,7 +7,7 @@
 /* Remove top padding to allow content to go behind navbar */
 main {
   /* No padding top to allow content to go behind transparent navbar */
-  min-height: 100vh;
+  min-height: 80vh;
   position: relative;
 }
 

@@ -1,7 +1,6 @@
 /* Admin Dashboard Layout */
 .admin-container {
   display: flex;
-  min-height: 100vh;
   background-color: #1a2236;
 }
 
