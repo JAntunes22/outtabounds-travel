@@ -27,7 +27,7 @@ body.modal-open {
   border-radius: 15px;
   width: 95%;
   max-width: 1400px;
-  max-height: 98vh;
+  max-height: 90vh;
   overflow-y: auto;
   position: relative;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -250,7 +250,7 @@ body.modal-open {
   .modal-image-container {
     width: 55%;
     height: auto;
-    max-height: 750px;
+    max-height: 650px;
     border-top-right-radius: 0;
     border-bottom-left-radius: 15px;
   }
@@ -258,17 +258,30 @@ body.modal-open {
   .modal-details {
     width: 45%;
     overflow-y: auto;
-    max-height: 750px;
+    max-height: 650px;
   }
 }
 
 @media (max-width: 767px) {
   .course-modal {
     width: 95%;
+    max-height: 80vh;
+  }
+  
+  .modal-image-container {
+    height: 250px;
   }
   
   .modal-title {
     font-size: 1.8rem;
+  }
+  
+  .modal-details {
+    padding: 20px;
+  }
+  
+  .modal-description p {
+    font-size: 0.9rem;
   }
   
   .modal-features ul {
@@ -277,5 +290,16 @@ body.modal-open {
   
   .modal-cta {
     flex-direction: column;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+  .course-modal {
+    max-height: 75vh;
+  }
+  
+  .modal-image-container {
+    height: 180px;
   }
 } 
