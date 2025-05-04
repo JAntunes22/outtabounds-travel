@@ -164,6 +164,39 @@
   z-index: -1;
 }
 
+.view-toggle {
+  position: absolute;
+  top: -50px;
+  right: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  display: flex;
+  z-index: 30;
+}
+
+.view-toggle button {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  color: #666;
+}
+
+.view-toggle button.active {
+  background-color: #186d00;
+  color: white;
+}
+
+.view-toggle button:hover:not(.active) {
+  background-color: #f0f0f0;
+}
+
 .filter-toggle {
   position: absolute;
   top: -50px;
@@ -175,7 +208,7 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
-  z-index: 10;
+  z-index: 20;
   transition: background-color 0.3s ease;
 }
 
@@ -247,107 +280,6 @@
   margin-top: 8px;
 }
 
-/* Add responsive media queries */
-@media (min-width: 1200px) {
-  .course-list {
-    grid-template-columns: repeat(4, 1fr); /* 4 per row on large screens */
-  }
-}
-
-@media (max-width: 1199px) and (min-width: 901px) {
-  .course-list {
-    grid-template-columns: repeat(3, 1fr); /* 3 per row on medium screens */
-  }
-}
-
-@media (max-width: 900px) and (min-width: 601px) {
-  .course-list {
-    grid-template-columns: repeat(2, 1fr); /* 2 per row on smaller screens */
-  }
-}
-
-@media (max-width: 600px) {
-  .course-list {
-    grid-template-columns: 1fr; /* 1 per row on very small screens */
-  }
-}
-
-/* Responsive adjustments */
-@media (max-width: 900px) {
-  .courses-container {
-    flex-direction: column;
-  }
-  
-  .filter-sidebar {
-    width: 100%;
-    margin-right: 0;
-    margin-bottom: 30px;
-    order: 1;
-  }
-  
-  .filter-sidebar.closed {
-    transform: translateY(-100%);
-    position: absolute;
-  }
-  
-  .course-list {
-    order: 2;
-  }
-  
-  .view-toggle {
-    position: absolute;
-    top: -120px; /* Move higher to make room for filter toggle */
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-  }
-  
-  .filter-toggle {
-    top: -70px; /* Position it clearly below the view toggle */
-    left: 50%;
-    transform: translateX(-50%);
-  }
-}
-
-@media (max-width: 600px) {
-  .filter-section select {
-    font-size: 0.9rem;
-  }
-}
-
-.view-toggle {
-  position: absolute;
-  top: -50px;
-  right: 20px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  display: flex;
-  z-index: 20;
-}
-
-.view-toggle button {
-  padding: 10px 20px;
-  background: none;
-  border: none;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  color: #666;
-}
-
-.view-toggle button.active {
-  background-color: #186d00;
-  color: white;
-}
-
-.view-toggle button:hover:not(.active) {
-  background-color: #f0f0f0;
-}
-
 .courses-content {
   position: relative;
   max-width: 1400px;
@@ -378,4 +310,134 @@
 
 .list-view.hidden {
   display: none;
+}
+
+/* Add responsive media queries */
+@media (min-width: 1200px) {
+  .course-list {
+    grid-template-columns: repeat(4, 1fr); /* 4 per row on large screens */
+  }
+}
+
+@media (max-width: 1199px) and (min-width: 901px) {
+  .course-list {
+    grid-template-columns: repeat(3, 1fr); /* 3 per row on medium screens */
+  }
+}
+
+@media (max-width: 900px) and (min-width: 601px) {
+  .course-list {
+    grid-template-columns: repeat(2, 1fr); /* 2 per row on smaller screens */
+    padding: 30px 5px 0 0; 
+  }
+}
+
+@media (max-width: 600px) {
+  .course-list {
+    grid-template-columns: 1fr; /* 1 per row on very small screens */
+    padding: 30px 5px 0 0; 
+  }
+  
+  .filter-section select {
+    font-size: 0.9rem;
+  }
+  
+  /* Improve mobile spacing */
+  .courses-content {
+    padding: 0 15px;
+  }
+  
+  .courses-container {
+    padding: 10px 15px 0;
+  }
+  
+  /* Make buttons more visible on small screens */
+  .view-toggle button {
+    padding: 8px 15px;
+    font-size: 13px;
+  }
+  
+  .filter-toggle {
+    padding: 7px 12px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Responsive adjustments for tablets and mobile */
+@media (max-width: 900px) {
+  .courses-container {
+    flex-direction: column;
+  }
+  
+  .filter-sidebar {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 30px;
+    order: 1;
+  }
+  
+  .filter-sidebar.closed {
+    transform: translateY(-100%);
+    position: absolute;
+  }
+  
+  .course-list {
+    order: 2;
+  }
+  
+  .view-toggle {
+    position: absolute;
+    top: -70px !important; /* Use !important to override the default position */
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    z-index: 30;
+  }
+  
+  .filter-toggle {
+    top: -5px !important; /* Use !important to override the default position */
+    left: 50% !important;
+    transform: translateX(-50%);
+    z-index: 20;
+  }
+  
+  /* Adjust hero text for smaller screens */
+  .hero-courses-content h1 {
+    font-size: 2.2rem;
+  }
+  
+  .hero-courses-content p {
+    font-size: 1.2rem;
+  }
+}
+
+/* Additional mobile-specific adjustments */
+@media (max-width: 480px) {
+  .hero-courses {
+    height: 40vh;
+  }
+  
+  .hero-courses-content h1 {
+    font-size: 1.8rem;
+  }
+  
+  .hero-courses-content p {
+    font-size: 1rem;
+  }
+  
+  .view-toggle {
+    top: -70px !important;
+    width: 100%;
+    max-width: 190px;
+  }
+  
+  .filter-toggle {
+    top: -5px !important;
+    width: 70%;
+    max-width: 200px;
+  }
+  
+  .courses-container {
+    margin-bottom: 50px;
+  }
 }
