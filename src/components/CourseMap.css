@@ -330,10 +330,15 @@
   }
   
   .course-popup {
-    max-height: 80vh;
+    max-height: 60vh;
   }
   
   .course-popup .mapboxgl-popup-content {
     padding: 10px 8px 8px 8px;
+  }
+  
+  /* Ensure proper centering for mobile */
+  .mapboxgl-popup {
+    margin-top: -30px;
   }
 } 

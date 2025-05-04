@@ -294,17 +294,17 @@
     order: 2;
   }
   
-  .filter-toggle {
-    top: -50px;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
   .view-toggle {
     position: absolute;
-    top: -100px; /* Move up above the filter toggle */
+    top: -120px; /* Move higher to make room for filter toggle */
     left: 50%;
     right: auto;
+    transform: translateX(-50%);
+  }
+  
+  .filter-toggle {
+    top: -70px; /* Position it clearly below the view toggle */
+    left: 50%;
     transform: translateX(-50%);
   }
 }
