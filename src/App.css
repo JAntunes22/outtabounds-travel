@@ -4,6 +4,32 @@
   overflow-x: hidden;
 }
 
+/* Remove top padding to allow content to go behind navbar */
+main {
+  /* No padding top to allow content to go behind transparent navbar */
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Add padding to elements that need to appear below navbar */
+main > *:not(.hero) {
+  padding-top: 80px;
+}
+
+/* Ensure hero sections render correctly with the transparent navbar */
+.hero {
+  min-height: 80vh;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -80px; /* Negative margin to pull content behind navbar */
+  padding-top: 80px; /* Padding to push content down */
+  background-size: cover;
+  background-position: center;
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
@@ -36,5 +62,17 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Responsive adjustment for smaller screens */
+@media (max-width: 900px) {
+  main > *:not(.hero) {
+    padding-top: 70px; /* Adjust for smaller header height on mobile */
+  }
+  
+  .hero {
+    margin-top: -70px; /* Negative margin for smaller screens */
+    padding-top: 70px; /* Matching padding for smaller screens */
   }
 }

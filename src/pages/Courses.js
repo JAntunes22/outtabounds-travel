@@ -158,7 +158,7 @@ const Courses = () => {
 
   return (
     <div className="courses">
-      <header className="hero-courses">
+      <header className="hero hero-courses">
         <div className="hero-courses-content">
           <h1>Our Golf Courses</h1>
           <p>Explore the best golf courses curated just for you.</p>
