@@ -1,15 +1,24 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { addAdminRole, removeAdminRole } from '../../utils/firebaseUtils';
 import './Admin.css';
 
 export default function AdminSettings() {
-  const { currentUser, refreshToken } = useAuth();
+  const { currentUser, refreshAdminStatus, userFullname } = useAuth();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const emailRef = useRef();
   const [adminToRemove, setAdminToRemove] = useState('');
   const [showModal, setShowModal] = useState(false);
+  
+  useEffect(() => {
+    // Force refresh admin status when component mounts
+    const checkAdmin = async () => {
+      await refreshAdminStatus();
+    };
+    
+    checkAdmin();
+  }, [refreshAdminStatus]);
   
   async function handleAddAdmin(e) {
     e.preventDefault();
@@ -70,19 +79,21 @@ export default function AdminSettings() {
     }
   }
   
-  async function handleRefreshToken() {
+  async function handleRefreshAdminStatus() {
     setLoading(true);
     setMessage({ text: '', type: '' });
     
     try {
-      await refreshToken();
+      const isAdmin = await refreshAdminStatus();
       setMessage({
-        text: 'Token refreshed successfully!',
-        type: 'success'
+        text: isAdmin 
+          ? 'Admin status confirmed successfully!' 
+          : 'You do not have admin privileges.',
+        type: isAdmin ? 'success' : 'error'
       });
     } catch (error) {
       setMessage({
-        text: 'Failed to refresh token',
+        text: 'Failed to refresh admin status',
         type: 'error'
       });
     } finally {
@@ -94,6 +105,7 @@ export default function AdminSettings() {
     <div>
       <div className="admin-header">
         <h1 className="admin-title">Admin Settings</h1>
+        <p>Welcome, {(userFullname || currentUser?.displayName || currentUser?.email).split(' ')[0]}</p>
       </div>
       
       {message.text && (
@@ -162,15 +174,15 @@ export default function AdminSettings() {
           <h2>Session Management</h2>
           
           <div className="admin-form-container">
-            <h3>Refresh Authentication Token</h3>
-            <p>If you've just been granted admin privileges, you may need to refresh your token to access all admin features.</p>
+            <h3>Refresh Admin Status</h3>
+            <p>If you've just been granted admin privileges or are having issues accessing admin features, you may need to refresh your admin status.</p>
             
             <button
               className="admin-action-btn"
-              onClick={handleRefreshToken}
+              onClick={handleRefreshAdminStatus}
               disabled={loading}
             >
-              Refresh Token
+              Refresh Admin Status
             </button>
           </div>
         </div>

@@ -13,11 +13,12 @@ exports.addAdminRole = functions.https.onCall(async (data, context) => {
   }
   
   // Verify that the caller is already an admin
-  const callerUid = context.auth.uid;
-  const callerUserRecord = await admin.auth().getUser(callerUid);
-  const callerCustomClaims = callerUserRecord.customClaims || {};
+  const callerEmail = context.auth.token.email || '';
   
-  if (!callerCustomClaims.admin) {
+  // Check admin status in the database - using email as document ID
+  const callerSnapshot = await admin.firestore().collection('users').doc(callerEmail).get();
+  
+  if (!callerSnapshot.exists || !callerSnapshot.data().isAdmin) {
     throw new functions.https.HttpsError(
       'permission-denied',
       'Only admins can add other admins'
@@ -35,12 +36,32 @@ exports.addAdminRole = functions.https.onCall(async (data, context) => {
       );
     }
     
-    const user = await admin.auth().getUserByEmail(email);
+    // First check if the user document exists
+    const userDoc = await admin.firestore().collection('users').doc(email).get();
     
-    // Set the custom claim
-    await admin.auth().setCustomUserClaims(user.uid, {
-      admin: true
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError(
+        'not-found',
+        `User with email ${email} does not have a profile. They must sign in first.`
+      );
+    }
+    
+    // Update the user document in Firestore (using email as document ID)
+    await admin.firestore().collection('users').doc(email).update({
+      isAdmin: true,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
+    
+    // Also set the custom claim for backward compatibility
+    try {
+      const user = await admin.auth().getUserByEmail(email);
+      await admin.auth().setCustomUserClaims(user.uid, {
+        admin: true
+      });
+    } catch (authError) {
+      console.error('Error setting custom claims:', authError);
+      // Continue even if custom claim fails
+    }
     
     // Return the updated user
     return {
@@ -65,11 +86,12 @@ exports.removeAdminRole = functions.https.onCall(async (data, context) => {
   }
   
   // Verify that the caller is already an admin
-  const callerUid = context.auth.uid;
-  const callerUserRecord = await admin.auth().getUser(callerUid);
-  const callerCustomClaims = callerUserRecord.customClaims || {};
+  const callerEmail = context.auth.token.email || '';
   
-  if (!callerCustomClaims.admin) {
+  // Check admin status in the database - using email as document ID
+  const callerSnapshot = await admin.firestore().collection('users').doc(callerEmail).get();
+  
+  if (!callerSnapshot.exists || !callerSnapshot.data().isAdmin) {
     throw new functions.https.HttpsError(
       'permission-denied',
       'Only admins can remove admin privileges'
@@ -87,21 +109,40 @@ exports.removeAdminRole = functions.https.onCall(async (data, context) => {
       );
     }
     
-    const user = await admin.auth().getUserByEmail(email);
-    
-    // Make sure you're not removing the last admin
-    const userData = await admin.auth().getUser(user.uid);
-    if (userData.uid === callerUid) {
+    // Make sure you're not removing your own admin privileges
+    if (email === callerEmail) {
       throw new functions.https.HttpsError(
         'failed-precondition',
         'You cannot remove your own admin privileges'
       );
     }
     
-    // Set the custom claim to false
-    await admin.auth().setCustomUserClaims(user.uid, {
-      admin: false
+    // First check if the user document exists
+    const userDoc = await admin.firestore().collection('users').doc(email).get();
+    
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError(
+        'not-found',
+        `User with email ${email} does not have a profile.`
+      );
+    }
+    
+    // Update the user document in Firestore (using email as document ID)
+    await admin.firestore().collection('users').doc(email).update({
+      isAdmin: false,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
+    
+    // Also update the custom claim for backward compatibility
+    try {
+      const user = await admin.auth().getUserByEmail(email);
+      await admin.auth().setCustomUserClaims(user.uid, {
+        admin: false
+      });
+    } catch (authError) {
+      console.error('Error updating custom claims:', authError);
+      // Continue even if custom claim fails
+    }
     
     // Return success
     return {
@@ -134,11 +175,19 @@ exports.createInitialAdmin = functions.https.onRequest(async (req, res) => {
       return;
     }
     
-    // Check if user exists
+    // Check if user exists in Authentication
     try {
       const user = await admin.auth().getUserByEmail(email);
       
-      // Set admin claim
+      // Update user document in Firestore (using email as document ID)
+      await admin.firestore().collection('users').doc(email).set({
+        email: email,
+        displayName: user.displayName || '',
+        isAdmin: true,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      
+      // Also set admin claim for backward compatibility
       await admin.auth().setCustomUserClaims(user.uid, {
         admin: true
       });
@@ -153,5 +202,55 @@ exports.createInitialAdmin = functions.https.onRequest(async (req, res) => {
     }
   } catch (error) {
     res.status(500).send(`Server error: ${error.message}`);
+  }
+});
+
+// Trigger when a new user is created in Authentication
+exports.createUserProfile = functions.https.onCall(async (data, context) => {
+  try {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        'unauthenticated',
+        'You must be logged in to create a profile'
+      );
+    }
+    
+    const user = context.auth;
+    const userId = user.token.email || user.uid;
+    
+    // Create a new document for the user in Firestore (using email as document ID)
+    await admin.firestore().collection('users').doc(userId).set({
+      email: user.token.email || '',
+      displayName: user.token.name || '',
+      isAdmin: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    
+    console.log(`User document created for ${userId}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Error creating user document:', error);
+    throw new functions.https.HttpsError('internal', error.message);
+  }
+});
+
+// Also fix the onCreate trigger
+exports.createUserOnSignup = functions.auth.user().onCreate(async (user) => {
+  try {
+    const userId = user.email || user.uid;
+    
+    // Create a new document for the user in Firestore (using email as document ID)
+    await admin.firestore().collection('users').doc(userId).set({
+      email: user.email || '',
+      displayName: user.displayName || '',
+      isAdmin: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    console.log(`User document created for ${userId}`);
+    return null;
+  } catch (error) {
+    console.error('Error creating user document:', error);
+    return null;
   }
 }); 

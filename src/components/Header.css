@@ -393,7 +393,28 @@
 }
 
 .mobile-account-section {
-  margin-top: 25px;
+  margin-top: 20px;
+}
+
+.mobile-user-info {
+  margin-bottom: 15px;
+  padding: 10px 15px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+}
+
+.mobile-greeting {
+  font-size: 14px;
+  color: #eee;
+  margin: 0;
+}
+
+.mobile-account-section h3 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: white;
+  position: relative;
+  padding-bottom: 10px;
 }
 
 .mobile-account-link {

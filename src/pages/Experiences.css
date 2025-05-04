@@ -1,0 +1,19 @@
+/* Experiences page styles */
+.experiences {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.experiences h1 {
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 2.5rem;
+}
+
+.experiences p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #555;
+  margin-bottom: 2rem;
+} 

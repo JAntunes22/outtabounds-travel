@@ -57,12 +57,12 @@
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
   transition: background-color 0.3s;
-  font-size: 0;
+  color: white;
 }
 
-.social-icon:before {
-  content: '';
-  font-size: 16px;
+.social-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
 .social-links a:hover .social-icon {

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { fetchCourses } from "../utils/firebaseUtils";
-import Footer from "../components/Footer";
 import CourseModal from "../components/CourseModal";
 import CourseMap from "../components/CourseMap";
 import './Courses.css';
@@ -253,8 +252,6 @@ const Courses = () => {
           onClose={closeCourseModal} 
         />
       )}
-      
-      <Footer />
     </div>
   );
 };

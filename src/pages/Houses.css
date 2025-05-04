@@ -1,0 +1,19 @@
+/* Houses page styles */
+.houses {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.houses h1 {
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 2.5rem;
+}
+
+.houses p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #555;
+  margin-bottom: 2rem;
+} 

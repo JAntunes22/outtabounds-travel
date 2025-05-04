@@ -2,7 +2,7 @@
 .admin-container {
   display: flex;
   min-height: 100vh;
-  background-color: #f7f7f7;
+  background-color: #1a2236;
 }
 
 .admin-sidebar {
@@ -150,6 +150,7 @@
   flex-grow: 1;
   padding: 20px;
   overflow-y: auto;
+  background-color: #95afc2;
 }
 
 /* Admin Components */
@@ -158,12 +159,17 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 25px;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 15px 20px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
 }
 
 .admin-title {
   margin: 0;
   font-size: 24px;
-  color: #186d00;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .admin-action-btn {
@@ -187,8 +193,9 @@
 .admin-table-container {
   background-color: white;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .admin-table {
@@ -247,7 +254,8 @@
   background-color: white;
   padding: 25px;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   max-width: 800px;
   margin: 0 auto;
 }
@@ -410,12 +418,19 @@
 .stat-card {
   background-color: white;
   border-radius: 10px;
-  padding: 25px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   position: relative;
   overflow: hidden;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .stat-icon {
@@ -486,18 +501,20 @@
 }
 
 .action-card {
-  background-color: #f9f9f9;
-  border-radius: 8px;
+  background-color: white;
+  border-radius: 10px;
   padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   text-align: center;
   text-decoration: none;
   color: #333;
-  transition: transform 0.3s, background-color 0.3s;
 }
 
 .action-card:hover {
-  background-color: #f0f0f0;
   transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .action-icon {
