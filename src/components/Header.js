@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './Header.css';
@@ -12,6 +12,7 @@ export default function Header() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const backdropRef = useRef(null);
   
   // Handle scroll event to change navbar style
   useEffect(() => {
@@ -29,35 +30,10 @@ export default function Header() {
     };
   }, []);
 
-  // Prevent body scrolling when menu is open, but keep the page content visible
+  // This effect only runs on component unmount as a safety cleanup
   useEffect(() => {
-    if (menuOpen || backdropVisible) {
-      // Get current scroll position
-      const scrollY = window.scrollY;
-      
-      // Apply a style to the body that maintains the visual position
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
-    } else {
-      // Get the saved position from the body's top
-      const scrollY = document.body.style.top;
-      
-      // Reset the styles
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = '';
-      
-      // Scroll back to the original position
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY.replace('-', '').replace('px', '')));
-      }
-    }
-    
-    // Clean up in case component unmounts while menu is open
     return () => {
+      // Safety cleanup in case component unmounts with locked scroll
       const scrollY = document.body.style.top;
       document.body.style.position = '';
       document.body.style.top = '';
@@ -68,7 +44,23 @@ export default function Header() {
         window.scrollTo(0, parseInt(scrollY.replace('-', '').replace('px', '')));
       }
     };
-  }, [menuOpen, backdropVisible]);
+  }, []);
+  
+  // Use a separate effect to directly control the backdrop element when its state changes
+  // useLayoutEffect runs synchronously before the browser paints
+  useLayoutEffect(() => {
+    if (backdropRef.current) {
+      if (backdropVisible) {
+        backdropRef.current.style.opacity = '1';
+        backdropRef.current.style.visibility = 'visible';
+        backdropRef.current.style.pointerEvents = 'auto';
+      } else {
+        backdropRef.current.style.opacity = '0';
+        backdropRef.current.style.visibility = 'hidden';
+        backdropRef.current.style.pointerEvents = 'none';
+      }
+    }
+  }, [backdropVisible]);
 
   async function handleLogout() {
     try {
@@ -104,25 +96,61 @@ export default function Header() {
     };
   }, [menuOpen, accountMenuOpen, languageMenuOpen]);
 
-  // Handle hamburger menu click - Two step process
+  // Handle hamburger menu click - completely redesigned approach
   const handleHamburgerClick = (e) => {
     // Prevent all default behaviors and stop event propagation
     if (e && e.preventDefault) e.preventDefault();
     if (e && e.stopPropagation) e.stopPropagation();
     
     if (!menuOpen) {
-      // Step 1: Show backdrop first
+      // Lock scroll position first to prevent any layout shifts
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      // Make the backdrop visible immediately
+      // First directly modify DOM to avoid any React rendering delays
+      if (backdropRef.current) {
+        backdropRef.current.style.opacity = '1';
+        backdropRef.current.style.visibility = 'visible';
+        backdropRef.current.style.pointerEvents = 'auto';
+      }
+      
+      // Then update state to keep React in sync
       setBackdropVisible(true);
       
-      // Step 2: After a small delay, show the menu
-      setTimeout(() => {
-        setMenuOpen(true);
-      }, 100); // 100ms delay to ensure backdrop is visible first
+      // After the backdrop is shown, open the menu
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setMenuOpen(true);
+        });
+      });
     } else {
       // When closing, hide menu first then backdrop
       setMenuOpen(false);
       setTimeout(() => {
+        // Update React state
         setBackdropVisible(false);
+        
+        // Directly modify DOM for immediate effect
+        if (backdropRef.current) {
+          backdropRef.current.style.opacity = '0';
+          backdropRef.current.style.visibility = 'hidden';
+          backdropRef.current.style.pointerEvents = 'none';
+        }
+        
+        // Only unlock scrolling after both menu and backdrop are hidden
+        const scrollY = document.body.style.top;
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        
+        if (scrollY) {
+          window.scrollTo(0, parseInt(scrollY.replace('-', '').replace('px', '')));
+        }
       }, 300); // Wait for menu animation to complete
     }
     
@@ -139,9 +167,28 @@ export default function Header() {
     // First close the menu
     setMenuOpen(false);
     
-    // Then after the menu animation completes, hide the backdrop
+    // Then after the menu animation completes, hide the backdrop and restore scroll
     setTimeout(() => {
+      // Update React state
       setBackdropVisible(false);
+      
+      // Directly modify DOM for immediate effect
+      if (backdropRef.current) {
+        backdropRef.current.style.opacity = '0';
+        backdropRef.current.style.visibility = 'hidden';
+        backdropRef.current.style.pointerEvents = 'none';
+      }
+      
+      // Restore scrolling only after both menu and backdrop are hidden
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY.replace('-', '').replace('px', '')));
+      }
     }, 300);
     
     // Return false to prevent any other handlers
@@ -266,9 +313,10 @@ export default function Header() {
         </div>
       </div>
       
-      {/* Mobile menu backdrop - Add it before the menu to ensure it appears first */}
+      {/* Mobile menu backdrop - now with ref to directly manipulate DOM */}
       <div 
-        className={`mobile-menu-backdrop ${backdropVisible ? 'visible' : ''}`}
+        ref={backdropRef}
+        className="mobile-menu-backdrop"
         onClick={handleCloseMenu}
       ></div>
       

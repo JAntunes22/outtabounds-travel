@@ -221,7 +221,24 @@
   color: white;
 }
 
-/* Mobile Menu */
+/* Mobile menu backdrop */
+.mobile-menu-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  will-change: opacity, backdrop-filter, visibility;
+}
+
+/* Mobile menu */
 .mobile-menu {
   position: fixed;
   top: 0;
@@ -410,29 +427,6 @@
 
 .mobile-logout-button:hover {
   color: #ff4f4f;
-}
-
-/* Mobile menu backdrop */
-.mobile-menu-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 999;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.1s ease, visibility 0s linear 0s;
-  visibility: hidden;
-}
-
-.mobile-menu-backdrop.visible {
-  opacity: 1;
-  pointer-events: auto;
-  visibility: visible;
 }
 
 /* Responsive Adjustments */
