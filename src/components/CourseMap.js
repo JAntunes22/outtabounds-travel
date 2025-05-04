@@ -120,31 +120,31 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
       clearTimeout(updateTimeout.current);
     }
     
-    // Set a new timeout
+    // Set a new timeout with a shorter delay for responsive updates
     updateTimeout.current = setTimeout(() => {
       // Only update if the map isn't currently moving
-      if (!isMoving.current) {
+      if (!isMoving.current && map.current && map.current.loaded()) {
         if (updateMarkers.current) {
           updateMarkers.current();
         }
       }
-    }, 150); // Wait a bit after movement stops
+    }, 150); // Reduced from 500ms to 150ms for better responsiveness
   }, []);
 
-  // Update markers based on current map view - changed to useRef to avoid circular dependency
+  // Update markers based on current map view - reference to avoid circular dependency
   const updateMarkers = useRef(() => {});
 
-  // Set up updateMarkers function after component mounts
+  // Update markers based on current map view - optimized to reduce flickering and lag
   useEffect(() => {
     // Define the actual implementation
     updateMarkers.current = () => {
       if (!map.current || !mapInitialized || !clusterIndex.current || markerData.current.length === 0) return;
       
+      // Skip updates if map is still moving
+      if (isMoving.current) return;
+      
       console.log("Updating markers based on current map view");
       
-      // Clear markers without open popups
-      clearAllMarkers();
-
       try {
         // Get the current map bounds
         const bounds = map.current.getBounds();
@@ -162,6 +162,12 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
         const clusters = clusterIndex.current.getClusters(bbox, zoom);
         console.log(`Found ${clusters.length} clusters/points at zoom level ${zoom}`);
         
+        // Track existing marker IDs to only remove what's necessary
+        const newMarkerIds = new Set();
+        
+        // Track active cluster IDs to clean up old ones
+        const activeClusters = new Set();
+        
         // Create markers for each cluster or individual point
         clusters.forEach(cluster => {
           // Check if this is a cluster or an individual point
@@ -170,6 +176,20 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
             const clusterId = cluster.properties.cluster_id;
             const pointCount = cluster.properties.point_count;
             const clusterCoordinates = cluster.geometry.coordinates;
+            
+            // Add this cluster ID to active clusters
+            activeClusters.add(clusterId);
+            
+            // Check if we already have a marker for this cluster
+            const existingClusterMarker = clusterMarkers.current.find(
+              marker => marker._clusterId === clusterId
+            );
+            
+            if (existingClusterMarker) {
+              // Update position if needed
+              existingClusterMarker.setLngLat(clusterCoordinates);
+              return;
+            }
             
             // Create cluster marker 
             const el = document.createElement('div');
@@ -194,6 +214,9 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
             })
               .setLngLat(clusterCoordinates)
               .addTo(map.current);
+            
+            // Store cluster ID with marker for tracking
+            marker._clusterId = clusterId;
             
             // Add click handler to expand cluster
             el.addEventListener('click', () => {
@@ -227,10 +250,23 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
             const course = cluster.properties.course;
             const markerId = `marker-${course.id}`;
             
+            // Add the marker ID to our tracking set
+            newMarkerIds.add(markerId);
+            
             // Skip if we already have a marker with an open popup for this course
             if (openPopups.current[markerId]) {
               return;
             }
+            
+            // Skip if this marker already exists (to reduce DOM operations)
+            const existingMarker = markers.current.find(m => m._id === markerId);
+            if (existingMarker) {
+              // Ensure it's at the correct position (may have moved slightly)
+              existingMarker.setLngLat(position);
+              return;
+            }
+            
+            // If we're here, we need to create a new marker
             
             // Create custom popup
             const popupContent = document.createElement('div');
@@ -248,6 +284,10 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
             button.textContent = 'View Details';
             button.onclick = (e) => {
               e.stopPropagation();
+              // Close the popup when opening the details view
+              if (marker && marker.getPopup()) {
+                marker.getPopup().remove();
+              }
               onCourseSelect && onCourseSelect(course);
             };
             
@@ -304,21 +344,50 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
             const tooltipElement = document.createElement('div');
             tooltipElement.className = 'course-tooltip';
             tooltipElement.textContent = course.name;
-            tooltipElement.style.pointerEvents = 'auto'; // Make tooltip clickable
-            tooltipElement.style.cursor = 'pointer';
             
-            // Add click handler to the tooltip to toggle popup
-            tooltipElement.addEventListener('click', (e) => {
+            // Add the tooltip to the marker element
+            markerElement.appendChild(tooltipElement);
+            
+            // Add click handler to the marker element
+            markerElement.addEventListener('click', (e) => {
               e.stopPropagation();
               marker.togglePopup();
             });
             
-            markerElement.appendChild(tooltipElement);
+            // Add click handler specifically to the tooltip
+            tooltipElement.addEventListener('click', (e) => {
+              e.stopPropagation();
+              marker.togglePopup();
+            });
               
             // Store marker reference for later cleanup
             markers.current.push(marker);
           }
         });
+        
+        // Only remove markers that are no longer in view and don't have open popups
+        // This is more efficient than clearing all markers and recreating them
+        markers.current = markers.current.filter(marker => {
+          const markerId = marker._id;
+          if (openPopups.current[markerId] || newMarkerIds.has(markerId)) {
+            return true; // Keep this marker
+          } else {
+            marker.remove();
+            return false; // Remove this marker
+          }
+        });
+        
+        // Remove cluster markers that are no longer active
+        clusterMarkers.current = clusterMarkers.current.filter(marker => {
+          const clusterId = marker._clusterId;
+          if (activeClusters.has(clusterId)) {
+            return true; // Keep this cluster marker
+          } else {
+            marker.remove();
+            return false; // Remove this cluster marker
+          }
+        });
+        
       } catch (error) {
         console.error("Error updating markers:", error);
       }
@@ -376,23 +445,32 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
         
         map.current.on('moveend', () => {
           isMoving.current = false;
-          debouncedUpdateMarkers();
+          // Update markers immediately on moveend for better responsiveness
+          if (updateMarkers.current) {
+            updateMarkers.current();
+          }
         });
         
         // Handle zoom changes once they complete
-        map.current.on('zoomend', debouncedUpdateMarkers);
+        map.current.on('zoomend', () => {
+          // Update markers immediately on zoomend for better responsiveness
+          if (updateMarkers.current) {
+            updateMarkers.current();
+          }
+        });
         
-        // Skip continuous updates during movement to prevent flickering
+        // More responsive render updates while preserving performance
+        let lastUpdateTime = 0;
         map.current.on('render', () => {
-          // Only update markers when map is idle and no popups are open
-          if (map.current && 
+          const now = Date.now();
+          // Only consider updating if it's been at least 2 seconds since last update
+          if (now - lastUpdateTime > 2000 && // Reduced from 10s to 2s
+              map.current &&
               map.current.loaded() && 
               !isMoving.current && 
               Object.keys(openPopups.current).length === 0) {
-            // Perform infrequent render updates for new markers that should appear
-            if (Math.random() < 0.05) { // Only update ~5% of the time during idle
-              debouncedUpdateMarkers();
-            }
+            lastUpdateTime = now;
+            debouncedUpdateMarkers();
           }
         });
       } catch (error) {
@@ -430,8 +508,9 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
     try {
       console.log("Updating clusters at zoom level", map.current.getZoom());
       
-      // Clear all existing markers
-      clearAllMarkers();
+      // Clear all existing individual markers but not clusters yet
+      markers.current.forEach(marker => marker.remove());
+      markers.current = [];
       
       // Get the current bounds of the map
       const bounds = map.current.getBounds();
@@ -450,12 +529,29 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
       const clusters = clusterIndex.current.getClusters(bbox, zoom);
       console.log(`Found ${clusters.length} clusters/points`);
       
+      // Track active cluster IDs
+      const activeClusters = new Set();
+      
       // Add cluster markers or individual markers
       clusters.forEach(cluster => {
         if (cluster.properties.cluster) {
           // This is a cluster
           const count = cluster.properties.point_count;
           const clusterId = cluster.properties.cluster_id;
+          
+          // Add to active clusters
+          activeClusters.add(clusterId);
+          
+          // Check if we already have a marker for this cluster
+          const existingClusterMarker = clusterMarkers.current.find(
+            marker => marker._clusterId === clusterId
+          );
+          
+          if (existingClusterMarker) {
+            // Update position if needed
+            existingClusterMarker.setLngLat(cluster.geometry.coordinates);
+            return;
+          }
           
           console.log(`Adding cluster of ${count} points with ID ${clusterId}`);
           
@@ -467,6 +563,9 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
           })
             .setLngLat(cluster.geometry.coordinates)
             .addTo(map.current);
+            
+          // Store the cluster ID with the marker
+          marker._clusterId = clusterId;
             
           // Add click event to zoom in when cluster is clicked
           el.addEventListener('click', () => {
@@ -507,6 +606,18 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
           addMarkerForCourse(course, [cluster.geometry.coordinates[0], cluster.geometry.coordinates[1]]);
         }
       });
+      
+      // Remove cluster markers that are no longer active
+      clusterMarkers.current = clusterMarkers.current.filter(marker => {
+        const clusterId = marker._clusterId;
+        if (activeClusters.has(clusterId)) {
+          return true; // Keep this cluster marker
+        } else {
+          marker.remove();
+          return false; // Remove this cluster marker
+        }
+      });
+      
     } catch (err) {
       console.error("Error updating clusters:", err);
     }
@@ -532,6 +643,10 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
       button.onclick = (e) => {
         e.preventDefault();
         e.stopPropagation();
+        // Close the popup when opening the details view
+        if (marker && marker.getPopup()) {
+          marker.getPopup().remove();
+        }
         onCourseSelect && onCourseSelect(course);
       };
       
@@ -560,7 +675,15 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
       const tooltipElement = document.createElement('div');
       tooltipElement.className = 'course-tooltip';
       tooltipElement.textContent = course.name;
+      tooltipElement.style.pointerEvents = 'auto';
+      tooltipElement.style.cursor = 'pointer';
       markerElement.appendChild(tooltipElement);
+      
+      // Add click handler to the tooltip
+      tooltipElement.addEventListener('click', (e) => {
+        e.stopPropagation();
+        marker.togglePopup();
+      });
         
       // Store marker reference for later cleanup
       markers.current.push(marker);

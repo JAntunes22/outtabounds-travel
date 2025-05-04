@@ -228,12 +228,14 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 1;
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  transition: none;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
-.course-tooltip:hover {
+.mapboxgl-marker:hover .course-tooltip {
   background-color: rgba(24, 109, 0, 1) !important;
-  transform: translateX(-50%) scale(1.05);
+  transform: translateX(-50%);
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3) !important;
 }
 
