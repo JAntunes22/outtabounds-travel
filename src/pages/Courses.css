@@ -299,6 +299,14 @@
     left: 50%;
     transform: translateX(-50%);
   }
+
+  .view-toggle {
+    position: absolute;
+    top: -100px; /* Move up above the filter toggle */
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
 }
 
 @media (max-width: 600px) {
