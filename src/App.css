@@ -12,8 +12,14 @@ main {
 }
 
 /* Add padding to elements that need to appear below navbar */
-main > *:not(.hero) {
+main > *:not(.hero):not(.auth-container) {
   padding-top: 80px;
+}
+
+/* Special rule for auth container to be properly positioned */
+main > .auth-container {
+  padding-top: 80px;
+  margin-bottom: 0; /* Ensure no bottom margin */
 }
 
 /* Ensure hero sections render correctly with the transparent navbar */
@@ -67,8 +73,12 @@ main > *:not(.hero) {
 
 /* Responsive adjustment for smaller screens */
 @media (max-width: 900px) {
-  main > *:not(.hero) {
+  main > *:not(.hero):not(.auth-container) {
     padding-top: 70px; /* Adjust for smaller header height on mobile */
+  }
+  
+  main > .auth-container {
+    padding-top: 70px;
   }
   
   .hero {
