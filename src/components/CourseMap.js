@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import Supercluster from 'supercluster';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -31,19 +31,301 @@ const createClusterMarker = (count) => {
 
 const CourseMap = ({ courses = [], onCourseSelect }) => {
   // Center on Algarve, Portugal (note: Mapbox uses [lng, lat] order)
-  const center = [-8.2, 37.1]; // Center of Algarve region
+  const center = useMemo(() => [-8.2, 37.1], []); // Center of Algarve region
   const mapContainer = useRef(null);
   const map = useRef(null);
   const [mapInitialized, setMapInitialized] = useState(false);
-  const markers = useRef([]); // Individual markers
-  const clusterMarkers = useRef([]); // Cluster markers
-  const supercluster = useRef(null); // Reference to the supercluster instance
-  const featuresRef = useRef([]); // Reference to the GeoJSON features
+  const markers = useRef([]); // For storing created markers
+  const markerData = useRef([]); // For storing preprocessed GeoJSON points
+  const clusterIndex = useRef(null); // For Supercluster index
   const containerRef = useRef(null);
-  const lastZoom = useRef(null); // Track the last zoom level
-  const isUpdating = useRef(false); // Flag to prevent concurrent updates
+  const clusterMarkers = useRef([]); // For storing cluster markers
+  const openPopups = useRef({}); // Track which popups are open
+  const isMoving = useRef(false); // Track if the map is currently moving
+  const updateTimeout = useRef(null); // Timeout for debounced updates
 
-  // Initialize map when component mounts
+  // Clear all markers from the map
+  const clearAllMarkers = useCallback(() => {
+    // Only remove markers that don't have open popups
+    markers.current = markers.current.filter(marker => {
+      const markerId = marker._id;
+      if (openPopups.current[markerId]) {
+        return true; // Keep this marker
+      } else {
+        marker.remove();
+        return false; // Remove this marker
+      }
+    });
+    
+    // Only remove cluster markers
+    clusterMarkers.current.forEach(marker => marker.remove());
+    clusterMarkers.current = [];
+  }, []);
+
+  // Process course data into GeoJSON points and initialize Supercluster
+  useEffect(() => {
+    if (!courses.length) return;
+    
+    console.log("Processing courses for clustering");
+    
+    try {
+      // Convert courses to GeoJSON features
+      const points = [];
+      
+      courses.forEach(course => {
+        const position = parsePosition(course.position);
+        if (!position) return; // Skip invalid positions
+        
+        // Create a feature with proper properties
+        const feature = {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: position
+          },
+          properties: {
+            id: course.id,
+            name: course.name,
+            location: course.location,
+            course // Store full course object
+          }
+        };
+        
+        points.push(feature);
+      });
+      
+      console.log(`Created ${points.length} valid GeoJSON points`);
+      markerData.current = points;
+      
+      // Create a new Supercluster instance with simpler options
+      clusterIndex.current = new Supercluster({
+        radius: 40,
+        maxZoom: 16
+      });
+      
+      if (points.length > 0) {
+        // Load points into the cluster index
+        clusterIndex.current.load(points);
+        console.log("Supercluster index initialized successfully");
+      }
+    } catch (error) {
+      console.error("Error initializing clustering:", error);
+    }
+  }, [courses]);
+
+  // Debounced update function to prevent too many updates during movement
+  const debouncedUpdateMarkers = useCallback(() => {
+    // Clear any existing timeout
+    if (updateTimeout.current) {
+      clearTimeout(updateTimeout.current);
+    }
+    
+    // Set a new timeout
+    updateTimeout.current = setTimeout(() => {
+      // Only update if the map isn't currently moving
+      if (!isMoving.current) {
+        if (updateMarkers.current) {
+          updateMarkers.current();
+        }
+      }
+    }, 150); // Wait a bit after movement stops
+  }, []);
+
+  // Update markers based on current map view - changed to useRef to avoid circular dependency
+  const updateMarkers = useRef(() => {});
+
+  // Set up updateMarkers function after component mounts
+  useEffect(() => {
+    // Define the actual implementation
+    updateMarkers.current = () => {
+      if (!map.current || !mapInitialized || !clusterIndex.current || markerData.current.length === 0) return;
+      
+      console.log("Updating markers based on current map view");
+      
+      // Clear markers without open popups
+      clearAllMarkers();
+
+      try {
+        // Get the current map bounds
+        const bounds = map.current.getBounds();
+        const bbox = [
+          bounds.getWest(),
+          bounds.getSouth(),
+          bounds.getEast(),
+          bounds.getNorth()
+        ];
+        
+        // Get current zoom level
+        const zoom = Math.floor(map.current.getZoom());
+        
+        // Get clusters for current view
+        const clusters = clusterIndex.current.getClusters(bbox, zoom);
+        console.log(`Found ${clusters.length} clusters/points at zoom level ${zoom}`);
+        
+        // Create markers for each cluster or individual point
+        clusters.forEach(cluster => {
+          // Check if this is a cluster or an individual point
+          if (cluster.properties.cluster) {
+            // This is a cluster
+            const clusterId = cluster.properties.cluster_id;
+            const pointCount = cluster.properties.point_count;
+            const clusterCoordinates = cluster.geometry.coordinates;
+            
+            // Create cluster marker 
+            const el = document.createElement('div');
+            el.className = 'cluster-marker';
+            el.style.width = `${Math.min(60, 30 + pointCount * 3)}px`; // Size based on point count
+            el.style.height = `${Math.min(60, 30 + pointCount * 3)}px`;
+            el.style.borderRadius = '50%';
+            el.style.backgroundColor = '#186d00';
+            el.style.display = 'flex';
+            el.style.justifyContent = 'center';
+            el.style.alignItems = 'center';
+            el.style.color = 'white';
+            el.style.fontWeight = 'bold';
+            el.style.border = '2px solid white';
+            el.style.willChange = 'transform'; // Optimize for transform changes
+            el.innerText = pointCount;
+            
+            // Create marker for this cluster
+            const marker = new mapboxgl.Marker({
+              element: el,
+              anchor: 'center', // Ensure proper centering
+            })
+              .setLngLat(clusterCoordinates)
+              .addTo(map.current);
+            
+            // Add click handler to expand cluster
+            el.addEventListener('click', () => {
+              console.log(`Expanding cluster ${clusterId}`);
+              
+              // Get children of this cluster
+              const children = clusterIndex.current.getChildren(clusterId);
+              
+              // Get new bounds that encompass all children
+              const coordinates = children.map(child => child.geometry.coordinates);
+              
+              // Create a bounds object from the points
+              const childrenBounds = new mapboxgl.LngLatBounds();
+              coordinates.forEach(coord => {
+                childrenBounds.extend(coord);
+              });
+              
+              // Zoom the map to fit these points, with some padding
+              map.current.fitBounds(childrenBounds, {
+                padding: 80,
+                duration: 500 // Animation time in ms
+              });
+            });
+            
+            // Store this cluster marker
+            clusterMarkers.current.push(marker);
+            
+          } else {
+            // This is an individual point
+            const position = cluster.geometry.coordinates;
+            const course = cluster.properties.course;
+            const markerId = `marker-${course.id}`;
+            
+            // Skip if we already have a marker with an open popup for this course
+            if (openPopups.current[markerId]) {
+              return;
+            }
+            
+            // Create custom popup
+            const popupContent = document.createElement('div');
+            popupContent.className = 'popup-content';
+            
+            const title = document.createElement('h3');
+            title.textContent = course.name;
+            title.style.marginTop = '5px'; // Add margin to top of title
+            
+            const location = document.createElement('p');
+            location.textContent = course.location;
+            
+            const button = document.createElement('button');
+            button.className = 'view-details-btn';
+            button.textContent = 'View Details';
+            button.onclick = (e) => {
+              e.stopPropagation();
+              onCourseSelect && onCourseSelect(course);
+            };
+            
+            popupContent.appendChild(title);
+            popupContent.appendChild(location);
+            popupContent.appendChild(button);
+
+            // Create popup with offset and correct positioning
+            const popup = new mapboxgl.Popup({ 
+              offset: 25,
+              closeButton: true,
+              closeOnClick: false,
+              className: 'course-popup' // Add custom class for styling
+            }).setDOMContent(popupContent);
+            
+            // Track popup open/close state
+            popup.on('open', () => {
+              console.log(`Popup opened for course: ${course.name}`);
+              openPopups.current[markerId] = true;
+              
+              // Ensure the marker stays in the same place
+              if (marker && marker.getLngLat) {
+                marker.setLngLat(position);
+              }
+            });
+            
+            popup.on('close', () => {
+              console.log(`Popup closed for course: ${course.name}`);
+              delete openPopups.current[markerId];
+              
+              // Subtle delay before potentially running updateMarkers
+              // to prevent visual jumps after closing popup
+              setTimeout(() => {
+                if (!isMoving.current && map.current && map.current.loaded()) {
+                  debouncedUpdateMarkers();
+                }
+              }, 50);
+            });
+
+            // Create marker for individual course
+            const marker = new mapboxgl.Marker({
+              color: '#186d00', // Match the green color used in the app
+              anchor: 'center', // Ensure proper centering
+            })
+              .setLngLat(position)
+              .setPopup(popup)
+              .addTo(map.current);
+              
+            // Store the ID with the marker for tracking
+            marker._id = markerId;
+              
+            // Add a tooltip as a child of the mapboxgl-marker element
+            const markerElement = marker.getElement();
+            const tooltipElement = document.createElement('div');
+            tooltipElement.className = 'course-tooltip';
+            tooltipElement.textContent = course.name;
+            tooltipElement.style.pointerEvents = 'auto'; // Make tooltip clickable
+            tooltipElement.style.cursor = 'pointer';
+            
+            // Add click handler to the tooltip to toggle popup
+            tooltipElement.addEventListener('click', (e) => {
+              e.stopPropagation();
+              marker.togglePopup();
+            });
+            
+            markerElement.appendChild(tooltipElement);
+              
+            // Store marker reference for later cleanup
+            markers.current.push(marker);
+          }
+        });
+      } catch (error) {
+        console.error("Error updating markers:", error);
+      }
+    };
+  }, [mapInitialized, clearAllMarkers, onCourseSelect, debouncedUpdateMarkers]);
+
+  // Update the map initialization
   useEffect(() => {
     console.log("CourseMap component mounted");
     
@@ -56,7 +338,11 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
           container: mapContainer.current,
           style: 'mapbox://styles/mapbox/streets-v12',
           center: center,
-          zoom: 8.5 // Zoom level to show Algarve from east to west
+          zoom: 8.5, // Zoom level to show Algarve from east to west
+          fadeDuration: 0, // Disable fade animations to prevent cluster position jumps
+          trackResize: true,
+          renderWorldCopies: false, // Prevent flickering at boundaries
+          antialias: true, // Smoother rendering
         });
 
         // Add navigation controls
@@ -82,27 +368,41 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
             console.log("Forcing initial resize");
             map.current.resize();
           }
+          
+          // Initial render of markers
+          setTimeout(() => {
+            if (updateMarkers.current) {
+              updateMarkers.current();
+            }
+          }, 100);
         });
         
-        // Add comprehensive map event handlers
+        // Track map movement state
+        map.current.on('movestart', () => {
+          isMoving.current = true;
+        });
+        
         map.current.on('moveend', () => {
-          // Only update if zoom hasn't changed (handled by zoomend)
-          if (lastZoom.current === map.current.getZoom()) {
-            requestAnimationFrame(() => updateClusters());
+          isMoving.current = false;
+          debouncedUpdateMarkers();
+        });
+        
+        // Handle zoom changes once they complete
+        map.current.on('zoomend', debouncedUpdateMarkers);
+        
+        // Skip continuous updates during movement to prevent flickering
+        map.current.on('render', () => {
+          // Only update markers when map is idle and no popups are open
+          if (map.current && 
+              map.current.loaded() && 
+              !isMoving.current && 
+              Object.keys(openPopups.current).length === 0) {
+            // Perform infrequent render updates for new markers that should appear
+            if (Math.random() < 0.05) { // Only update ~5% of the time during idle
+              debouncedUpdateMarkers();
+            }
           }
         });
-        
-        map.current.on('zoomend', () => {
-          console.log(`Zoom changed from ${lastZoom.current} to ${map.current.getZoom()}`);
-          lastZoom.current = map.current.getZoom();
-          requestAnimationFrame(() => updateClusters());
-        });
-        
-        // Also handle drag events to ensure smooth updates
-        map.current.on('dragend', () => {
-          requestAnimationFrame(() => updateClusters());
-        });
-        
       } catch (error) {
         console.error("Error initializing map:", error);
       }
@@ -110,28 +410,26 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
 
     // Cleanup on unmount
     return () => {
+      if (updateTimeout.current) {
+        clearTimeout(updateTimeout.current);
+      }
+      
       if (map.current) {
         console.log("Removing map instance");
+        // Remove event listeners
+        if (map.current) {
+          map.current.off('movestart');
+          map.current.off('moveend');
+          map.current.off('zoomend');
+          map.current.off('render');
+        }
+        // Remove all markers
+        clearAllMarkers();
         map.current.remove();
         map.current = null;
       }
     };
-  }, []);
-
-  // Clear all markers from the map
-  const clearAllMarkers = () => {
-    // Clear individual markers
-    markers.current.forEach(marker => {
-      if (marker) marker.remove();
-    });
-    markers.current = [];
-    
-    // Clear cluster markers
-    clusterMarkers.current.forEach(marker => {
-      if (marker) marker.remove();
-    });
-    clusterMarkers.current = [];
-  };
+  }, [center, clearAllMarkers, debouncedUpdateMarkers]);
 
   // Update clusters based on current map bounds and zoom level
   const updateClusters = () => {
@@ -344,61 +642,19 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
     };
   }, [mapInitialized]);
 
-  // Add markers when courses change or map is initialized
+  // Update markers when courses data changes
   useEffect(() => {
-    if (!map.current || !mapInitialized || !courses.length || !supercluster.current) return;
-
-    console.log("Processing", courses.length, "courses for clustering");
+    if (!mapInitialized || !courses.length || !clusterIndex.current) return;
     
-    // Clear previous markers
-    clearAllMarkers();
+    console.log("Courses data updated, updating markers");
     
-    try {
-      // Convert courses to GeoJSON features for the supercluster
-      const features = courses.map(course => {
-        const position = parsePosition(course.position);
-        if (!position) {
-          console.log("Invalid position for course:", course.name);
-          return null;
-        }
-        
-        return {
-          type: 'Feature',
-          properties: {
-            id: course.id
-          },
-          geometry: {
-            type: 'Point',
-            coordinates: position
-          }
-        };
-      }).filter(Boolean); // Remove null values
-      
-      console.log(`Generated ${features.length} valid features`);
-      
-      // Store the features for later use
-      featuresRef.current = features;
-      
-      // Load the features into the supercluster
-      supercluster.current.load(features);
-      
-      // Update clusters based on current view
-      setTimeout(() => updateClusters(), 100);
-      
-      // Also add a periodic update to ensure markers are displayed correctly
-      // This can help with rendering issues when the map is first displayed
-      const periodicUpdate = setTimeout(() => {
-        if (map.current) {
-          console.log("Performing periodic cluster update");
-          updateClusters();
-        }
-      }, 1500);
-      
-      return () => clearTimeout(periodicUpdate);
-    } catch (err) {
-      console.error("Error processing courses for clustering:", err);
-    }
-  }, [courses, onCourseSelect, mapInitialized]);
+    // We need a slight delay to ensure the map is properly initialized
+    setTimeout(() => {
+      if (updateMarkers.current) {
+        updateMarkers.current();
+      }
+    }, 250);
+  }, [courses, mapInitialized]);
 
   return (
     <div className="course-map-container" ref={containerRef}>
