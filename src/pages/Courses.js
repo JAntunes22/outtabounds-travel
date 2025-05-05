@@ -15,22 +15,32 @@ const Courses = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [viewMode, setViewMode] = useState("list"); // "list" or "map"
   const heroContentRef = useRef(null);
+  const heroRef = useRef(null);
 
   // Helper function to normalize location strings
   const normalizeLocation = (location) => {
     return location.trim().toLowerCase();
   };
 
-  // Add parallax effect for hero section
+  // Add parallax effect for hero section with limits
   useEffect(() => {
     const handleScroll = () => {
-      if (heroContentRef.current) {
+      if (heroContentRef.current && heroRef.current) {
         // Calculate how far down the page we've scrolled
         const scrollPos = window.scrollY;
-        // Apply a parallax effect to the hero content
-        // Move it up slightly as we scroll down
-        if (scrollPos < window.innerHeight) {
-          const translateY = scrollPos * 0.4; // Adjust this value to control effect intensity
+        
+        // Get the hero container dimensions
+        const heroHeight = heroRef.current.offsetHeight;
+        const heroBottom = heroRef.current.getBoundingClientRect().bottom + scrollPos;
+        
+        // Calculate the maximum allowed translation to keep content within hero
+        // Allow only 60% of the hero height for translation (courses hero is shorter)
+        const maxTranslation = heroHeight * 0.25;
+
+        // Apply a parallax effect to the hero content, but limit the movement
+        if (scrollPos < heroBottom) {
+          // Calculate translation with a limit
+          const translateY = Math.min(scrollPos * 0.3, maxTranslation);
           heroContentRef.current.style.transform = `translateY(${translateY}px)`;
         }
       }
@@ -182,7 +192,7 @@ const Courses = () => {
 
   return (
     <div className="courses">
-      <header className="hero hero-courses">
+      <header className="hero hero-courses" ref={heroRef}>
         <div className="hero-courses-content" ref={heroContentRef}>
           <h1>Our Golf Courses</h1>
           <p>Explore the best golf courses curated just for you.</p>

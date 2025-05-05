@@ -34,7 +34,6 @@ import AdminSettings from './components/admin/AdminSettings';
 // Layout component that handles conditional footer rendering
 const Layout = () => {
   const location = useLocation();
-  const showFooter = !location.pathname.startsWith('/admin');
   
   return (
     <div className="app">
@@ -76,7 +75,7 @@ const Layout = () => {
           <Route path="*" element={<div>Page Not Found</div>} />
         </Routes>
       </main>
-      {showFooter && <Footer />}
+      <Footer />
     </div>
   );
 };

@@ -2,6 +2,8 @@
 .admin-container {
   display: flex;
   background-color: #1a2236;
+  min-height: calc(70vh);
+  margin-top: 0;
 }
 
 .admin-sidebar {
@@ -150,6 +152,7 @@
   padding: 20px;
   overflow-y: auto;
   background-color: #95afc2;
+  min-height: calc(70vh);
 }
 
 /* Admin Components */
