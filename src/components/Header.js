@@ -205,7 +205,7 @@ export default function Header() {
     <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
       <div className="header-container">
         {/* Left side - Hamburger menu */}
-        <div className="hamburger-menu" onClick={handleHamburgerClick}>
+        <div className={`hamburger-menu ${menuOpen ? 'open' : ''}`} onClick={handleHamburgerClick}>
           <span></span>
           <span></span>
           <span></span>

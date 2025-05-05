@@ -36,6 +36,8 @@
   height: 20px;
   cursor: pointer;
   z-index: 1001;
+  transition: transform 0.3s ease;
+  position: relative;
 }
 
 .hamburger-menu span {
@@ -43,7 +45,25 @@
   height: 2px;
   width: 100%;
   background-color: white;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease-in-out;
+  transform-origin: center;
+}
+
+/* Hamburger animation when menu is open */
+.hamburger-menu.open span:nth-child(1) {
+  transform: translateY(9px) rotate(45deg);
+  width: 100%;
+}
+
+.hamburger-menu.open span:nth-child(2) {
+  opacity: 0;
+  transform: scale(0);
+  width: 0;
+}
+
+.hamburger-menu.open span:nth-child(3) {
+  transform: translateY(-9px) rotate(-45deg);
+  width: 100%;
 }
 
 .scrolled .hamburger-menu span,
