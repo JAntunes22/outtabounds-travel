@@ -1,0 +1,100 @@
+.add-to-pack-container {
+  position: relative;
+}
+
+.add-to-pack-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.add-to-pack-button.primary {
+  background-color: #186d00;
+  color: white;
+}
+
+.add-to-pack-button.primary:hover {
+  background-color: #145a00;
+}
+
+.add-to-pack-button.secondary {
+  background-color: white;
+  color: #186d00;
+  border: 1px solid #186d00;
+}
+
+.add-to-pack-button.secondary:hover {
+  background-color: rgba(24, 109, 0, 0.1);
+}
+
+.add-to-pack-button.in-pack {
+  background-color: #e6f4ea;
+  color: #186d00;
+  border: 1px solid #186d00;
+}
+
+.add-to-pack-button.in-pack:hover {
+  background-color: #d0e9da;
+}
+
+.plus-icon, .check-icon {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.add-success-message {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 10px;
+  background-color: #e6f4ea;
+  color: #186d00;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  animation: fadeInUp 0.3s ease;
+  z-index: 10;
+}
+
+.add-success-message:after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #e6f4ea transparent transparent transparent;
+}
+
+.add-success-message button {
+  background: none;
+  border: none;
+  color: #186d00;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 500;
+  padding: 0 5px;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+} 

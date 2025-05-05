@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { fetchCourses } from "../utils/firebaseUtils";
 import CourseModal from "../components/CourseModal";
 import CourseMap from "../components/CourseMap";
+import AddToPack from "../components/AddToPack";
 import './Courses.css';
 
 const Courses = () => {
@@ -255,12 +256,31 @@ const Courses = () => {
               
               <div className="course-list">
                 {filteredCourses.map((course) => (
-                  <div key={course.id} className="course-item" onClick={() => openCourseModal(course)}>
-                    <img src={course.url} alt={course.name} />
+                  <div key={course.id} className="course-item">
+                    <div className="course-image-container" onClick={() => openCourseModal(course)}>
+                      <img src={course.url} alt={course.name} />
+                    </div>
                     <div className="course-content">
-                      <h2>{course.name}</h2>
-                      <h3>{course.location}</h3>
-                      {course.rating && <div className="course-rating">Rating: {course.rating}★</div>}
+                      <div className="course-info" onClick={() => openCourseModal(course)}>
+                        <h2>{course.name}</h2>
+                        <h3>{course.location}</h3>
+                        {course.rating && <div className="course-rating">Rating: {course.rating}★</div>}
+                      </div>
+                      <div className="course-actions">
+                        <AddToPack 
+                          item={{
+                            id: course.id,
+                            name: course.name,
+                            location: course.location,
+                            description: course.description || 'Explore this amazing golf course.',
+                            imageUrl: course.url,
+                            rating: course.rating
+                          }} 
+                          type="course"
+                          buttonStyle="secondary"
+                          showFeedback={false}
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}

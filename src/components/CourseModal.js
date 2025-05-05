@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import AddToPack from './AddToPack';
 import './CourseModal.css';
 
 const CourseModal = ({ course, onClose }) => {
@@ -112,7 +113,18 @@ const CourseModal = ({ course, onClose }) => {
             </div>
             
             <div className="modal-cta">
-              <button className="book-now-btn">Book Now</button>
+              <AddToPack 
+                item={{
+                  id: course.id,
+                  name: course.name,
+                  location: course.location,
+                  description: course.description,
+                  imageUrl: course.url,
+                  rating: course.rating
+                }} 
+                type="course"
+                buttonStyle="primary"
+              />
               <button className="learn-more-btn">Learn More</button>
             </div>
           </div>

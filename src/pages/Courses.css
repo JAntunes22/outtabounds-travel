@@ -22,13 +22,19 @@
   aspect-ratio: 3/4; /* Create a taller card with fixed aspect ratio */
   z-index: 1; /* Base z-index */
   transform-origin: center bottom; /* Ensure transform happens from bottom */
-  cursor: pointer; /* Add pointer cursor to indicate clickable */
 }
 
 .course-item:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
   z-index: 100; /* Much higher z-index on hover to ensure it appears above everything */
+}
+
+.course-image-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: pointer;
 }
 
 .course-item img {
@@ -51,6 +57,18 @@
   background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0) 100%); /* Gradient overlay for readability */
   color: white;
   text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.course-info {
+  cursor: pointer;
+}
+
+.course-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .course-item h2 {

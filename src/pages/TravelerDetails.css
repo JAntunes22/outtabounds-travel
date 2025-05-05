@@ -1,0 +1,200 @@
+.traveler-details-container {
+  max-width: 800px;
+  margin: 100px auto 60px;
+  padding: 0 20px;
+}
+
+.traveler-details-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.traveler-details-header h1 {
+  font-size: 2.5rem;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.traveler-details-header p {
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.traveler-details-content {
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.traveler-form {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.traveler-section {
+  margin-bottom: 30px;
+  padding-bottom: 30px;
+  border-bottom: 1px solid #eee;
+}
+
+.traveler-section:last-of-type {
+  border-bottom: none;
+}
+
+.traveler-section h2 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-group input,
+.form-group select {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.3s;
+  background-color: #fff;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #186d00;
+  box-shadow: 0 0 0 2px rgba(24, 109, 0, 0.1);
+}
+
+.form-group input.error,
+.form-group select.error {
+  border-color: #dc3545;
+}
+
+.error-message {
+  margin-top: 5px;
+  color: #dc3545;
+  font-size: 0.85rem;
+}
+
+.email-lookup-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.loading-spinner {
+  position: absolute;
+  right: 15px;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #186d00;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.golf-options {
+  display: flex;
+  margin-top: 10px;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  margin-right: 30px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #333;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-right: 8px;
+  width: 18px;
+  height: 18px;
+  accent-color: #186d00;
+}
+
+.booking-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.back-button, .next-button {
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.back-button {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.back-button:hover {
+  background-color: #e9ecef;
+}
+
+.next-button {
+  background-color: #186d00;
+  color: white;
+  border: none;
+}
+
+.next-button:hover {
+  background-color: #145a00;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .golf-options {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .booking-navigation {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .back-button, .next-button {
+    width: 100%;
+  }
+} 

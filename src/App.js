@@ -4,6 +4,7 @@ import './App.css';
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from './contexts/AuthContext';
+import { PackProvider } from './contexts/PackContext';
 import PrivateRoute from './components/auth/PrivateRoute';
 import Unauthorized from './components/auth/Unauthorized';
 
@@ -18,6 +19,10 @@ import Courses from "./pages/Courses";
 import Experiences from "./pages/Experiences";
 import Houses from "./pages/Houses";
 import Contact from "./pages/Contact";
+import YourPack from "./pages/YourPack";
+import BookingDetails from "./pages/BookingDetails";
+import TravelerDetails from "./pages/TravelerDetails";
+import ReviewInquiry from "./pages/ReviewInquiry";
 
 // Auth Components
 import Signup from './components/auth/Signup';
@@ -47,6 +52,12 @@ const Layout = () => {
           <Route path="/experiences" element={<Experiences />} />
           <Route path="/houses" element={<Houses />} />
           <Route path="/contact" element={<Contact />} />
+          
+          {/* Pack & Booking Routes */}
+          <Route path="/your-pack" element={<YourPack />} />
+          <Route path="/booking-details" element={<BookingDetails />} />
+          <Route path="/traveler-details" element={<TravelerDetails />} />
+          <Route path="/review-inquiry" element={<ReviewInquiry />} />
           
           {/* Auth Routes */}
           <Route path="/signup" element={<Signup />} />
@@ -84,7 +95,9 @@ const App = () => {
   return (
     <Router>
       <AuthProvider>
-        <Layout />
+        <PackProvider>
+          <Layout />
+        </PackProvider>
       </AuthProvider>
     </Router>
   );
