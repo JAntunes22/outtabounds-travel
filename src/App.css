@@ -1,10 +1,11 @@
+/* App container */
 .App {
   text-align: center;
   width: 100%;
   overflow-x: hidden;
 }
 
-/* Remove top padding to allow content to go behind navbar */
+/* Main content */
 main {
   /* No padding top to allow content to go behind transparent navbar */
   min-height: 60vh;
@@ -34,6 +35,12 @@ main > .auth-container {
   padding-top: 80px; /* Padding to push content down */
   background-size: cover;
   background-position: center;
+}
+
+/* Footer positioning */
+.site-footer {
+  position: relative;
+  width: 100%;
 }
 
 .App-logo {

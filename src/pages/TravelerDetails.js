@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePack } from '../contexts/PackContext';
 import { useAuth } from '../contexts/AuthContext';
-import Footer from '../components/Footer';
 import './PackCommon.css';
 import './TravelerDetails.css';
 
@@ -292,7 +291,6 @@ export default function TravelerDetails() {
           </form>
         </div>
       </div>
-      <Footer />
     </div>
   );
 } 

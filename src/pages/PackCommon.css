@@ -3,10 +3,9 @@
 /* Parallax background */
 .pack-page {
   position: relative;
-  z-index: 1;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  padding-bottom: 0;
+  margin-bottom: 0;
 }
 
 .pack-page::before {
@@ -40,7 +39,6 @@
   margin: 100px auto 60px;
   padding: 0 20px;
   position: relative;
-  flex: 1;
 }
 
 /* Content backgrounds with white background */
@@ -80,11 +78,10 @@
   background-color: #186d00;
 }
 
-/* Footer styling for pack pages - solid and below the background */
+/* Footer styling for pack pages */
 .pack-page .site-footer {
   background-color: #1a2236;
   position: relative;
-  margin-top: 0;
   z-index: 1;
 }
 

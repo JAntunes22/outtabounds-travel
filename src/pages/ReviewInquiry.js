@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePack } from '../contexts/PackContext';
-import Footer from '../components/Footer';
 import './PackCommon.css';
 import './ReviewInquiry.css';
 
@@ -121,7 +120,6 @@ export default function ReviewInquiry() {
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 } 

@@ -94,7 +94,7 @@ export default function YourPack() {
           )}
         </div>
       </div>
-      <Footer />
+      {/* Footer is now managed by the main App layout */}
     </div>
   );
 } 
