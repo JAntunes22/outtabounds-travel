@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
 // Your web app's Firebase configuration
@@ -31,5 +31,6 @@ export {
   createUserWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
-  updateProfile
+  updateProfile,
+  fetchSignInMethodsForEmail
 }; 

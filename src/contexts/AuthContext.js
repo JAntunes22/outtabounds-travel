@@ -6,7 +6,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
-  updateProfile
+  updateProfile,
+  fetchSignInMethodsForEmail
 } from '../utils/firebaseConfig';
 import { checkUserAdmin, createUserDocument, getUserDocument } from '../utils/firebaseUtils';
 
@@ -71,7 +72,41 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function signup(email, password, displayName, fullname) {
+  // Check if an email already exists in Firebase Auth or Firestore
+  async function checkEmailExists(email) {
+    try {
+      console.log("Starting email existence check for:", email);
+      
+      // First check if email exists in Firebase Authentication
+      console.log("Checking Firebase Auth...");
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      console.log("Firebase Auth sign-in methods:", methods);
+      
+      if (methods && methods.length > 0) {
+        console.log("Email found in Firebase Auth");
+        return true;
+      }
+      
+      // Also check if email exists in Firestore users collection
+      // In Firestore, email is used as the document ID
+      console.log("Checking Firestore users collection...");
+      try {
+        const userDoc = await getUserDocument(email);
+        console.log("Firestore check result:", userDoc ? "User found" : "User not found");
+        return userDoc !== null;
+      } catch (firestoreError) {
+        console.error("Error checking Firestore for email:", firestoreError);
+        // If there's an error checking Firestore, we still want to continue
+        // so return the result from the Authentication check
+        return false;
+      }
+    } catch (error) {
+      console.error("Error checking if email exists:", error);
+      throw error;
+    }
+  }
+
+  async function signup(email, password, displayName, userData = {}) {
     try {
       // Create the user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -79,14 +114,25 @@ export function AuthProvider({ children }) {
       // Update the user's profile with display name
       await updateProfile(userCredential.user, { displayName });
       
-      // Create a document in Firestore for this user
-      await createUserDocument({
+      // Prepare user data for Firestore
+      const userDataForFirestore = {
         ...userCredential.user,
         displayName,
-        fullname
-      });
+        fullname: userData.firstName && userData.lastName 
+          ? `${userData.firstName} ${userData.lastName}` 
+          : displayName,
+        title: userData.title || '',
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
+        phoneNumber: userData.phoneNumber || '',
+        receiveOffers: userData.receiveOffers || false,
+        createdAt: new Date()
+      };
       
-      setUserFullname(fullname || displayName);
+      // Create a document in Firestore for this user
+      await createUserDocument(userDataForFirestore);
+      
+      setUserFullname(userDataForFirestore.fullname);
       
       return userCredential;
     } catch (error) {
@@ -121,8 +167,12 @@ export function AuthProvider({ children }) {
 
   async function resetPassword(email) {
     try {
-      return await sendPasswordResetEmail(auth, email);
+      console.log("Sending password reset email to:", email);
+      await sendPasswordResetEmail(auth, email);
+      console.log("Password reset email sent successfully");
+      return true;
     } catch (error) {
+      console.error("Error in resetPassword:", error);
       throw error;
     }
   }
@@ -166,7 +216,8 @@ export function AuthProvider({ children }) {
     logout,
     resetPassword,
     updateUserProfile,
-    refreshAdminStatus
+    refreshAdminStatus,
+    checkEmailExists
   };
 
   return (

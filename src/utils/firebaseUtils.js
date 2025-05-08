@@ -15,16 +15,32 @@ const functions = getFunctions();
 const getUserId = (user) => {
   if (!user) return null;
   
+  console.log("Getting user ID from:", user);
+  
   // If user is a string, just return it as the ID
-  if (typeof user === 'string') return user;
+  if (typeof user === 'string') {
+    console.log("User is a string, returning as ID:", user);
+    return user;
+  }
   
   // Check if user has id or email property
-  if (user.id) return user.id;
-  if (user.email) return user.email;
+  if (user.id) {
+    console.log("Using user.id:", user.id);
+    return user.id;
+  }
+  
+  if (user.email) {
+    console.log("Using user.email:", user.email);
+    return user.email;
+  }
   
   // If user has uid, that's from Firebase Auth
-  if (user.uid) return user.email || user.uid;
+  if (user.uid) {
+    console.log("Using user.email or user.uid:", user.email || user.uid);
+    return user.email || user.uid;
+  }
   
+  console.log("Could not determine user ID");
   return null;
 };
 
@@ -37,13 +53,24 @@ export const createUserDocument = async (user) => {
     if (!userId) throw new Error("Could not determine user ID");
     
     const userRef = doc(db, "users", userId);
-    await setDoc(userRef, {
+    
+    // Default user data
+    const userData = {
       email: user.email || userId,
       displayName: user.displayName || '',
       fullname: user.fullname || user.displayName || '',
       isAdmin: false,
       createdAt: new Date()
-    });
+    };
+    
+    // Add additional user fields if they exist
+    if (user.title) userData.title = user.title;
+    if (user.firstName) userData.firstName = user.firstName;
+    if (user.lastName) userData.lastName = user.lastName;
+    if (user.phoneNumber) userData.phoneNumber = user.phoneNumber;
+    if (user.receiveOffers !== undefined) userData.receiveOffers = user.receiveOffers;
+    
+    await setDoc(userRef, userData);
     console.log("User document created for:", userId);
     return true;
   } catch (error) {
@@ -61,21 +88,27 @@ export const getUserDocument = async (user) => {
     
     console.log("Getting user document for ID:", userId);
     const userRef = doc(db, "users", userId);
-    const userDoc = await getDoc(userRef);
     
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      console.log("Found user document:", userData);
-      return {
-        id: userId,
-        ...userData
-      };
+    try {
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        console.log("Found user document:", userData);
+        return {
+          id: userId,
+          ...userData
+        };
+      }
+      
+      console.log("No user document found for ID:", userId);
+      return null;
+    } catch (docError) {
+      console.error("Error getting document:", docError);
+      throw docError;
     }
-    
-    console.log("No user document found for ID:", userId);
-    return null;
   } catch (error) {
-    console.error("Error fetching user document:", error);
+    console.error("Error in getUserDocument:", error);
     throw error;
   }
 };

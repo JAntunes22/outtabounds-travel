@@ -25,7 +25,7 @@ import TravelerDetails from "./pages/TravelerDetails";
 import ReviewInquiry from "./pages/ReviewInquiry";
 
 // Auth Components
-import Signup from './components/auth/Signup';
+import MultiStepSignup from './components/auth/MultiStepSignup';
 import Login from './components/auth/Login';
 import ForgotPassword from './components/auth/ForgotPassword';
 
@@ -60,7 +60,7 @@ const Layout = () => {
           <Route path="/review-inquiry" element={<ReviewInquiry />} />
           
           {/* Auth Routes */}
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/signup" element={<MultiStepSignup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/unauthorized" element={<Unauthorized />} />

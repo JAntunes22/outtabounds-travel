@@ -38,38 +38,200 @@
 }
 
 .auth-card h2 {
-  margin-bottom: 24px;
+  margin-bottom: 8px;
   color: #186d00;
   text-align: center;
   font-size: 28px;
 }
 
-.form-group {
+/* Step indicator */
+.auth-card .step-indicator {
+  margin-top: 0;
+  text-align: center;
+  color: #666;
+  margin-bottom: 24px;
+  font-size: 16px;
+}
+
+.auth-card .already-member {
+  margin-bottom: 24px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.auth-card .already-member a {
+  color: #186d00;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-card .already-member a:hover {
+  text-decoration: underline;
+}
+
+.auth-card .form-group {
   margin-bottom: 20px;
 }
 
-.form-group label {
+.auth-card .form-group label {
   display: block;
   margin-bottom: 6px;
   font-weight: 600;
   color: #333;
 }
 
-.form-group input {
+.auth-card .form-group input,
+.auth-card .form-group select {
   width: 100%;
   padding: 12px 15px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
   font-size: 16px;
-  transition: border-color 0.3s;
 }
 
-.form-group input:focus {
+.auth-card .form-group input:focus,
+.auth-card .form-group select:focus {
   border-color: #186d00;
   outline: none;
 }
 
-.auth-button {
+/* Form row for side-by-side fields */
+.auth-card .form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.auth-card .form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Phone input with flags styling - main container */
+.auth-card .phone-input-with-flags {
+  width: 100%;
+  font-size: 16px;
+}
+
+/* PhoneInput library overrides - the container */
+.auth-card .PhoneInput {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: white;
+  padding: 0 10px 0 15px;
+  height: 45px;
+}
+
+.auth-card .PhoneInput:focus-within {
+  border-color: #186d00;
+  outline: none;
+}
+
+/* Country dropdown section */
+.auth-card .PhoneInputCountry {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  padding-right: 10px;
+  border-right: none;
+}
+
+.auth-card .PhoneInputCountrySelect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.auth-card .PhoneInputCountryIcon {
+  width: 24px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-card .PhoneInputCountryIcon--border {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+/* Input field */
+.auth-card .PhoneInputInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  padding: 0 5px;
+  height: 43px;
+  font-size: 16px;
+  background: transparent;
+  outline: none;
+}
+
+/* Remove browser native styling for country select dropdown */
+.auth-card select.PhoneInputCountrySelect option {
+  color: inherit;
+}
+
+/* Help text for inputs */
+.auth-card .input-help-text {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #666;
+}
+
+/* Checkbox styling */
+.auth-card .checkbox-group {
+  margin-bottom: 20px;
+}
+
+.auth-card .checkbox-container {
+  display: flex;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.auth-card .checkbox-container input[type="checkbox"] {
+  width: auto;
+  margin-right: 10px;
+  margin-top: 3px;
+}
+
+.auth-card .checkbox-text {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #333;
+  font-weight: normal;
+}
+
+/* Button group for back/next buttons */
+.auth-card .button-group {
+  display: flex;
+  gap: 15px;
+}
+
+.auth-card .back-button,
+.auth-card .next-button {
+  flex: 1;
+}
+
+.auth-card .back-button {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.auth-card .back-button:hover {
+  background-color: #d0d0d0;
+}
+
+.auth-container .auth-button {
   width: 100%;
   padding: 12px;
   background-color: #186d00;
@@ -83,16 +245,104 @@
   margin-top: 10px;
 }
 
-.auth-button:hover {
+.auth-container .auth-button:hover {
   background-color: #135600;
 }
 
-.auth-button:disabled {
+.auth-container .auth-button:disabled {
   background-color: #8fac8a;
   cursor: not-allowed;
 }
 
-.auth-error {
+/* Password requirements styling */
+.auth-card .password-requirements {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.auth-card .password-requirements p {
+  margin: 0 0 5px 0;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.auth-card .password-requirements ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.auth-card .password-requirements li {
+  font-size: 13px;
+  margin-bottom: 3px;
+  color: #666;
+}
+
+.auth-card .password-requirements li.met {
+  color: #186d00;
+}
+
+.auth-card .password-requirements li.met::marker {
+  color: #186d00;
+}
+
+/* Popup styles */
+.auth-container .popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.auth-container .popup-content {
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.auth-container .popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #ddd;
+  border-left: 4px solid #186d00;
+}
+
+.auth-container .popup-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.auth-container .close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.auth-container .popup-body {
+  padding: 20px;
+}
+
+.auth-container .popup-body p {
+  margin-top: 0;
+  line-height: 1.5;
+}
+
+.auth-container .auth-error {
   background-color: #ffebee;
   color: #c62828;
   padding: 12px;
@@ -101,7 +351,7 @@
   font-size: 14px;
 }
 
-.auth-success {
+.auth-container .auth-success {
   background-color: #e8f5e9;
   color: #2e7d32;
   padding: 12px;
@@ -110,35 +360,35 @@
   font-size: 14px;
 }
 
-.auth-links {
+.auth-container .auth-links {
   margin-top: 20px;
   text-align: center;
 }
 
-.auth-links a {
+.auth-container .auth-links a {
   color: #186d00;
   text-decoration: none;
   font-weight: 500;
 }
 
-.auth-links a:hover {
+.auth-container .auth-links a:hover {
   text-decoration: underline;
 }
 
-.auth-footer {
+.auth-container .auth-footer {
   margin-top: 30px;
   text-align: center;
   color: #666;
   font-size: 14px;
 }
 
-.auth-footer a {
+.auth-container .auth-footer a {
   color: #186d00;
   text-decoration: none;
   font-weight: 600;
 }
 
-.auth-footer a:hover {
+.auth-container .auth-footer a:hover {
   text-decoration: underline;
 }
 
@@ -151,18 +401,24 @@
     font-size: 24px;
   }
   
-  .form-group input {
+  .auth-card .form-group input,
+  .auth-card .form-group select {
     padding: 10px;
     font-size: 14px;
   }
   
-  .auth-button {
+  .auth-container .auth-button {
     padding: 10px;
     font-size: 14px;
   }
+  
+  .auth-card .form-row {
+    flex-direction: column;
+    gap: 15px;
+  }
 }
 
-.loading-container {
+.auth-container .loading-container {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -171,7 +427,7 @@
   padding: 2rem;
 }
 
-.loading-spinner {
+.auth-container .loading-spinner {
   width: 40px;
   height: 40px;
   border: 4px solid rgba(0, 0, 0, 0.1);
@@ -193,4 +449,22 @@
     background-attachment: scroll; /* Better performance on mobile */
     padding: 10px;
   }
+}
+
+/* Phone input custom classes */
+.auth-card .phone-input-container {
+  /* This is now handled directly in PhoneInput */
+}
+
+.auth-card .phone-input {
+  /* This is now handled directly in PhoneInputInput */
+}
+
+/* Fix the inner borders and create a clean single-bordered container */
+.auth-card .PhoneInput {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: white;
+  padding: 0 10px 0 15px;
+  height: 45px;
 } 
