@@ -253,4 +253,70 @@ exports.createUserOnSignup = functions.auth.user().onCreate(async (user) => {
     console.error('Error creating user document:', error);
     return null;
   }
+});
+
+// Function to delete a user from Firebase Authentication
+exports.deleteUserAccount = functions.https.onCall(async (data, context) => {
+  // Check if the request is made by an admin
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'Only authenticated users can delete user accounts'
+    );
+  }
+  
+  // Verify that the caller is an admin
+  const callerEmail = context.auth.token.email || '';
+  
+  // Check admin status in the database - using email as document ID
+  const callerSnapshot = await admin.firestore().collection('users').doc(callerEmail).get();
+  
+  if (!callerSnapshot.exists || !callerSnapshot.data().isAdmin) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Only admins can delete user accounts'
+    );
+  }
+  
+  try {
+    const { email } = data;
+    
+    if (!email) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Email is required'
+      );
+    }
+    
+    // Find the user in Firebase Authentication by email
+    try {
+      const userRecord = await admin.auth().getUserByEmail(email);
+      
+      // Delete the user from Firebase Authentication
+      await admin.auth().deleteUser(userRecord.uid);
+      
+      return {
+        success: true,
+        message: `User ${email} has been deleted from Firebase Authentication.`
+      };
+    } catch (authError) {
+      if (authError.code === 'auth/user-not-found') {
+        // If user doesn't exist in Auth, we just return success since there's nothing to delete
+        return {
+          success: true,
+          message: `User ${email} not found in Firebase Authentication, nothing to delete.`
+        };
+      }
+      
+      throw new functions.https.HttpsError(
+        'internal',
+        `Error deleting user from Authentication: ${authError.message}`
+      );
+    }
+  } catch (error) {
+    throw new functions.https.HttpsError(
+      'internal',
+      `Error deleting user account: ${error.message}`
+    );
+  }
 }); 

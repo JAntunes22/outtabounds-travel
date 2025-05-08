@@ -35,6 +35,7 @@ import AdminHome from './components/admin/AdminHome';
 import CourseList from './components/admin/CourseList';
 import CourseForm from './components/admin/CourseForm';
 import AdminSettings from './components/admin/AdminSettings';
+import UserList from './components/admin/UserList';
 
 // Layout component that handles conditional footer rendering
 const Layout = () => {
@@ -79,6 +80,7 @@ const Layout = () => {
               <Route path="experiences" element={<div>Experiences Management</div>} />
               <Route path="accommodations" element={<div>Accommodations Management</div>} />
               <Route path="settings" element={<AdminSettings />} />
+              <Route path="users" element={<UserList />} />
             </Route>
           </Route>
           

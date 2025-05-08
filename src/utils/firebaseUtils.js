@@ -1,5 +1,5 @@
-import { collection, addDoc, getDocs, setDoc } from "firebase/firestore";
-import { db } from "./firebaseConfig";
+import { collection, addDoc, getDocs, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { db, auth } from "./firebaseConfig";
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { 
   query, 
@@ -8,6 +8,7 @@ import {
   doc, 
   getDoc 
 } from 'firebase/firestore';
+import { deleteUser as deleteAuthUser } from 'firebase/auth';
 
 const functions = getFunctions();
 
@@ -109,6 +110,98 @@ export const getUserDocument = async (user) => {
     }
   } catch (error) {
     console.error("Error in getUserDocument:", error);
+    throw error;
+  }
+};
+
+// Fetch all users from Firestore
+export const fetchAllUsers = async () => {
+  try {
+    console.log("Fetching all users from Firestore");
+    const usersCollection = collection(db, 'users');
+    const usersSnapshot = await getDocs(usersCollection);
+    
+    const users = [];
+    usersSnapshot.forEach((doc) => {
+      users.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    
+    console.log(`Fetched ${users.length} users`);
+    return users;
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    throw error;
+  }
+};
+
+// Update a user document
+export const updateUser = async (user) => {
+  try {
+    if (!user || !user.id) {
+      throw new Error("User object with ID is required");
+    }
+    
+    console.log("Updating user:", user.id);
+    const userRef = doc(db, "users", user.id);
+    
+    // Remove the id property to avoid storing it in the document
+    const { id, ...userData } = user;
+    
+    // Update the document
+    await updateDoc(userRef, userData);
+    
+    // If isAdmin status changed, update the admin custom claim
+    if (userData.isAdmin !== undefined) {
+      try {
+        if (userData.isAdmin) {
+          await addAdminRole(user.id);
+        } else {
+          await removeAdminRole(user.id);
+        }
+      } catch (adminError) {
+        console.error("Could not update admin status:", adminError);
+        // We don't throw here because the Firestore update was successful
+      }
+    }
+    
+    console.log("User updated successfully");
+    return true;
+  } catch (error) {
+    console.error("Error updating user:", error);
+    throw error;
+  }
+};
+
+// Delete a user from both Firestore and Authentication (if applicable)
+export const deleteUser = async (userId) => {
+  try {
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+    
+    console.log("Deleting user:", userId);
+    
+    // First, delete the user document from Firestore
+    const userRef = doc(db, "users", userId);
+    await deleteDoc(userRef);
+    console.log("User document deleted from Firestore");
+    
+    // Then, attempt to delete the user from Authentication using Firebase Functions
+    try {
+      const deleteAuthUserFunction = httpsCallable(functions, 'deleteUserAccount');
+      await deleteAuthUserFunction({ email: userId });
+      console.log("User deleted from Authentication");
+    } catch (authError) {
+      console.error("Error deleting user from Authentication:", authError);
+      // We don't throw here because the Firestore deletion was successful
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error deleting user:", error);
     throw error;
   }
 };

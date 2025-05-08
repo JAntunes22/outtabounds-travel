@@ -39,6 +39,12 @@ export default function AdminDashboard() {
               </Link>
             </li>
             <li>
+              <Link to="/admin/users" className="nav-link">
+                <i className="icon">👥</i>
+                <span>Users</span>
+              </Link>
+            </li>
+            <li>
               <Link to="/admin/courses" className="nav-link">
                 <i className="icon">🏌️</i>
                 <span>Courses</span>
