@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 import './Auth.css';
 
 export default function ProfileCompletion() {
@@ -12,10 +14,10 @@ export default function ProfileCompletion() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const { currentUser, updateUserProfile, cancelIncompleteSignUp } = useAuth();
+  const { currentUser, updateUserProfile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
+  
   useEffect(() => {
     console.log("ProfileCompletion component mounted, current user:", !!currentUser);
     console.log("Location state:", location.state);
@@ -79,9 +81,9 @@ export default function ProfileCompletion() {
     };
   }, [formSubmitted]);
 
-  // Basic phone validation
-  const isValidPhone = (phone) => {
-    return phone.length >= 10; // Simple check for minimum length
+  // Handle phone number change
+  const handlePhoneChange = (value) => {
+    setPhoneNumber(value || '');
   };
 
   async function handleSubmit(e) {
@@ -92,8 +94,27 @@ export default function ProfileCompletion() {
       return setError('First name and last name are required');
     }
 
-    if (!isValidPhone(phoneNumber)) {
-      return setError('Please enter a valid phone number');
+    // Validate phone number if provided
+    if (phoneNumber) {
+      // Check if phone number appears to be formatted as an international number
+      if (!phoneNumber.startsWith('+')) {
+        return setError('Please include a country code for your phone number (starting with +)');
+      }
+      
+      // Extract digits only from the phone number (including country code)
+      const digitsOnly = phoneNumber.replace(/\D/g, '');
+      
+      // International phone numbers including country code shouldn't exceed 15 digits
+      if (digitsOnly.length > 15) {
+        return setError('Phone number (including country code) cannot exceed 15 digits');
+      }
+      
+      // Also check if the number has a reasonable minimum length
+      if (digitsOnly.length < 7) {
+        return setError('Phone number is too short to be valid');
+      }
+    } else {
+      return setError('Phone number is required');
     }
 
     try {
@@ -153,45 +174,43 @@ export default function ProfileCompletion() {
     <div className="auth-container">
       <div className="auth-card">
         <h2>Complete Your Profile</h2>
-        <p className="profile-completion-intro">
-          Please provide some additional information to complete your profile.
-          <br /><br />
-          <strong>Note:</strong> You can complete your profile later, but some features may be limited until you do.
-        </p>
 
         {error && <div className="auth-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Title</label>
+            <label htmlFor="title">Title</label>
             <select 
+              id="title"
               value={title} 
               onChange={(e) => setTitle(e.target.value)}
-              required
+              className="form-select"
             >
-              <option value="">Select title</option>
-              <option value="Mr.">Mr.</option>
-              <option value="Mrs.">Mrs.</option>
-              <option value="Ms.">Ms.</option>
-              <option value="Dr.">Dr.</option>
-              <option value="Prof.">Prof.</option>
+              <option value="">Select</option>
+              <option value="Mr">Mr</option>
+              <option value="Mrs">Mrs</option>
+              <option value="Ms">Ms</option>
+              <option value="Dr">Dr</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label>First Name</label>
+              <label htmlFor="firstName">First name</label>
               <input 
-                type="text" 
+                type="text"
+                id="firstName" 
                 value={firstName} 
                 onChange={(e) => setFirstName(e.target.value)} 
                 required 
               />
             </div>
             <div className="form-group">
-              <label>Last Name</label>
+              <label htmlFor="lastName">Last name</label>
               <input 
-                type="text" 
+                type="text"
+                id="lastName" 
                 value={lastName} 
                 onChange={(e) => setLastName(e.target.value)} 
                 required 
@@ -200,20 +219,22 @@ export default function ProfileCompletion() {
           </div>
 
           <div className="form-group">
-            <label>Phone Number</label>
-            <input 
-              type="tel" 
-              value={phoneNumber} 
-              onChange={(e) => setPhoneNumber(e.target.value)} 
-              required 
-              placeholder="e.g. +1 123 456 7890"
+            <label htmlFor="phoneNumber">Primary phone number</label>
+            <PhoneInput
+              international
+              defaultCountry="US"
+              value={phoneNumber}
+              onChange={handlePhoneChange}
+              className="phone-input-with-flags"
+              containerClass="phone-input-container"
+              inputClass="phone-input"
+              placeholder="Enter phone number with country code"
+              countrySelectProps={{ unicodeFlags: true }}
             />
-            <div className="input-help-text">
-              Please include country code
-            </div>
+            <p className="input-help-text">This can be a mobile or landline (with country code)</p>
           </div>
 
-          <div className="checkbox-group">
+          <div className="form-group checkbox-group">
             <label className="checkbox-container">
               <input 
                 type="checkbox" 
@@ -221,7 +242,7 @@ export default function ProfileCompletion() {
                 onChange={(e) => setReceiveOffers(e.target.checked)}
               />
               <span className="checkbox-text">
-                I would like to receive special offers and updates from OuttaBounds.
+                Please tick this box if you do not want to receive details about our latest golf trip deals and exclusive special offers.
               </span>
             </label>
           </div>
@@ -230,7 +251,7 @@ export default function ProfileCompletion() {
             <button 
               type="button" 
               disabled={loading} 
-              className="back-button"
+              className="auth-button back-button"
               onClick={handleCancel}
             >
               Cancel
@@ -238,7 +259,7 @@ export default function ProfileCompletion() {
             <button 
               type="submit" 
               disabled={loading} 
-              className="auth-button"
+              className="auth-button next-button"
             >
               {loading ? "Processing..." : "Complete Profile"}
             </button>

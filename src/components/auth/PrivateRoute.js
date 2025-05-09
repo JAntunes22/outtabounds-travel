@@ -18,7 +18,6 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
   const [checkingAdmin, setCheckingAdmin] = useState(requireAdmin);
   const [adminVerified, setAdminVerified] = useState(isAdmin);
   const [checkingProfile, setCheckingProfile] = useState(requireProfileCompletion);
-  const [profileComplete, setProfileComplete] = useState(true);
   const [showProfileReminder, setShowProfileReminder] = useState(false);
 
   // When component loads, force check admin status if required
@@ -47,7 +46,6 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
           console.log("Checking profile completion for user:", currentUser.email);
           const profileStatus = await isProfileCompleted();
           console.log("Profile completion status:", profileStatus);
-          setProfileComplete(profileStatus);
           
           // If profile is incomplete, show a reminder
           if (!profileStatus) {
@@ -55,7 +53,6 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
           }
         } catch (error) {
           console.error("Error checking profile completion:", error);
-          setProfileComplete(false);
         } finally {
           setCheckingProfile(false);
         }

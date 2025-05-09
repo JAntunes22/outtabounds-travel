@@ -1,5 +1,5 @@
 import { collection, addDoc, getDocs, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import { db, auth } from "./firebaseConfig";
+import { db } from "./firebaseConfig";
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { 
   query, 
@@ -8,7 +8,6 @@ import {
   doc, 
   getDoc 
 } from 'firebase/firestore';
-import { deleteUser as deleteAuthUser } from 'firebase/auth';
 
 const functions = getFunctions();
 
@@ -67,32 +66,44 @@ export const createUserDocument = async (user) => {
         lastLogin: new Date()
       };
       
+      // Update any new fields from the user object
       if (user.email && !existingData.email) updatedData.email = user.email;
       if (user.displayName && !existingData.displayName) updatedData.displayName = user.displayName;
+      if (user.fullname && !existingData.fullname) updatedData.fullname = user.fullname;
+      if (user.firstName && !existingData.firstName) updatedData.firstName = user.firstName;
+      if (user.lastName && !existingData.lastName) updatedData.lastName = user.lastName;
+      if (user.phoneNumber && !existingData.phoneNumber) updatedData.phoneNumber = user.phoneNumber;
+      if (user.title && !existingData.title) updatedData.title = user.title;
+      if (user.receiveOffers !== undefined && existingData.receiveOffers === undefined) {
+        updatedData.receiveOffers = user.receiveOffers;
+      }
       
       await updateDoc(userRef, updatedData);
       console.log("User document updated");
       return true;
     }
     
-    // Default user data
+    // Default user data - include all possible fields
     const userData = {
       uid: userId,
       email: user.email || '',
       displayName: user.displayName || '',
       fullname: user.fullname || user.displayName || '',
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      phoneNumber: user.phoneNumber || '',
+      title: user.title || '',
+      receiveOffers: user.receiveOffers !== undefined ? user.receiveOffers : false,
       isAdmin: false,
       createdAt: new Date(),
       lastLogin: new Date(),
       profileCompleted: user.profileCompleted !== undefined ? user.profileCompleted : true
     };
     
-    // Add additional user fields if they exist
-    if (user.title) userData.title = user.title;
-    if (user.firstName) userData.firstName = user.firstName;
-    if (user.lastName) userData.lastName = user.lastName;
-    if (user.phoneNumber) userData.phoneNumber = user.phoneNumber;
-    if (user.receiveOffers !== undefined) userData.receiveOffers = user.receiveOffers;
+    // Add auth providers if specified
+    if (user.authProviders) {
+      userData.authProviders = user.authProviders;
+    }
     
     // Create new document
     await setDoc(userRef, userData);
@@ -134,6 +145,36 @@ export const getUserDocument = async (user) => {
     }
   } catch (error) {
     console.error("Error in getUserDocument:", error);
+    throw error;
+  }
+};
+
+// Find a user document by email address
+export const findUserByEmail = async (email) => {
+  try {
+    if (!email) throw new Error("Email is required");
+    
+    console.log("Finding user document by email:", email);
+    const usersCollection = collection(db, 'users');
+    const q = query(usersCollection, where("email", "==", email));
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      // Return the first matching user
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+      console.log("Found user document by email:", userData);
+      return {
+        id: userDoc.id,
+        ...userData
+      };
+    }
+    
+    console.log("No user document found for email:", email);
+    return null;
+  } catch (error) {
+    console.error("Error finding user by email:", error);
     throw error;
   }
 };
@@ -327,3 +368,58 @@ export const removeAdminRole = async (email) => {
     throw error;
   }
 };
+
+// Sync user data from an existing account with the same email
+export const syncUserData = async (currentUser, existingUserData) => {
+  try {
+    if (!currentUser || !existingUserData) {
+      throw new Error("Both current user and existing user data are required");
+    }
+
+    console.log("Syncing user data for:", currentUser.email);
+    
+    // We'll only update the Firestore document for the current user
+    // without disturbing any existing documents or Firebase Auth accounts
+    
+    // Create document data for the current user with synced profile data
+    const userData = {
+      uid: currentUser.uid,
+      email: currentUser.email || '',
+      displayName: currentUser.displayName || existingUserData.displayName || '',
+      fullname: existingUserData.fullname || currentUser.displayName || '',
+      // Copy any existing profile data
+      firstName: existingUserData.firstName || '',
+      lastName: existingUserData.lastName || '',
+      phoneNumber: existingUserData.phoneNumber || '',
+      title: existingUserData.title || '',
+      // Keep admin status if it exists
+      isAdmin: existingUserData.isAdmin === true,
+      // Keep profile completion status
+      profileCompleted: existingUserData.profileCompleted === true,
+      // Keep user preferences
+      receiveOffers: existingUserData.receiveOffers === true,
+      // Update timestamps
+      createdAt: existingUserData.createdAt || new Date(),
+      lastLogin: new Date(),
+      // Track authentication methods - we're not modifying auth providers here
+      // just preserving the current authentication method
+      authProviders: ['social']
+    };
+    
+    // Update document for the current user with synced data
+    console.log("Updating user document with synced data for:", currentUser.uid);
+    const userRef = doc(db, 'users', currentUser.uid);
+    await setDoc(userRef, userData);
+    
+    return {
+      id: currentUser.uid,
+      ...userData
+    };
+  } catch (error) {
+    console.error("Error syncing user data:", error);
+    throw error;
+  }
+};
+
+// For backward compatibility
+export const mergeUserAccounts = syncUserData;

@@ -12,9 +12,19 @@ import {
   appleProvider,
   signInWithPopup
 } from '../utils/firebaseConfig';
-import { checkUserAdmin, createUserDocument, getUserDocument } from '../utils/firebaseUtils';
+import { 
+  checkUserAdmin, 
+  createUserDocument, 
+  getUserDocument, 
+  findUserByEmail, 
+  syncUserData,
+  mergeUserAccounts // For backward compatibility
+} from '../utils/firebaseUtils';
 import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../utils/firebaseConfig';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+
+const functions = getFunctions();
 
 const AuthContext = createContext();
 
@@ -55,7 +65,21 @@ export function AuthProvider({ children }) {
     console.log("Fetching data for user:", user.email);
     
     try {
-      const userData = await getUserDocument(user);
+      // First, try to get the user document by UID
+      let userData = await getUserDocument(user);
+      
+      // If no document found by UID but we have an email, check for document by email
+      if (!userData && user.email) {
+        console.log("No user document found by UID, checking by email...");
+        const userByEmail = await findUserByEmail(user.email);
+        
+        if (userByEmail && userByEmail.id !== user.uid) {
+          console.log("Found user document by email but with different UID");
+          // Only sync profile data between accounts, not linking authentication methods
+          userData = await syncUserData(user, userByEmail);
+        }
+      }
+      
       if (userData) {
         // Update admin status
         console.log("User data fetched:", userData);
@@ -65,6 +89,21 @@ export function AuthProvider({ children }) {
         if (userData.fullname) {
           setUserFullname(userData.fullname);
         }
+        
+        // Update auth providers if needed
+        const userRef = doc(db, 'users', user.uid);
+        if (!userData.authProviders) {
+          // If no auth providers tracked yet, set based on current auth method
+          const defaultProvider = user.providerData && 
+            user.providerData[0] && 
+            user.providerData[0].providerId.includes('google.com') ? 'social' : 'email';
+          
+          await updateDoc(userRef, { 
+            authProviders: [defaultProvider],
+            lastLogin: new Date()
+          });
+        }
+        
         return userData;
       } else {
         console.log("No user document found. Creating one now...");
@@ -122,8 +161,9 @@ export function AuthProvider({ children }) {
       
       // Prepare user data for Firestore
       const userDataForFirestore = {
-        ...userCredential.user,
-        displayName,
+        uid: userCredential.user.uid,
+        email: email,
+        displayName: displayName,
         fullname: userData.firstName && userData.lastName 
           ? `${userData.firstName} ${userData.lastName}` 
           : displayName,
@@ -132,10 +172,14 @@ export function AuthProvider({ children }) {
         lastName: userData.lastName || '',
         phoneNumber: userData.phoneNumber || '',
         receiveOffers: userData.receiveOffers || false,
-        createdAt: new Date()
+        profileCompleted: true,
+        createdAt: new Date(),
+        lastLogin: new Date(),
+        authProviders: ['email'] // Track authentication providers
       };
       
-      // Create a document in Firestore for this user
+      // Create a document in Firestore for this user - using our manually constructed object
+      // rather than passing userCredential.user which might not contain all the form data
       await createUserDocument(userDataForFirestore);
       
       setUserFullname(userDataForFirestore.fullname);
@@ -163,10 +207,17 @@ export function AuthProvider({ children }) {
 
   async function logout() {
     try {
-      await signOut(auth);
+      // Reset all states
       setIsAdmin(false);
       setUserFullname('');
+      setHasSeenProfileReminder(false);
+      
+      // Sign out from Firebase
+      await signOut(auth);
+      
+      return true;
     } catch (error) {
+      console.error("Error during logout:", error);
       throw error;
     }
   }
@@ -246,23 +297,54 @@ export function AuthProvider({ children }) {
         
         if (!userDoc.exists()) {
           console.log("User document doesn't exist, creating new one");
-          // New user - create document and mark for profile completion
-          const userDataForFirestore = {
-            uid: user.uid,
-            email: user.email || '',
-            displayName: user.displayName || '',
-            fullname: user.displayName || '',
-            createdAt: new Date(),
-            profileCompleted: false // Mark that profile needs completion
-          };
           
-          await setDoc(userRef, userDataForFirestore);
-          console.log("Created new user document in Firestore");
+          // Check if there's existing user data with this email
+          let existingUserData = null;
+          if (user.email) {
+            existingUserData = await findUserByEmail(user.email);
+            if (existingUserData && existingUserData.id !== user.uid) {
+              console.log("Found existing profile data with same email:", existingUserData.id);
+              // Sync the user data from the existing account - this only syncs profile data,
+              // not authentication methods or account linking
+              await syncUserData(user, existingUserData);
+            }
+          }
+          
+          // If we didn't find any existing data or didn't sync
+          if (!existingUserData || existingUserData.id === user.uid) {
+            // New user - create document and mark for profile completion
+            const userDataForFirestore = {
+              uid: user.uid,
+              email: user.email || '',
+              displayName: user.displayName || '',
+              fullname: user.displayName || '',
+              createdAt: new Date(),
+              profileCompleted: false, // Mark that profile needs completion
+              authProviders: ['social'] // Track authentication providers
+            };
+            
+            await setDoc(userRef, userDataForFirestore);
+            console.log("Created new user document in Firestore");
+          }
+          
           return { ...result, isNewUser: true };
         } else {
           // User exists, check if profile is completed
           const userData = userDoc.data();
           console.log("User document exists, profile completed:", userData.profileCompleted);
+          
+          // Update the auth providers array if needed
+          if (!userData.authProviders || !userData.authProviders.includes('social')) {
+            const updatedAuthProviders = userData.authProviders 
+              ? [...new Set([...userData.authProviders, 'social'])]
+              : ['social'];
+              
+            await updateDoc(userRef, { 
+              authProviders: updatedAuthProviders,
+              lastLogin: new Date()
+            });
+            console.log("Updated user document with social auth provider");
+          }
           
           if (userData.profileCompleted === false) {
             console.log("User exists but profile not completed");
@@ -302,23 +384,54 @@ export function AuthProvider({ children }) {
         
         if (!userDoc.exists()) {
           console.log("User document doesn't exist, creating new one");
-          // New user - create document and mark for profile completion
-          const userDataForFirestore = {
-            uid: user.uid,
-            email: user.email || '',
-            displayName: user.displayName || '',
-            fullname: user.displayName || '',
-            createdAt: new Date(),
-            profileCompleted: false // Mark that profile needs completion
-          };
           
-          await setDoc(userRef, userDataForFirestore);
-          console.log("Created new user document in Firestore");
+          // Check if there's existing user data with this email
+          let existingUserData = null;
+          if (user.email) {
+            existingUserData = await findUserByEmail(user.email);
+            if (existingUserData && existingUserData.id !== user.uid) {
+              console.log("Found existing profile data with same email:", existingUserData.id);
+              // Sync the user data from the existing account - this only syncs profile data,
+              // not authentication methods or account linking
+              await syncUserData(user, existingUserData);
+            }
+          }
+          
+          // If we didn't find any existing data or didn't sync
+          if (!existingUserData || existingUserData.id === user.uid) {
+            // New user - create document and mark for profile completion
+            const userDataForFirestore = {
+              uid: user.uid,
+              email: user.email || '',
+              displayName: user.displayName || '',
+              fullname: user.displayName || '',
+              createdAt: new Date(),
+              profileCompleted: false, // Mark that profile needs completion
+              authProviders: ['social'] // Track authentication providers
+            };
+            
+            await setDoc(userRef, userDataForFirestore);
+            console.log("Created new user document in Firestore");
+          }
+          
           return { ...result, isNewUser: true };
         } else {
           // User exists, check if profile is completed
           const userData = userDoc.data();
           console.log("User document exists, profile completed:", userData.profileCompleted);
+          
+          // Update the auth providers array if needed
+          if (!userData.authProviders || !userData.authProviders.includes('social')) {
+            const updatedAuthProviders = userData.authProviders 
+              ? [...new Set([...userData.authProviders, 'social'])]
+              : ['social'];
+              
+            await updateDoc(userRef, { 
+              authProviders: updatedAuthProviders,
+              lastLogin: new Date()
+            });
+            console.log("Updated user document with social auth provider");
+          }
           
           if (userData.profileCompleted === false) {
             console.log("User exists but profile not completed");
@@ -393,6 +506,44 @@ export function AuthProvider({ children }) {
     setHasSeenProfileReminder(true);
   }
 
+  // Function to manually sync profile data between accounts with same email address
+  async function syncAccountData() {
+    try {
+      if (!currentUser || !currentUser.email) {
+        console.error("Cannot sync account data: No current user or email");
+        throw new Error("You must be logged in with an email address to sync account data");
+      }
+      
+      console.log("Starting profile data sync for:", currentUser.email);
+      
+      // Call the Cloud Function to handle the data syncing
+      const syncAccountDataFunction = httpsCallable(functions, 'linkUserAccounts'); // Using the same function with updated behavior
+      const result = await syncAccountDataFunction({ email: currentUser.email });
+      
+      if (result.data.success) {
+        console.log("Profile data sync successful:", result.data.message);
+        
+        // Refresh user data
+        await fetchUserData(currentUser);
+        
+        return {
+          success: true,
+          message: result.data.message,
+          syncedAccounts: result.data.syncedAccounts
+        };
+      } else {
+        console.log("No profile data to sync:", result.data.message);
+        return {
+          success: false,
+          message: result.data.message
+        };
+      }
+    } catch (error) {
+      console.error("Error syncing profile data:", error);
+      throw error;
+    }
+  }
+
   useEffect(() => {
     // Subscribe to auth state changes
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -428,7 +579,8 @@ export function AuthProvider({ children }) {
     cancelIncompleteSignUp,
     isProfileCompleted,
     hasSeenProfileReminder,
-    markProfileReminderSeen
+    markProfileReminderSeen,
+    syncAccountData
   };
 
   return (

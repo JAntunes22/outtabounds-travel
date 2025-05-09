@@ -144,13 +144,21 @@ export default function MultiStepSignup() {
     if (formData.phoneNumber) {
       // Check if phone number appears to be formatted as an international number
       if (!formData.phoneNumber.startsWith('+')) {
-        return setError('Please select a country code for your phone number');
+        return setError('Please include a country code for your phone number (starting with +)');
       }
       
-      // Check if phone number (with country code) is at most 15 digits
+      // Extract digits only from the phone number (including country code)
       const digitsOnly = formData.phoneNumber.replace(/\D/g, '');
+      
+      // International phone numbers including country code shouldn't exceed 15 digits
+      // but we need to be a bit flexible due to different country formats
       if (digitsOnly.length > 15) {
         return setError('Phone number (including country code) cannot exceed 15 digits');
+      }
+      
+      // Also check if the number has a reasonable minimum length
+      if (digitsOnly.length < 7) {
+        return setError('Phone number is too short to be valid');
       }
     }
     
@@ -281,11 +289,10 @@ export default function MultiStepSignup() {
             className="phone-input-with-flags"
             containerClass="phone-input-container"
             inputClass="phone-input"
-            maxLength={15}
-            placeholder="Enter phone number"
+            placeholder="Enter phone number with country code"
             countrySelectProps={{ unicodeFlags: true }}
           />
-          <p className="input-help-text">This can be a mobile or landline</p>
+          <p className="input-help-text">This can be a mobile or landline (with country code)</p>
         </div>
         
         <div className="form-group checkbox-group">
