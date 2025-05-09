@@ -31,6 +31,14 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId;
     }
     
+    // Rules for inquiries collection
+    match /inquiries/{inquiryId} {
+      allow read: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if request.auth != null || true; // Allow both authenticated and anonymous inquiries
+      allow update, delete: if isAdmin();
+    }
+    
     // Rules for other collections can be added here as needed
     match /experiences/{experienceId} {
       allow read: if true;

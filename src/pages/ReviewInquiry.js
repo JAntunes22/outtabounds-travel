@@ -1,12 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePack } from '../contexts/PackContext';
+import { useAuth } from '../contexts/AuthContext';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../utils/firebaseConfig';
 import './PackCommon.css';
 import './ReviewInquiry.css';
 
 export default function ReviewInquiry() {
-  const { packItems, bookingDetails } = usePack();
+  const { packItems, bookingDetails, clearPack } = usePack();
+  const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if pack is empty
   useEffect(() => {
@@ -33,11 +38,39 @@ export default function ReviewInquiry() {
     navigate('/traveler-details');
   };
 
-  const handleSubmitInquiry = () => {
-    // In a real app, this would submit the inquiry to a backend server
-    // For now, let's just show a success message and redirect to home
-    alert('Your inquiry has been submitted successfully! We will contact you shortly.');
-    navigate('/');
+  const handleSubmitInquiry = async () => {
+    if (isSubmitting) return; // Prevent multiple submissions
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Prepare inquiry data
+      const inquiryData = {
+        userId: currentUser ? currentUser.uid : null,
+        userEmail: currentUser ? currentUser.email : bookingDetails.travelers[0].email,
+        packItems,
+        bookingDetails,
+        status: 'new',
+        createdAt: serverTimestamp(),
+        submitted: true
+      };
+      
+      // Save inquiry to Firestore
+      const inquiryRef = await addDoc(collection(db, 'inquiries'), inquiryData);
+      console.log('Inquiry submitted with ID:', inquiryRef.id);
+      
+      // Clear the pack after successful submission
+      await clearPack();
+      
+      // Show success message and redirect to home
+      alert('Your inquiry has been submitted successfully! We will contact you shortly.');
+      navigate('/');
+    } catch (error) {
+      console.error('Error submitting inquiry:', error);
+      alert('There was an error submitting your inquiry. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -114,8 +147,9 @@ export default function ReviewInquiry() {
               type="button" 
               className="submit-inquiry-button"
               onClick={handleSubmitInquiry}
+              disabled={isSubmitting}
             >
-              Submit Inquiry
+              {isSubmitting ? 'Submitting...' : 'Submit Inquiry'}
             </button>
           </div>
         </div>

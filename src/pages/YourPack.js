@@ -86,7 +86,7 @@ export default function YourPack() {
                     Clear Pack
                   </button>
                   <button className="proceed-btn" onClick={handleProceedToBooking}>
-                    Proceed to Booking
+                    Next: Travel Details
                   </button>
                 </div>
               </div>
