@@ -225,10 +225,24 @@
 .auth-card .back-button {
   background-color: #e0e0e0;
   color: #333;
+  padding: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 10px;
+  flex: 1;
 }
 
 .auth-card .back-button:hover {
   background-color: #d0d0d0;
+}
+
+.auth-card .back-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
 .auth-container .auth-button {
@@ -287,7 +301,7 @@
   color: #186d00;
 }
 
-/* Popup styles */
+/* Popup styles - update to correctly overlay content */
 .auth-container .popup-overlay {
   position: fixed;
   top: 0;
@@ -299,6 +313,15 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
+}
+
+.auth-container.with-outlet {
+  position: relative;
+  min-height: auto;
+}
+
+.auth-container.with-outlet .popup-overlay {
+  position: absolute;
 }
 
 .auth-container .popup-content {
@@ -566,4 +589,12 @@
     padding: 10px;
     font-size: 14px;
   }
+}
+
+/* Profile completion intro text */
+.profile-completion-intro {
+  margin-bottom: 20px;
+  text-align: center;
+  color: #666;
+  font-size: 16px;
 } 

@@ -28,6 +28,7 @@ import ReviewInquiry from "./pages/ReviewInquiry";
 import MultiStepSignup from './components/auth/MultiStepSignup';
 import Login from './components/auth/Login';
 import ForgotPassword from './components/auth/ForgotPassword';
+import ProfileCompletion from './components/auth/ProfileCompletion';
 
 // Admin Components
 import AdminDashboard from './components/admin/AdminDashboard';
@@ -66,8 +67,13 @@ const Layout = () => {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           
-          {/* Protected Admin Routes */}
-          <Route path="/admin" element={<PrivateRoute requireAdmin={true} />}>
+          {/* Protected User Routes */}
+          <Route path="/profile-completion" element={<PrivateRoute requireProfileCompletion={false} />}>
+            <Route index element={<ProfileCompletion />} />
+          </Route>
+          
+          {/* Protected Admin Routes - require profile completion */}
+          <Route path="/admin" element={<PrivateRoute requireAdmin={true} requireProfileCompletion={true} />}>
             <Route element={<AdminDashboard />}>
               <Route index element={<AdminHome />} />
               

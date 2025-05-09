@@ -1,14 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import "./Auth.css";
 
 // Higher-order component to protect routes that require authentication
-export default function PrivateRoute({ requireAdmin }) {
-  const { currentUser, isAdmin, refreshAdminStatus } = useAuth();
+export default function PrivateRoute({ requireAdmin, requireProfileCompletion = false }) {
+  const { 
+    currentUser, 
+    isAdmin, 
+    refreshAdminStatus, 
+    isProfileCompleted, 
+    hasSeenProfileReminder, 
+    markProfileReminderSeen 
+  } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [checkingAdmin, setCheckingAdmin] = useState(requireAdmin);
   const [adminVerified, setAdminVerified] = useState(isAdmin);
+  const [checkingProfile, setCheckingProfile] = useState(requireProfileCompletion);
+  const [profileComplete, setProfileComplete] = useState(true);
+  const [showProfileReminder, setShowProfileReminder] = useState(false);
 
   // When component loads, force check admin status if required
   useEffect(() => {
@@ -30,14 +41,56 @@ export default function PrivateRoute({ requireAdmin }) {
       }
     }
 
-    verifyAdminStatus();
-  }, [requireAdmin, currentUser, refreshAdminStatus]);
+    async function verifyProfileCompletion() {
+      if (requireProfileCompletion && currentUser && !hasSeenProfileReminder) {
+        try {
+          console.log("Checking profile completion for user:", currentUser.email);
+          const profileStatus = await isProfileCompleted();
+          console.log("Profile completion status:", profileStatus);
+          setProfileComplete(profileStatus);
+          
+          // If profile is incomplete, show a reminder
+          if (!profileStatus) {
+            setShowProfileReminder(true);
+          }
+        } catch (error) {
+          console.error("Error checking profile completion:", error);
+          setProfileComplete(false);
+        } finally {
+          setCheckingProfile(false);
+        }
+      } else {
+        setCheckingProfile(false);
+      }
+    }
 
-  // Show loading indicator while checking admin status
-  if (checkingAdmin) {
+    verifyAdminStatus();
+    verifyProfileCompletion();
+  }, [requireAdmin, requireProfileCompletion, currentUser, refreshAdminStatus, isProfileCompleted, hasSeenProfileReminder, markProfileReminderSeen]);
+
+  // Function to dismiss the reminder and continue
+  const dismissReminder = () => {
+    setShowProfileReminder(false);
+    markProfileReminderSeen();
+  };
+
+  // Function to go to profile completion
+  const goToProfileCompletion = () => {
+    setShowProfileReminder(false);
+    markProfileReminderSeen();
+    navigate('/profile-completion', { 
+      state: { 
+        from: location,
+        fromSocialLogin: true
+      } 
+    });
+  };
+
+  // Show loading indicator while checking status
+  if (checkingAdmin || checkingProfile) {
     return <div className="loading-container">
       <div className="loading-spinner"></div>
-      <p>Verifying admin access...</p>
+      <p>Verifying access...</p>
     </div>;
   }
 
@@ -53,6 +106,33 @@ export default function PrivateRoute({ requireAdmin }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If user is authenticated (and is admin if required), render the child routes
+  // Show profile completion reminder if needed
+  if (showProfileReminder) {
+    return (
+      <div className="auth-container with-outlet">
+        <div className="popup-overlay">
+          <div className="popup-content">
+            <div className="popup-header">
+              <h3>Complete Your Profile</h3>
+              <button className="close-button" onClick={dismissReminder}>&times;</button>
+            </div>
+            <div className="popup-body">
+              <p>
+                Your profile is incomplete. We recommend completing your profile to 
+                ensure you get the best experience with OuttaBounds.
+              </p>
+              <div className="button-group" style={{ marginTop: '20px' }}>
+                <button className="back-button" onClick={dismissReminder}>Continue Anyway</button>
+                <button className="auth-button" onClick={goToProfileCompletion}>Complete Now</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Outlet />
+      </div>
+    );
+  }
+
+  // If user is authenticated, admin verified if required, and profile complete or not required, render the child routes
   return <Outlet />;
 } 

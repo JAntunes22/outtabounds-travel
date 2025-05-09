@@ -58,8 +58,18 @@ export default function Signup() {
     try {
       setError('');
       setLoading(true);
-      await signInWithGoogle();
-      navigate('/');
+      const result = await signInWithGoogle();
+      
+      if (result.isNewUser) {
+        // Redirect to profile completion page for new users
+        // Include a flag in state to indicate this is from social login
+        navigate('/profile-completion', { 
+          state: { fromSocialLogin: true } 
+        });
+      } else {
+        // Redirect to homepage for existing users
+        navigate('/');
+      }
     } catch (error) {
       setError('Failed to sign up with Google: ' + error.message);
     }
@@ -70,8 +80,18 @@ export default function Signup() {
     try {
       setError('');
       setLoading(true);
-      await signInWithApple();
-      navigate('/');
+      const result = await signInWithApple();
+      
+      if (result.isNewUser) {
+        // Redirect to profile completion page for new users
+        // Include a flag in state to indicate this is from social login
+        navigate('/profile-completion', { 
+          state: { fromSocialLogin: true } 
+        });
+      } else {
+        // Redirect to homepage for existing users
+        navigate('/');
+      }
     } catch (error) {
       setError('Failed to sign up with Apple: ' + error.message);
     }

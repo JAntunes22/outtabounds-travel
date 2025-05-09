@@ -52,24 +52,56 @@ export default function Login() {
     try {
       setError('');
       setLoading(true);
-      await signInWithGoogle();
-      navigate(from, { replace: true });
+      console.log("Starting Google sign-in process");
+      const result = await signInWithGoogle();
+      console.log("Google sign-in result:", result);
+      
+      if (result.isNewUser) {
+        console.log("New user detected, redirecting to profile completion");
+        // Redirect to profile completion page for new users
+        // Include a flag in state to indicate this is from social login
+        navigate('/profile-completion', { 
+          state: { fromSocialLogin: true } 
+        });
+      } else {
+        console.log("Existing user detected, redirecting to:", from);
+        // Redirect to intended page for existing users
+        navigate(from, { replace: true });
+      }
     } catch (error) {
+      console.error("Google sign-in error:", error);
       setError('Failed to log in with Google: ' + error.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function handleAppleLogin() {
     try {
       setError('');
       setLoading(true);
-      await signInWithApple();
-      navigate(from, { replace: true });
+      console.log("Starting Apple sign-in process");
+      const result = await signInWithApple();
+      console.log("Apple sign-in result:", result);
+      
+      if (result.isNewUser) {
+        console.log("New user detected, redirecting to profile completion");
+        // Redirect to profile completion page for new users
+        // Include a flag in state to indicate this is from social login
+        navigate('/profile-completion', { 
+          state: { fromSocialLogin: true } 
+        });
+      } else {
+        console.log("Existing user detected, redirecting to:", from);
+        // Redirect to intended page for existing users
+        navigate(from, { replace: true });
+      }
     } catch (error) {
+      console.error("Apple sign-in error:", error);
       setError('Failed to log in with Apple: ' + error.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (

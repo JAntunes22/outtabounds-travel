@@ -12,7 +12,7 @@ import { deleteUser as deleteAuthUser } from 'firebase/auth';
 
 const functions = getFunctions();
 
-// Helper function to safely get user ID (email) for document reference
+// Helper function to safely get user ID (UID) for document reference
 const getUserId = (user) => {
   if (!user) return null;
   
@@ -24,7 +24,13 @@ const getUserId = (user) => {
     return user;
   }
   
-  // Check if user has id or email property
+  // If user has uid, that's from Firebase Auth - primary identifier
+  if (user.uid) {
+    console.log("Using user.uid:", user.uid);
+    return user.uid;
+  }
+  
+  // Fallback to other identifiers
   if (user.id) {
     console.log("Using user.id:", user.id);
     return user.id;
@@ -33,12 +39,6 @@ const getUserId = (user) => {
   if (user.email) {
     console.log("Using user.email:", user.email);
     return user.email;
-  }
-  
-  // If user has uid, that's from Firebase Auth
-  if (user.uid) {
-    console.log("Using user.email or user.uid:", user.email || user.uid);
-    return user.email || user.uid;
   }
   
   console.log("Could not determine user ID");
@@ -53,15 +53,38 @@ export const createUserDocument = async (user) => {
     const userId = getUserId(user);
     if (!userId) throw new Error("Could not determine user ID");
     
+    console.log(`Creating user document for UID: ${userId}`);
     const userRef = doc(db, "users", userId);
+    
+    // Check if document already exists
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists()) {
+      console.log("User document already exists, updating instead of creating");
+      // Document exists, update instead of create
+      const existingData = docSnap.data();
+      const updatedData = {
+        ...existingData,
+        lastLogin: new Date()
+      };
+      
+      if (user.email && !existingData.email) updatedData.email = user.email;
+      if (user.displayName && !existingData.displayName) updatedData.displayName = user.displayName;
+      
+      await updateDoc(userRef, updatedData);
+      console.log("User document updated");
+      return true;
+    }
     
     // Default user data
     const userData = {
-      email: user.email || userId,
+      uid: userId,
+      email: user.email || '',
       displayName: user.displayName || '',
       fullname: user.fullname || user.displayName || '',
       isAdmin: false,
-      createdAt: new Date()
+      createdAt: new Date(),
+      lastLogin: new Date(),
+      profileCompleted: user.profileCompleted !== undefined ? user.profileCompleted : true
     };
     
     // Add additional user fields if they exist
@@ -71,11 +94,12 @@ export const createUserDocument = async (user) => {
     if (user.phoneNumber) userData.phoneNumber = user.phoneNumber;
     if (user.receiveOffers !== undefined) userData.receiveOffers = user.receiveOffers;
     
+    // Create new document
     await setDoc(userRef, userData);
-    console.log("User document created for:", userId);
+    console.log("User document created successfully for:", userId);
     return true;
   } catch (error) {
-    console.error("Error creating user document:", error);
+    console.error("Error creating/updating user document:", error);
     throw error;
   }
 };

@@ -239,7 +239,7 @@ export default function Header() {
           <div className="account-icon-container">
             <button 
               className="account-icon" 
-              onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+              onClick={() => currentUser ? setAccountMenuOpen(!accountMenuOpen) : navigate('/login')}
               aria-label="Account"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -248,56 +248,35 @@ export default function Header() {
               </svg>
             </button>
             
-            {accountMenuOpen && (
+            {accountMenuOpen && currentUser && (
               <div className="account-menu">
-                {currentUser ? (
-                  <>
-                    <div className="account-menu-header">
-                      <p className="user-greeting">Hello, {(userFullname || currentUser.displayName || 'User').split(' ')[0]}</p>
-                    </div>
-                    <div className="account-menu-items">
-                      <Link 
-                        to="/profile" 
-                        className="account-menu-item"
-                        onClick={() => setAccountMenuOpen(false)}
-                      >
-                        My Profile
-                      </Link>
-                      {isAdmin && (
-                        <Link 
-                          to="/admin" 
-                          className="account-menu-item"
-                          onClick={() => setAccountMenuOpen(false)}
-                        >
-                          Admin Dashboard
-                        </Link>
-                      )}
-                      <button 
-                        className="account-menu-item logout" 
-                        onClick={handleLogout}
-                      >
-                        Log Out
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="account-menu-items">
+                <div className="account-menu-header">
+                  <p className="user-greeting">Hello, {(userFullname || currentUser.displayName || 'User').split(' ')[0]}</p>
+                </div>
+                <div className="account-menu-items">
+                  <Link 
+                    to="/profile" 
+                    className="account-menu-item"
+                    onClick={() => setAccountMenuOpen(false)}
+                  >
+                    My Profile
+                  </Link>
+                  {isAdmin && (
                     <Link 
-                      to="/login" 
+                      to="/admin" 
                       className="account-menu-item"
                       onClick={() => setAccountMenuOpen(false)}
                     >
-                      Log In
+                      Admin Dashboard
                     </Link>
-                    <Link 
-                      to="/signup" 
-                      className="account-menu-item"
-                      onClick={() => setAccountMenuOpen(false)}
-                    >
-                      Sign Up
-                    </Link>
-                  </div>
-                )}
+                  )}
+                  <button 
+                    className="account-menu-item logout" 
+                    onClick={handleLogout}
+                  >
+                    Log Out
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -398,14 +377,7 @@ export default function Header() {
                   className="mobile-auth-link"
                   onClick={handleMenuLinkClick}
                 >
-                  Log In
-                </Link>
-                <Link 
-                  to="/signup" 
-                  className="mobile-auth-link"
-                  onClick={handleMenuLinkClick}
-                >
-                  Sign Up
+                  Account
                 </Link>
               </div>
             )}
@@ -433,11 +405,10 @@ export default function Header() {
                   </Link>
                 )}
                 <button 
-                  className="mobile-logout-button"
-                  onClick={(e) => {
-                    e.preventDefault();
+                  className="mobile-account-link logout" 
+                  onClick={() => {
                     handleLogout();
-                    setMenuOpen(false);
+                    handleMenuLinkClick();
                   }}
                 >
                   Log Out
