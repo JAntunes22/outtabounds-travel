@@ -93,3 +93,41 @@ main > .auth-container {
     padding-top: 70px; /* Matching padding for smaller screens */
   }
 }
+
+/* Ensure the app container takes the full viewport height */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Make the main content area take up all available space */
+main {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+/* Style the footer to ensure it stays at the bottom */
+footer {
+  position: relative !important; /* Override any absolute positioning */
+  bottom: auto !important; /* Override any fixed positioning */
+  z-index: 5;
+  width: 100%;
+  margin-top: auto; /* Push to bottom of flex container */
+}
+
+/* Add global styles for the background parallax effect if needed */
+.parallax-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  z-index: -1;
+}
+
+/* Additional global styles */

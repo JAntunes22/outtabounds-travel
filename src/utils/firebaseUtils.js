@@ -69,11 +69,11 @@ export const createUserDocument = async (user) => {
       // Update any new fields from the user object
       if (user.email && !existingData.email) updatedData.email = user.email;
       if (user.displayName && !existingData.displayName) updatedData.displayName = user.displayName;
-      if (user.fullname && !existingData.fullname) updatedData.fullname = user.fullname;
-      if (user.firstName && !existingData.firstName) updatedData.firstName = user.firstName;
-      if (user.lastName && !existingData.lastName) updatedData.lastName = user.lastName;
-      if (user.phoneNumber && !existingData.phoneNumber) updatedData.phoneNumber = user.phoneNumber;
-      if (user.title && !existingData.title) updatedData.title = user.title;
+      if (user.fullname && !existingData.fullname) updatedData.fullname = user.fullname || user.displayName || '';
+      if (user.firstName && !existingData.firstName) updatedData.firstName = user.firstName || '';
+      if (user.lastName && !existingData.lastName) updatedData.lastName = user.lastName || '';
+      if (user.phoneNumber && !existingData.phoneNumber) updatedData.phoneNumber = user.phoneNumber || '';
+      if (user.title && !existingData.title) updatedData.title = user.title || '';
       if (user.receiveOffers !== undefined && existingData.receiveOffers === undefined) {
         updatedData.receiveOffers = user.receiveOffers;
       }
@@ -131,6 +131,12 @@ export const getUserDocument = async (user) => {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         console.log("Found user document:", userData);
+        
+        // Log specific fields that we're interested in
+        console.log("Title:", userData.title);
+        console.log("Phone Number:", userData.phoneNumber);
+        console.log("Receive Offers:", userData.receiveOffers);
+        
         return {
           id: userId,
           ...userData
@@ -392,8 +398,8 @@ export const syncUserData = async (currentUser, existingUserData) => {
       lastName: existingUserData.lastName || '',
       phoneNumber: existingUserData.phoneNumber || '',
       title: existingUserData.title || '',
-      // Keep admin status if it exists
-      isAdmin: existingUserData.isAdmin === true,
+      // Keep admin status if it exists, otherwise set to false
+      isAdmin: existingUserData.isAdmin === true ? true : false,
       // Keep profile completion status
       profileCompleted: existingUserData.profileCompleted === true,
       // Keep user preferences
@@ -423,3 +429,137 @@ export const syncUserData = async (currentUser, existingUserData) => {
 
 // For backward compatibility
 export const mergeUserAccounts = syncUserData;
+
+// Fetch all inquiries for a specific user
+export const fetchUserInquiries = async (userId) => {
+  try {
+    if (!userId) throw new Error("User ID is required");
+    
+    console.log("Fetching inquiries for user:", userId);
+    const inquiriesCollection = collection(db, 'inquiries');
+    const q = query(
+      inquiriesCollection, 
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc")
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    const inquiries = [];
+    querySnapshot.forEach((doc) => {
+      inquiries.push({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date()
+      });
+    });
+    
+    console.log(`Fetched ${inquiries.length} inquiries for user`);
+    return inquiries;
+  } catch (error) {
+    console.error("Error fetching user inquiries:", error);
+    throw error;
+  }
+};
+
+// Fetch all inquiries (for admin)
+export const fetchAllInquiries = async () => {
+  try {
+    console.log("Fetching all inquiries");
+    const inquiriesCollection = collection(db, 'inquiries');
+    const q = query(
+      inquiriesCollection,
+      orderBy("createdAt", "desc")
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    const inquiries = [];
+    querySnapshot.forEach((doc) => {
+      inquiries.push({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date()
+      });
+    });
+    
+    console.log(`Fetched ${inquiries.length} inquiries total`);
+    return inquiries;
+  } catch (error) {
+    console.error("Error fetching all inquiries:", error);
+    throw error;
+  }
+};
+
+// Update inquiry status
+export const updateInquiryStatus = async (inquiryId, status) => {
+  try {
+    if (!inquiryId) throw new Error("Inquiry ID is required");
+    if (!status) throw new Error("Status is required");
+    
+    console.log(`Updating inquiry ${inquiryId} status to ${status}`);
+    const inquiryRef = doc(db, "inquiries", inquiryId);
+    
+    await updateDoc(inquiryRef, { 
+      status: status,
+      updatedAt: new Date()
+    });
+    
+    console.log("Inquiry status updated successfully");
+    return true;
+  } catch (error) {
+    console.error("Error updating inquiry status:", error);
+    throw error;
+  }
+};
+
+// Update user profile
+export const updateUserProfile = async (uid, updates) => {
+  try {
+    if (!uid) {
+      throw new Error("User ID is required");
+    }
+    
+    console.log("Updating user profile in firebaseUtils:", uid, updates);
+    
+    // Reference to the user document
+    const userRef = doc(db, "users", uid);
+    
+    // Check if document exists
+    const docSnap = await getDoc(userRef);
+    
+    if (!docSnap.exists()) {
+      console.warn("User document doesn't exist, creating new one");
+      
+      // Ensure admin status is explicitly set to false for new documents
+      const userData = {
+        uid: uid,
+        createdAt: new Date(),
+        lastLogin: new Date(),
+        isAdmin: false, // Explicitly set isAdmin to false
+        ...updates
+      };
+      
+      await setDoc(userRef, userData);
+      return true;
+    }
+    
+    // Get current data
+    const currentData = docSnap.data();
+    
+    // Don't allow overriding isAdmin status through regular profile updates
+    if (updates.hasOwnProperty('isAdmin') && updates.isAdmin !== currentData.isAdmin) {
+      console.warn("Attempting to change isAdmin status through regular profile update - ignoring");
+      delete updates.isAdmin;
+    }
+    
+    // Update the document
+    await updateDoc(userRef, updates);
+    
+    console.log("User profile updated successfully");
+    return true;
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    throw error;
+  }
+};

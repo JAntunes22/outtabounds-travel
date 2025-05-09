@@ -23,6 +23,7 @@ import YourPack from "./pages/YourPack";
 import BookingDetails from "./pages/BookingDetails";
 import TravelerDetails from "./pages/TravelerDetails";
 import ReviewInquiry from "./pages/ReviewInquiry";
+import Profile from "./pages/Profile";
 
 // Auth Components
 import MultiStepSignup from './components/auth/MultiStepSignup';
@@ -37,6 +38,7 @@ import CourseList from './components/admin/CourseList';
 import CourseForm from './components/admin/CourseForm';
 import AdminSettings from './components/admin/AdminSettings';
 import UserList from './components/admin/UserList';
+import InquiriesList from './components/admin/InquiriesList';
 
 // Layout component that handles conditional footer rendering
 const Layout = () => {
@@ -72,6 +74,10 @@ const Layout = () => {
             <Route index element={<ProfileCompletion />} />
           </Route>
           
+          <Route path="/profile" element={<PrivateRoute requireProfileCompletion={true} />}>
+            <Route index element={<Profile />} />
+          </Route>
+          
           {/* Protected Admin Routes - require profile completion */}
           <Route path="/admin" element={<PrivateRoute requireAdmin={true} requireProfileCompletion={true} />}>
             <Route element={<AdminDashboard />}>
@@ -82,11 +88,14 @@ const Layout = () => {
               <Route path="courses/new" element={<CourseForm />} />
               <Route path="courses/edit/:id" element={<CourseForm />} />
               
+              {/* User and Inquiry Management */}
+              <Route path="users" element={<UserList />} />
+              <Route path="inquiries" element={<InquiriesList />} />
+              
               {/* Future routes */}
               <Route path="experiences" element={<div>Experiences Management</div>} />
               <Route path="accommodations" element={<div>Accommodations Management</div>} />
               <Route path="settings" element={<AdminSettings />} />
-              <Route path="users" element={<UserList />} />
             </Route>
           </Route>
           

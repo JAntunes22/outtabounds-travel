@@ -172,6 +172,7 @@ export function AuthProvider({ children }) {
         lastName: userData.lastName || '',
         phoneNumber: userData.phoneNumber || '',
         receiveOffers: userData.receiveOffers || false,
+        isAdmin: false, // Explicitly set isAdmin to false
         profileCompleted: true,
         createdAt: new Date(),
         lastLogin: new Date(),
@@ -256,12 +257,11 @@ export function AuthProvider({ children }) {
         }
       }
       
+      // Use the firebaseUtils implementation for updating user profile
+      // This ensures consistent handling of isAdmin field
       try {
-        // Update user document in Firestore using UID
-        const userRef = doc(db, 'users', currentUser.uid);
-        console.log("Updating Firestore document for user:", currentUser.uid);
-        await updateDoc(userRef, updates);
-        console.log("Firestore document updated successfully");
+        const { updateUserProfile: updateUserProfileInFirestore } = await import('../utils/firebaseUtils');
+        await updateUserProfileInFirestore(currentUser.uid, updates);
         
         // Set userFullname state to keep local state in sync
         if (updates.fullname) {
@@ -320,6 +320,7 @@ export function AuthProvider({ children }) {
               fullname: user.displayName || '',
               createdAt: new Date(),
               profileCompleted: false, // Mark that profile needs completion
+              isAdmin: false, // Explicitly set isAdmin to false
               authProviders: ['social'] // Track authentication providers
             };
             
@@ -407,6 +408,7 @@ export function AuthProvider({ children }) {
               fullname: user.displayName || '',
               createdAt: new Date(),
               profileCompleted: false, // Mark that profile needs completion
+              isAdmin: false, // Explicitly set isAdmin to false
               authProviders: ['social'] // Track authentication providers
             };
             
