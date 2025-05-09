@@ -7,7 +7,10 @@ import {
   signOut,
   sendPasswordResetEmail,
   updateProfile,
-  fetchSignInMethodsForEmail
+  fetchSignInMethodsForEmail,
+  googleProvider,
+  appleProvider,
+  signInWithPopup
 } from '../utils/firebaseConfig';
 import { checkUserAdmin, createUserDocument, getUserDocument } from '../utils/firebaseUtils';
 
@@ -188,6 +191,56 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function signInWithGoogle() {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      
+      // Check if user document exists, if not create one
+      const userData = await getUserDocument(user);
+      if (!userData) {
+        const userDataForFirestore = {
+          ...user,
+          fullname: user.displayName || '',
+          createdAt: new Date()
+        };
+        await createUserDocument(userDataForFirestore);
+      }
+      
+      // Fetch user data including admin status and fullname
+      await fetchUserData(user);
+      
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async function signInWithApple() {
+    try {
+      const result = await signInWithPopup(auth, appleProvider);
+      const user = result.user;
+      
+      // Check if user document exists, if not create one
+      const userData = await getUserDocument(user);
+      if (!userData) {
+        const userDataForFirestore = {
+          ...user,
+          fullname: user.displayName || '',
+          createdAt: new Date()
+        };
+        await createUserDocument(userDataForFirestore);
+      }
+      
+      // Fetch user data including admin status and fullname
+      await fetchUserData(user);
+      
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   useEffect(() => {
     // Subscribe to auth state changes
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -217,7 +270,9 @@ export function AuthProvider({ children }) {
     resetPassword,
     updateUserProfile,
     refreshAdminStatus,
-    checkEmailExists
+    checkEmailExists,
+    signInWithGoogle,
+    signInWithApple
   };
 
   return (

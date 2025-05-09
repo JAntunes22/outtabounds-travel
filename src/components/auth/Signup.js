@@ -8,7 +8,7 @@ export default function Signup() {
   const emailRef = useRef();
   const passwordRef = useRef();
   const passwordConfirmRef = useRef();
-  const { signup } = useAuth();
+  const { signup, signInWithGoogle, signInWithApple } = useAuth();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -54,6 +54,30 @@ export default function Signup() {
     setLoading(false);
   }
 
+  async function handleGoogleSignup() {
+    try {
+      setError('');
+      setLoading(true);
+      await signInWithGoogle();
+      navigate('/');
+    } catch (error) {
+      setError('Failed to sign up with Google: ' + error.message);
+    }
+    setLoading(false);
+  }
+
+  async function handleAppleSignup() {
+    try {
+      setError('');
+      setLoading(true);
+      await signInWithApple();
+      navigate('/');
+    } catch (error) {
+      setError('Failed to sign up with Apple: ' + error.message);
+    }
+    setLoading(false);
+  }
+
   return (
     <div className="auth-container">
       <div className="auth-card" ref={authCardRef}>
@@ -80,6 +104,28 @@ export default function Signup() {
             Sign Up
           </button>
         </form>
+
+        <div className="auth-divider">
+          <span>OR</span>
+        </div>
+
+        <div className="social-auth-buttons">
+          <button 
+            disabled={loading} 
+            onClick={handleGoogleSignup} 
+            className="social-auth-button google-auth-button"
+          >
+            Continue with Google
+          </button>
+          <button 
+            disabled={loading} 
+            onClick={handleAppleSignup} 
+            className="social-auth-button apple-auth-button"
+          >
+            Continue with Apple
+          </button>
+        </div>
+
         <div className="auth-footer">
           Already have an account? <Link to="/login">Log In</Link>
         </div>
