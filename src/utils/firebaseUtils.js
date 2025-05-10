@@ -112,91 +112,140 @@ export async function createUserDocument(user) {
 
 export async function getUserDocument(userId) {
   if (!userId) {
+    console.error("getUserDocument: No userId provided");
     throw new Error('User ID is required');
   }
 
+  console.log("getUserDocument: Starting for userId:", userId);
+  
   try {
-    // First try direct lookup with the provided ID
+    // Try a direct lookup first
+    console.log("getUserDocument: Attempting direct lookup for document ID:", userId);
     const userRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userRef);
     
     if (userDoc.exists()) {
+      console.log("getUserDocument: Document found directly with ID:", userId);
       return {
         id: userId,
         ...userDoc.data()
       };
+    } else {
+      console.log("getUserDocument: No document found directly with ID:", userId);
     }
     
-    // If the document doesn't exist and looks like an email, try looking up by email
-    if (userId.includes('@')) {
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('email', '==', userId));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
-        return {
-          id: doc.id,
-          ...doc.data()
-        };
+    // If user has @ symbol, it's likely an email
+    if (typeof userId === 'string' && userId.includes('@')) {
+      console.log("getUserDocument: userId appears to be an email, trying query by email field");
+      // Try finding a user with this email field
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', userId));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const docData = querySnapshot.docs[0];
+          console.log("getUserDocument: Found document by email query:", docData.id);
+          return {
+            id: docData.id,
+            ...docData.data()
+          };
+        } else {
+          console.log("getUserDocument: No documents found by email query");
+        }
+      } catch (emailQueryError) {
+        console.error("getUserDocument: Error in email query:", emailQueryError);
+      }
+    } else {
+      console.log("getUserDocument: userId not an email, trying query by uid field");
+      // Try finding a user with this uid field
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('uid', '==', userId));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const docData = querySnapshot.docs[0];
+          console.log("getUserDocument: Found document by uid query:", docData.id);
+          return {
+            id: docData.id,
+            ...docData.data()
+          };
+        } else {
+          console.log("getUserDocument: No documents found by uid query");
+        }
+      } catch (uidQueryError) {
+        console.error("getUserDocument: Error in uid query:", uidQueryError);
       }
     }
     
-    // If the document doesn't exist and looks like a UID, try looking up by UID field
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('uid', '==', userId));
-    const querySnapshot = await getDocs(q);
-    
-    if (!querySnapshot.empty) {
-      const doc = querySnapshot.docs[0];
-      return {
-        id: doc.id,
-        ...doc.data()
-      };
-    }
-    
+    console.log("getUserDocument: No document found through any method, returning null");
     return null;
   } catch (error) {
-    console.error('Error getting user document:', error);
-    throw new Error('Failed to get user document');
+    console.error('getUserDocument: Fatal error:', error);
+    console.error('getUserDocument: Error stack:', error.stack);
+    throw new Error('Failed to get user document: ' + error.message);
   }
 }
 
 // Find a user document by email address
 export async function findUserByEmail(email) {
   if (!email) {
+    console.error("findUserByEmail: No email provided");
     throw new Error('Email is required');
   }
 
+  console.log("findUserByEmail: Starting for email:", email);
+  
   try {
-    // First, try direct lookup by email as document ID
-    const directRef = doc(db, 'users', email);
-    const directDoc = await getDoc(directRef);
-    
-    if (directDoc.exists()) {
-      return {
-        id: email,
-        ...directDoc.data()
-      };
+    // First try direct document lookup by email as document ID
+    try {
+      console.log("findUserByEmail: Attempting direct lookup with email as document ID");
+      const userRef = doc(db, 'users', email);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        console.log("findUserByEmail: Document found directly with email as ID");
+        return {
+          id: email,
+          ...userDoc.data()
+        };
+      } else {
+        console.log("findUserByEmail: No document found directly with email as ID");
+      }
+    } catch (directError) {
+      console.error('findUserByEmail: Error in direct email lookup:', directError);
+      // Continue to try with query
     }
     
     // Then try query by email field
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('email', '==', email));
-    const querySnapshot = await getDocs(q);
-    
-    if (!querySnapshot.empty) {
-      const userDoc = querySnapshot.docs[0];
-      return {
-        id: userDoc.id,
-        ...userDoc.data()
-      };
+    try {
+      console.log("findUserByEmail: Attempting query by email field");
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', email));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        console.log("findUserByEmail: Document found by email field query:", userDoc.id);
+        return {
+          id: userDoc.id,
+          ...userDoc.data()
+        };
+      } else {
+        console.log("findUserByEmail: No documents found by email field query");
+      }
+    } catch (queryError) {
+      console.error('findUserByEmail: Error in query email lookup:', queryError);
+      // Continue to return null
     }
     
+    console.log("findUserByEmail: No user found with email:", email);
     return null;
   } catch (error) {
-    console.error('Error finding user by email:', error);
-    throw new Error('Failed to find user by email');
+    console.error('findUserByEmail: Fatal error:', error);
+    console.error('findUserByEmail: Error stack:', error.stack);
+    throw new Error('Failed to find user by email: ' + error.message);
   }
 }
 
@@ -625,5 +674,134 @@ export async function updateUserProfile(userId, updates) {
   } catch (error) {
     console.error('Error updating user profile:', error);
     throw new Error('Failed to update user profile');
+  }
+}
+
+// Debugging utility to check and fix user documents
+export async function debugUserDocuments(user) {
+  if (!user) {
+    console.error("debugUserDocuments: No user object provided");
+    throw new Error('User object is required');
+  }
+  
+  const results = {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName,
+    uidDocExists: false,
+    emailDocExists: false,
+    emailQueryExists: false,
+    createdDocuments: []
+  };
+  
+  console.log("debugUserDocuments: Starting for user:", user.uid, user.email);
+  
+  try {
+    // Check for document with UID as ID
+    try {
+      const uidRef = doc(db, 'users', user.uid);
+      const uidDoc = await getDoc(uidRef);
+      results.uidDocExists = uidDoc.exists();
+      results.uidDocData = uidDoc.exists() ? uidDoc.data() : null;
+      console.log("debugUserDocuments: UID document exists:", results.uidDocExists);
+    } catch (uidError) {
+      console.error("debugUserDocuments: Error checking UID document:", uidError);
+    }
+    
+    // Check for document with email as ID
+    if (user.email) {
+      try {
+        const emailRef = doc(db, 'users', user.email);
+        const emailDoc = await getDoc(emailRef);
+        results.emailDocExists = emailDoc.exists();
+        results.emailDocData = emailDoc.exists() ? emailDoc.data() : null;
+        console.log("debugUserDocuments: Email document exists:", results.emailDocExists);
+      } catch (emailError) {
+        console.error("debugUserDocuments: Error checking email document:", emailError);
+      }
+    }
+    
+    // Check for documents with email field matching
+    if (user.email) {
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', user.email));
+        const querySnapshot = await getDocs(q);
+        results.emailQueryExists = !querySnapshot.empty;
+        results.emailQueryDocs = [];
+        
+        querySnapshot.forEach(doc => {
+          results.emailQueryDocs.push({
+            id: doc.id,
+            data: doc.data()
+          });
+        });
+        
+        console.log("debugUserDocuments: Email query found documents:", results.emailQueryExists);
+        if (results.emailQueryExists) {
+          console.log("debugUserDocuments: Found", querySnapshot.size, "documents by email query");
+        }
+      } catch (queryError) {
+        console.error("debugUserDocuments: Error in email query:", queryError);
+      }
+    }
+    
+    // Create documents if missing
+    const needsUidDoc = !results.uidDocExists;
+    const needsEmailDoc = user.email && !results.emailDocExists;
+    
+    if (needsUidDoc || needsEmailDoc) {
+      // Prepare user data
+      const newUserData = {
+        uid: user.uid,
+        email: user.email || '',
+        displayName: user.displayName || '',
+        fullname: user.displayName || '',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        lastLogin: new Date(),
+        profileCompleted: false,
+        isAdmin: false,
+        authProviders: user.providerData ? 
+          user.providerData.map(provider => 
+            provider.providerId.includes('google.com') ? 'social' : 'email'
+          ) : ['email']
+      };
+      
+      // Create UID document if needed
+      if (needsUidDoc) {
+        try {
+          console.log("debugUserDocuments: Creating document with UID as ID:", user.uid);
+          const uidRef = doc(db, 'users', user.uid);
+          await setDoc(uidRef, newUserData);
+          results.createdDocuments.push(`UID document: ${user.uid}`);
+          console.log("debugUserDocuments: Created UID document successfully");
+        } catch (uidError) {
+          console.error("debugUserDocuments: Error creating UID document:", uidError);
+        }
+      }
+      
+      // Create email document if needed
+      if (needsEmailDoc) {
+        try {
+          console.log("debugUserDocuments: Creating document with email as ID:", user.email);
+          const emailRef = doc(db, 'users', user.email);
+          await setDoc(emailRef, {
+            ...newUserData,
+            referenceUid: user.uid
+          });
+          results.createdDocuments.push(`Email document: ${user.email}`);
+          console.log("debugUserDocuments: Created email document successfully");
+        } catch (emailError) {
+          console.error("debugUserDocuments: Error creating email document:", emailError);
+        }
+      }
+    }
+    
+    console.log("debugUserDocuments: Results:", results);
+    return results;
+  } catch (error) {
+    console.error("debugUserDocuments: Fatal error:", error);
+    throw error;
   }
 }

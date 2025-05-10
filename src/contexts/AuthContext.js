@@ -46,42 +46,73 @@ export function AuthProvider({ children }) {
       try {
         console.log("Refreshing admin status for:", currentUser.email);
         
+        let adminStatusFromClaim = false;
+        let adminStatusFromFirestore = false;
+        
         // Get the user's ID token to check custom claims
-        const idTokenResult = await currentUser.getIdTokenResult(true); // Force token refresh
-        const hasAdminClaim = idTokenResult.claims.admin === true;
-        console.log("Admin claim from token:", hasAdminClaim);
+        try {
+          const idTokenResult = await currentUser.getIdTokenResult(true); // Force token refresh
+          adminStatusFromClaim = idTokenResult.claims.admin === true;
+          console.log("Admin claim from token:", adminStatusFromClaim);
+        } catch (tokenError) {
+          console.error("Error checking token claims:", tokenError);
+          // Continue to check Firestore
+        }
 
-        // Check Firestore for admin status by email first
-        let userDoc = await getDoc(doc(db, 'users', currentUser.email));
-        
-        // If not found by email, try by UID
-        if (!userDoc.exists()) {
-          console.log("User document not found by email, trying UID:", currentUser.uid);
-          userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-        }
-        
-        // If still not found, query by email field
-        if (!userDoc.exists()) {
-          console.log("User document not found by UID, querying by email field");
-          const usersRef = collection(db, 'users');
-          const q = query(usersRef, where('email', '==', currentUser.email));
-          const querySnapshot = await getDocs(q);
-          
-          if (!querySnapshot.empty) {
-            userDoc = querySnapshot.docs[0];
+        // Check Firestore for admin status
+        try {
+          // First try by email
+          if (currentUser.email) {
+            try {
+              const emailDoc = await getDoc(doc(db, 'users', currentUser.email));
+              if (emailDoc.exists()) {
+                adminStatusFromFirestore = emailDoc.data().isAdmin === true;
+                console.log("Admin status from email document:", adminStatusFromFirestore);
+              }
+            } catch (emailError) {
+              console.error("Error checking admin by email document:", emailError);
+            }
           }
+          
+          // If not found or no email, try by UID
+          if (!adminStatusFromFirestore) {
+            try {
+              const uidDoc = await getDoc(doc(db, 'users', currentUser.uid));
+              if (uidDoc.exists()) {
+                adminStatusFromFirestore = uidDoc.data().isAdmin === true;
+                console.log("Admin status from UID document:", adminStatusFromFirestore);
+              }
+            } catch (uidError) {
+              console.error("Error checking admin by UID document:", uidError);
+            }
+          }
+          
+          // If still not found, query by email field
+          if (!adminStatusFromFirestore && currentUser.email) {
+            try {
+              const usersRef = collection(db, 'users');
+              const q = query(usersRef, where('email', '==', currentUser.email));
+              const querySnapshot = await getDocs(q);
+              
+              if (!querySnapshot.empty) {
+                const userData = querySnapshot.docs[0].data();
+                adminStatusFromFirestore = userData.isAdmin === true;
+                console.log("Admin status from email query:", adminStatusFromFirestore);
+              }
+            } catch (queryError) {
+              console.error("Error checking admin by email query:", queryError);
+            }
+          }
+        } catch (firestoreError) {
+          console.error("Error checking Firestore admin status:", firestoreError);
         }
-        
-        const hasAdminDoc = userDoc.exists() && userDoc.data().isAdmin === true;
-        console.log("Admin status in Firestore:", hasAdminDoc);
-        console.log("User document data:", userDoc.exists() ? userDoc.data() : "No document");
         
         // For now we'll only require one of the two checks to be true
         // This allows admins to start using the dashboard even if one side is not yet updated
-        const isUserAdmin = hasAdminClaim || hasAdminDoc;
+        const isUserAdmin = adminStatusFromClaim || adminStatusFromFirestore;
         
         // If admin in Firestore but not in claims, attempt to fix
-        if (hasAdminDoc && !hasAdminClaim) {
+        if (adminStatusFromFirestore && !adminStatusFromClaim) {
           console.log("Admin in Firestore but not in claims - will need to call addAdminRole function");
           try {
             const addAdminRoleFunction = httpsCallable(functions, 'addAdminRole');
@@ -107,73 +138,69 @@ export function AuthProvider({ children }) {
 
   async function fetchUserData(user) {
     if (!user) {
+      console.error("fetchUserData: No user object provided");
       throw new Error('User object is required');
     }
     
+    console.log("fetchUserData: Starting for user:", user.uid, user.email);
+    console.log("fetchUserData: User object:", JSON.stringify({
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      providerData: user.providerData
+    }));
+    
     try {
-      // First, try to get the user document by UID
+      // Create a new document for the user if needed
+      // We need to ensure users have documents with both UID and email as IDs
       let userData = null;
+      
+      // First try to get the existing document by UID or email
       try {
-        userData = await getUserDocument(user.uid);
-      } catch (err) {
-        console.error('Error fetching user data by UID:', err);
-      }
-      
-      // If no document found by UID but we have an email, check for document by email
-      if (!userData && user.email) {
-        try {
-          const userByEmail = await findUserByEmail(user.email);
-          
-          if (userByEmail) {
-            if (userByEmail.id !== user.uid) {
-              // Only sync profile data between accounts, not linking authentication methods
-              userData = await syncUserData(user, userByEmail);
-            } else {
-              userData = userByEmail;
-            }
-          }
-        } catch (emailErr) {
-          console.error('Error fetching user data by email:', emailErr);
-        }
-      }
-      
-      if (userData) {
-        // Update admin status
-        setIsAdmin(userData.isAdmin === true);
+        console.log("fetchUserData: Trying to get user document by UID:", user.uid);
+        // Try UID first
+        const uidRef = doc(db, 'users', user.uid);
+        const uidDoc = await getDoc(uidRef);
         
-        // Update user fullname if available
-        if (userData.fullname) {
-          setUserFullname(userData.fullname);
-        }
-        
-        // Update auth providers if needed
-        try {
-          const userRef = doc(db, 'users', user.uid);
-          if (!userData.authProviders) {
-            const defaultProvider = user.providerData && 
-              user.providerData[0] && 
-              user.providerData[0].providerId.includes('google.com') ? 'social' : 'email';
+        if (uidDoc.exists()) {
+          console.log("fetchUserData: Found user document by UID");
+          userData = { id: user.uid, ...uidDoc.data() };
+        } else {
+          console.log("fetchUserData: No document found by UID");
+          // If not found by UID but we have an email, try by email
+          if (user.email) {
+            console.log("fetchUserData: Trying to get user document by email:", user.email);
+            const emailRef = doc(db, 'users', user.email);
+            const emailDoc = await getDoc(emailRef);
             
-            await updateDoc(userRef, { 
-              authProviders: [defaultProvider],
-              lastLogin: new Date()
-            });
+            if (emailDoc.exists()) {
+              console.log("fetchUserData: Found user document by email");
+              userData = { id: user.email, ...emailDoc.data() };
+            } else {
+              console.log("fetchUserData: No document found by email either");
+            }
+          } else {
+            console.log("fetchUserData: No email available to try");
           }
-        } catch (updateErr) {
-          console.error('Error updating user auth providers:', updateErr);
-          // Don't throw here, just continue
         }
+      } catch (getError) {
+        console.error("fetchUserData: Error getting user document:", getError);
+        // Continue to create if needed
+      }
+      
+      // If no document found, create one
+      if (!userData) {
+        console.log("fetchUserData: No user document found, creating one");
         
-        return userData;
-      } else {
-        // If no user document found, create one
         try {
+          // Prepare user data
           const newUserData = {
             uid: user.uid,
             email: user.email || '',
             displayName: user.displayName || '',
             fullname: user.displayName || '',
-            createdAt: new Date(),
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
             lastLogin: new Date(),
             profileCompleted: false,
             isAdmin: false,
@@ -183,25 +210,77 @@ export function AuthProvider({ children }) {
               ) : ['email']
           };
           
-          await setDoc(doc(db, 'users', user.uid), newUserData);
+          console.log("fetchUserData: Creating document with UID as ID:", user.uid);
+          // Create document with UID as document ID
+          const uidRef = doc(db, 'users', user.uid);
+          await setDoc(uidRef, newUserData);
+          console.log("fetchUserData: Successfully created document with UID");
           
-          // Also create a document with email as ID for easier lookups
+          // Also create/update document with email as ID for easier lookups (if email exists)
           if (user.email) {
-            await setDoc(doc(db, 'users', user.email), {
+            console.log("fetchUserData: Creating document with email as ID:", user.email);
+            const emailRef = doc(db, 'users', user.email);
+            await setDoc(emailRef, {
               ...newUserData,
               referenceUid: user.uid
             });
+            console.log("fetchUserData: Successfully created document with email");
           }
           
-          return newUserData;
-        } catch (createErr) {
-          console.error('Error creating user document:', createErr);
-          throw new Error('Failed to create user document');
+          userData = { id: user.uid, ...newUserData };
+          console.log("fetchUserData: Created new user document successfully");
+        } catch (createError) {
+          console.error("fetchUserData: Error creating user document:", createError);
+          throw new Error('Failed to create user document: ' + createError.message);
         }
       }
+      
+      // Update admin status
+      if (userData) {
+        console.log("fetchUserData: Updating admin status, isAdmin =", userData.isAdmin === true);
+        setIsAdmin(userData.isAdmin === true);
+        
+        // Update fullname if available
+        if (userData.fullname) {
+          console.log("fetchUserData: Setting userFullname from userData:", userData.fullname);
+          setUserFullname(userData.fullname);
+        } else if (user.displayName) {
+          console.log("fetchUserData: Setting userFullname from displayName:", user.displayName);
+          setUserFullname(user.displayName);
+        }
+        
+        // Update last login
+        try {
+          console.log("fetchUserData: Updating last login time");
+          const uidRef = doc(db, 'users', user.uid);
+          await updateDoc(uidRef, { 
+            lastLogin: new Date(),
+            updatedAt: serverTimestamp()
+          });
+          console.log("fetchUserData: Updated last login on UID document");
+          
+          if (user.email) {
+            const emailRef = doc(db, 'users', user.email);
+            await updateDoc(emailRef, { 
+              lastLogin: new Date(),
+              updatedAt: serverTimestamp()
+            });
+            console.log("fetchUserData: Updated last login on email document");
+          }
+        } catch (updateError) {
+          console.error("fetchUserData: Error updating last login:", updateError);
+          // Continue anyway, this is not critical
+        }
+      } else {
+        console.error("fetchUserData: userData is still null after create/fetch attempts");
+      }
+      
+      console.log("fetchUserData: Completed successfully, returning userData");
+      return userData;
     } catch (error) {
-      console.error('Error in fetchUserData:', error);
-      throw new Error('Failed to fetch user data');
+      console.error("fetchUserData: Fatal error:", error);
+      console.error("fetchUserData: Error stack:", error.stack);
+      throw new Error('Failed to fetch user data: ' + error.message);
     }
   }
 
@@ -352,17 +431,54 @@ export function AuthProvider({ children }) {
   async function signInWithGoogle() {
     try {
       setError(null);
+      console.log("signInWithGoogle: Starting Google sign-in process");
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
+      console.log("signInWithGoogle: Sign-in successful, user:", user.uid, user.email);
       
       try {
+        // Ensure we get the most up-to-date token before proceeding
+        try {
+          await user.getIdToken(true);
+          console.log("signInWithGoogle: Refreshed ID token");
+        } catch (tokenError) {
+          console.error("signInWithGoogle: Error refreshing token, continuing anyway:", tokenError);
+        }
+        
         // Fetch/create user data in Firestore
-        const userData = await fetchUserData(user);
+        console.log("signInWithGoogle: Fetching user data from Firestore");
+        let userData = null;
+        try {
+          userData = await fetchUserData(user);
+          console.log("signInWithGoogle: User data fetched successfully");
+        } catch (fetchError) {
+          console.error("signInWithGoogle: Error in fetchUserData:", fetchError);
+          
+          // Try the debug function as a fallback
+          try {
+            console.log("signInWithGoogle: Trying debug function to create user document");
+            const { debugUserDocuments } = await import('../utils/firebaseUtils');
+            const debugResults = await debugUserDocuments(user);
+            console.log("signInWithGoogle: Debug function results:", debugResults);
+            
+            // If we created any documents, try fetching again
+            if (debugResults.createdDocuments.length > 0) {
+              console.log("signInWithGoogle: Created documents, trying fetchUserData again");
+              userData = await fetchUserData(user);
+              console.log("signInWithGoogle: Second fetchUserData attempt succeeded");
+            }
+          } catch (debugError) {
+            console.error("signInWithGoogle: Debug function error:", debugError);
+            // Continue with fallback behavior
+          }
+        }
+        
         const isNewUser = userData ? !userData.profileCompleted : true;
         
         // If we have the user data, update lastLogin
         if (userData) {
           try {
+            console.log("signInWithGoogle: Updating last login time");
             const userRef = doc(db, 'users', user.uid);
             await updateDoc(userRef, { 
               lastLogin: new Date(),
@@ -371,21 +487,35 @@ export function AuthProvider({ children }) {
                 ? userData.authProviders 
                 : [...(userData.authProviders || []), 'social']
             });
+            console.log("signInWithGoogle: Updated last login successfully");
           } catch (updateError) {
-            console.error('Error updating last login:', updateError);
+            console.error('signInWithGoogle: Error updating last login:', updateError);
             // Don't throw here, just continue
           }
+        } else {
+          console.warn("signInWithGoogle: No userData available for lastLogin update");
         }
         
+        // Check admin status
+        try {
+          console.log("signInWithGoogle: Checking admin status");
+          await refreshAdminStatus();
+          console.log("signInWithGoogle: Admin status checked successfully");
+        } catch (adminError) {
+          console.error("signInWithGoogle: Error checking admin status:", adminError);
+          // Continue anyway
+        }
+        
+        console.log("signInWithGoogle: Success, returning result with isNewUser:", isNewUser);
         // Return whether this is a new user (for profile completion routing)
         return { ...result, isNewUser };
       } catch (firestoreError) {
-        console.error('Firestore error during Google sign-in:', firestoreError);
+        console.error('signInWithGoogle: Firestore error during sign-in:', firestoreError);
         // If there's an error with Firestore, default to requiring profile completion
         return { ...result, isNewUser: true, error: firestoreError.message };
       }
     } catch (error) {
-      console.error('Google sign-in error:', error);
+      console.error('signInWithGoogle: Sign-in error:', error);
       setError(error.message || 'Failed to sign in with Google');
       throw error;
     }
@@ -526,23 +656,78 @@ export function AuthProvider({ children }) {
     }
   }
 
-  useEffect(() => {
-    // Subscribe to auth state changes
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      
-      if (user) {
+  // Add this new function before the handleAuthStateChange function
+  async function refreshUserToken(user) {
+    if (!user) return null;
+    
+    console.log("refreshUserToken: Starting token refresh for user:", user.uid);
+    try {
+      // Force token refresh
+      await user.getIdToken(true);
+      console.log("refreshUserToken: Token refreshed successfully");
+      return user;
+    } catch (error) {
+      console.error("refreshUserToken: Error refreshing token:", error);
+      // Continue with the user object even if token refresh fails
+      return user;
+    }
+  }
+
+  async function handleAuthStateChange(user) {
+    console.log("handleAuthStateChange: Auth state changed, user:", user ? `${user.uid} (${user.email})` : "null");
+    
+    if (user) {
+      // Refresh the token before proceeding
+      try {
+        user = await refreshUserToken(user);
+      } catch (tokenError) {
+        console.error("handleAuthStateChange: Token refresh error:", tokenError);
+        // Continue with the original user object
+      }
+    }
+    
+    setCurrentUser(user);
+    
+    if (user) {
+      try {
+        console.log("handleAuthStateChange: User authenticated, fetching user data");
         // Fetch complete user data from Firestore
         await fetchUserData(user);
-      } else {
+        console.log("handleAuthStateChange: User data fetched successfully");
+      } catch (fetchError) {
+        console.error("handleAuthStateChange: Error fetching user data:", fetchError);
+        // Even if there's an error, we'll continue with the authenticated state
+        // but admin status will be false
         setIsAdmin(false);
-        setUserFullname('');
+        setUserFullname(user.displayName || '');
       }
-      
-      setLoading(false);
+    } else {
+      console.log("handleAuthStateChange: User signed out, resetting state");
+      setIsAdmin(false);
+      setUserFullname('');
+    }
+    
+    console.log("handleAuthStateChange: Setting loading to false");
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    console.log("AuthContext: Setting up auth state observer");
+    // Subscribe to auth state changes
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      try {
+        console.log("AuthContext: Auth state changed, calling handleAuthStateChange");
+        await handleAuthStateChange(user);
+      } catch (error) {
+        console.error("AuthContext: Fatal error in auth state observer:", error);
+        setLoading(false);
+      }
     });
 
-    return unsubscribe;
+    return () => {
+      console.log("AuthContext: Cleanup - unsubscribing from auth state");
+      unsubscribe();
+    };
   }, []);
 
   const value = {

@@ -5,13 +5,25 @@ service firebase.storage {
     // Function to check if the current user is an admin
     function isAdmin() {
       return request.auth != null && 
-        firestore.exists(/databases/(default)/documents/users/$(request.auth.token.email)) && 
-        firestore.get(/databases/(default)/documents/users/$(request.auth.token.email)).data.isAdmin == true;
+        (
+          // Check token claims first
+          request.auth.token.admin == true ||
+          
+          // Check email document if email exists
+          (request.auth.token.email != null && 
+           firestore.exists(/databases/(default)/documents/users/$(request.auth.token.email)) && 
+           firestore.get(/databases/(default)/documents/users/$(request.auth.token.email)).data.isAdmin == true) ||
+          
+          // Check UID document
+          (firestore.exists(/databases/(default)/documents/users/$(request.auth.uid)) && 
+           firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin == true)
+        );
     }
     
     // Function to check if the user is accessing their own data
     function isOwner(userId) {
-      return request.auth != null && request.auth.token.email == userId;
+      return request.auth != null && 
+        (request.auth.token.email == userId || request.auth.uid == userId);
     }
     
     // Default rules for all files - no default access
@@ -21,10 +33,10 @@ service firebase.storage {
     
     // Rules for user profile images
     match /users/{userId}/profile.jpg {
-      // Anyone can view profile images
+      // Anyone authenticated can view profile images
       allow read: if request.auth != null;
       // Users can only upload their own profile image
-      allow write: if isOwner(userId);
+      allow write: if isOwner(userId) || isAdmin();
     }
     
     // Rules for public assets
@@ -37,16 +49,16 @@ service firebase.storage {
     
     // Rules for course images
     match /courses/{courseId}/{fileName} {
-      // Authenticated users can view course images
-      allow read: if request.auth != null;
+      // Anyone can view course images (for marketing)
+      allow read: if true;
       // Only admins can upload course images
       allow write: if isAdmin();
     }
     
     // Rules for experience images
     match /experiences/{experienceId}/{fileName} {
-      // Authenticated users can view experience images
-      allow read: if request.auth != null;
+      // Anyone can view experience images (for marketing)
+      allow read: if true;
       // Only admins can upload experience images
       allow write: if isAdmin();
     }
@@ -56,7 +68,7 @@ service firebase.storage {
       // Users can view their own uploads, admins can view all
       allow read: if request.auth != null && (isOwner(userId) || isAdmin());
       // Users can upload their own files
-      allow write: if isOwner(userId);
+      allow write: if isOwner(userId) || isAdmin();
     }
   }
 } 

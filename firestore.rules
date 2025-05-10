@@ -5,36 +5,45 @@ service cloud.firestore {
     // Function to check if the current user is an admin
     function isAdmin() {
       return request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.token.email)) && 
-        get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.isAdmin == true;
+        (
+          // Check token claims
+          (request.auth.token.admin == true) ||
+          // Check email document  
+          (request.auth.token.email != null && 
+            exists(/databases/$(database)/documents/users/$(request.auth.token.email)) && 
+            get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.isAdmin == true) ||
+          // Check UID document
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true)
+        );
     }
     
     // Function to check if the user is accessing their own data
     function isOwner(userId) {
-      return request.auth != null && request.auth.token.email == userId;
+      return request.auth != null && 
+        (request.auth.token.email == userId || request.auth.uid == userId);
     }
     
-    // Rules for users collection
+    // Rules for users collection 
     match /users/{userId} {
-      // Only allow the user or an admin to read their own document
+      // Allow users to read their own document and admins to read all
       allow read: if request.auth != null && (isOwner(userId) || isAdmin());
       
-      // Allow user to create their own document, but not set isAdmin to true
+      // Allow user to create their own document with restrictions
       allow create: if request.auth != null && 
-                    isOwner(userId) && 
-                    (!('isAdmin' in request.resource.data) || 
-                     request.resource.data.isAdmin == false);
+        (userId == request.auth.uid || userId == request.auth.token.email) && 
+        (!('isAdmin' in request.resource.data) || request.resource.data.isAdmin == false);
       
-      // Rules for updating users
-      allow update: if request.auth != null && (
-        // Regular users can update their own document but cannot modify the isAdmin field
-        (isOwner(userId) && 
-          (!('isAdmin' in request.resource.data) || 
-           (resource.data.isAdmin == request.resource.data.isAdmin))
-        ) || 
-        // Admins can update any document including the isAdmin field
-        isAdmin()
-      );
+      // Allow user to update their own document, but not change admin status
+      allow update: if request.auth != null && 
+        (
+          // Admins can update any user doc
+          isAdmin() ||
+          // Regular users can update their own doc but not set isAdmin
+          (isOwner(userId) && 
+            (!('isAdmin' in request.resource.data) || 
+              (resource.data.isAdmin == request.resource.data.isAdmin)))
+        );
       
       // Only admins can delete user documents
       allow delete: if isAdmin();
@@ -42,8 +51,8 @@ service cloud.firestore {
     
     // Rules for courses collection
     match /courses/{courseId} {
-      // Only authenticated users can read courses
-      allow read: if request.auth != null;
+      // Anyone can read courses (for marketing purposes)
+      allow read: if true;
       // Only admins can write to courses
       allow write: if isAdmin();
     }
@@ -52,17 +61,25 @@ service cloud.firestore {
     match /inquiries/{inquiryId} {
       // Users can read their own inquiries, admins can read all
       allow read: if request.auth != null && 
-        (resource.data.userId == request.auth.token.email || isAdmin());
+        (resource.data.userId == request.auth.uid || 
+         resource.data.userId == request.auth.token.email || 
+         resource.data.email == request.auth.token.email || 
+         isAdmin());
+         
       // Authenticated users can create inquiries
-      allow create: if request.auth != null;
+      allow create: if request.auth != null && 
+        (request.resource.data.userId == request.auth.uid || 
+         request.resource.data.userId == request.auth.token.email || 
+         request.resource.data.email == request.auth.token.email);
+         
       // Only admins can update or delete inquiries
       allow update, delete: if isAdmin();
     }
     
     // Rules for experiences collection
     match /experiences/{experienceId} {
-      // Only authenticated users can read experiences
-      allow read: if request.auth != null;
+      // Anyone can read experiences (for marketing purposes)
+      allow read: if true;
       // Only admins can write to experiences
       allow write: if isAdmin();
     }
@@ -75,9 +92,8 @@ service cloud.firestore {
       allow write: if false;
     }
     
-    // Default rules for other collections - no public access
+    // Default deny rule
     match /{document=**} {
-      // No default read/write access to unspecified collections
       allow read, write: if false;
     }
   }
