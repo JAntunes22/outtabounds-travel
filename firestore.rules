@@ -16,40 +16,69 @@ service cloud.firestore {
     
     // Rules for users collection
     match /users/{userId} {
+      // Only allow the user or an admin to read their own document
       allow read: if request.auth != null && (isOwner(userId) || isAdmin());
-      allow create: if request.auth != null && isOwner(userId);
+      
+      // Allow user to create their own document, but not set isAdmin to true
+      allow create: if request.auth != null && 
+                    isOwner(userId) && 
+                    (!('isAdmin' in request.resource.data) || 
+                     request.resource.data.isAdmin == false);
+      
+      // Rules for updating users
       allow update: if request.auth != null && (
+        // Regular users can update their own document but cannot modify the isAdmin field
         (isOwner(userId) && 
-         !('isAdmin' in request.resource.data)) || 
+          (!('isAdmin' in request.resource.data) || 
+           (resource.data.isAdmin == request.resource.data.isAdmin))
+        ) || 
+        // Admins can update any document including the isAdmin field
         isAdmin()
       );
+      
+      // Only admins can delete user documents
       allow delete: if isAdmin();
     }
     
     // Rules for courses collection
     match /courses/{courseId} {
+      // Only authenticated users can read courses
       allow read: if request.auth != null;
+      // Only admins can write to courses
       allow write: if isAdmin();
     }
     
     // Rules for inquiries collection
     match /inquiries/{inquiryId} {
+      // Users can read their own inquiries, admins can read all
       allow read: if request.auth != null && 
         (resource.data.userId == request.auth.token.email || isAdmin());
+      // Authenticated users can create inquiries
       allow create: if request.auth != null;
+      // Only admins can update or delete inquiries
       allow update, delete: if isAdmin();
     }
     
     // Rules for experiences collection
     match /experiences/{experienceId} {
+      // Only authenticated users can read experiences
       allow read: if request.auth != null;
+      // Only admins can write to experiences
       allow write: if isAdmin();
     }
     
-    // Default rules for other collections
+    // Rules for adminLogs collection
+    match /adminLogs/{logId} {
+      // Only admins can read admin logs
+      allow read: if isAdmin();
+      // No one can directly write to admin logs (should be handled by Cloud Functions)
+      allow write: if false;
+    }
+    
+    // Default rules for other collections - no public access
     match /{document=**} {
-      allow read: if request.auth != null;
-      allow write: if isAdmin();
+      // No default read/write access to unspecified collections
+      allow read, write: if false;
     }
   }
 } 
