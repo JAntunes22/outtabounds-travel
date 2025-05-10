@@ -1,11 +1,45 @@
-import React, { useState } from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import './Admin.css';
 
 export default function AdminDashboard() {
-  const { currentUser } = useAuth();
+  const { currentUser, isAdmin, refreshAdminStatus } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    async function verifyAdmin() {
+      setLoading(true);
+      try {
+        console.log("AdminDashboard - Verifying admin status");
+        const adminStatus = await refreshAdminStatus();
+        console.log("Admin status result:", adminStatus);
+        
+        if (!adminStatus) {
+          console.error("Not an admin, redirecting to unauthorized");
+          navigate("/unauthorized");
+        }
+      } catch (error) {
+        console.error("Error verifying admin status:", error);
+        navigate("/unauthorized");
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    verifyAdmin();
+  }, [refreshAdminStatus, navigate]);
+  
+  if (loading) {
+    return (
+      <div className="admin-loading">
+        <div className="loading-spinner"></div>
+        <p>Verifying admin access...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-container">
@@ -27,6 +61,7 @@ export default function AdminDashboard() {
           <div className="user-info">
             <span>{currentUser?.displayName || 'Admin User'}</span>
             <small>{currentUser?.email}</small>
+            <span className="admin-badge">Admin</span>
           </div>
         </div>
         

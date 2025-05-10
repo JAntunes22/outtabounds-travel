@@ -1164,4 +1164,41 @@
   .status-buttons {
     grid-template-columns: 1fr;
   }
+}
+
+.admin-badge {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: #4CAF50;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.admin-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100%;
+  text-align: center;
+}
+
+.loading-spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid #3498db;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 } 

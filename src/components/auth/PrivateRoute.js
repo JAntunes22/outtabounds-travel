@@ -19,6 +19,7 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
   const [adminVerified, setAdminVerified] = useState(isAdmin);
   const [checkingProfile, setCheckingProfile] = useState(requireProfileCompletion);
   const [showProfileReminder, setShowProfileReminder] = useState(false);
+  const [error, setError] = useState(null);
 
   // When component loads, force check admin status if required
   useEffect(() => {
@@ -26,16 +27,25 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
       if (requireAdmin && currentUser) {
         try {
           console.log("Verifying admin access for user:", currentUser.email);
+          console.log("Current admin state before verification:", isAdmin);
+          
           const adminStatus = await refreshAdminStatus();
           console.log("Admin verification result:", adminStatus);
           setAdminVerified(adminStatus);
+          
+          if (!adminStatus) {
+            console.error("Admin access denied - user not an admin.");
+            setError('403'); // Set 403 Forbidden for unauthorized admin access
+          }
         } catch (error) {
           console.error("Error verifying admin status:", error);
           setAdminVerified(false);
+          setError('500'); // Set 500 Internal Server Error for verification failures
         } finally {
           setCheckingAdmin(false);
         }
       } else {
+        console.log("Admin verification not required or no current user");
         setCheckingAdmin(false);
       }
     }
@@ -47,12 +57,12 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
           const profileStatus = await isProfileCompleted();
           console.log("Profile completion status:", profileStatus);
           
-          // If profile is incomplete, show a reminder
           if (!profileStatus) {
             setShowProfileReminder(true);
           }
         } catch (error) {
           console.error("Error checking profile completion:", error);
+          setError('500'); // Set 500 Internal Server Error for verification failures
         } finally {
           setCheckingProfile(false);
         }
@@ -63,7 +73,7 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
 
     verifyAdminStatus();
     verifyProfileCompletion();
-  }, [requireAdmin, requireProfileCompletion, currentUser, refreshAdminStatus, isProfileCompleted, hasSeenProfileReminder, markProfileReminderSeen]);
+  }, [requireAdmin, requireProfileCompletion, currentUser, refreshAdminStatus, isProfileCompleted, hasSeenProfileReminder]);
 
   // Function to dismiss the reminder and continue
   const dismissReminder = () => {
@@ -93,43 +103,40 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
 
   // If requireAdmin flag is true, check if user is admin
   if (requireAdmin && !adminVerified) {
-    console.log("Admin access denied. Auth state: currentUser=", !!currentUser, "isAdmin=", isAdmin, "adminVerified=", adminVerified);
-    // Redirect to unauthorized page if user is not an admin
-    return <Navigate to="/unauthorized" state={{ from: location }} replace />;
+    console.log("Admin access denied. Auth state: currentUser=", !!currentUser, 
+      "isAdmin=", isAdmin, "adminVerified=", adminVerified);
+    
+    // Let's show more details to help diagnose the issue
+    if (currentUser) {
+      console.log("User email:", currentUser.email);
+      console.log("User ID:", currentUser.uid);
+      console.log("Provider data:", currentUser.providerData);
+    }
+    
+    // Return 403 Forbidden for unauthorized admin access
+    return <Navigate to="/unauthorized" state={{ from: location, status: 403 }} replace />;
   }
 
   // If no user, redirect to login with the current location for redirect after login
   if (!currentUser) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Return 401 Unauthorized for unauthenticated access
+    return <Navigate to="/login" state={{ from: location, status: 401 }} replace />;
   }
 
-  // Show profile completion reminder if needed
-  if (showProfileReminder) {
+  // If profile completion is required and not completed, show reminder
+  if (requireProfileCompletion && showProfileReminder) {
     return (
-      <div className="auth-container with-outlet">
-        <div className="popup-overlay">
-          <div className="popup-content">
-            <div className="popup-header">
-              <h3>Complete Your Profile</h3>
-              <button className="close-button" onClick={dismissReminder}>&times;</button>
-            </div>
-            <div className="popup-body">
-              <p>
-                Your profile is incomplete. We recommend completing your profile to 
-                ensure you get the best experience with OuttaBounds.
-              </p>
-              <div className="button-group" style={{ marginTop: '20px' }}>
-                <button className="back-button" onClick={dismissReminder}>Continue Anyway</button>
-                <button className="auth-button" onClick={goToProfileCompletion}>Complete Now</button>
-              </div>
-            </div>
-          </div>
+      <div className="profile-reminder">
+        <h2>Complete Your Profile</h2>
+        <p>Please complete your profile to access this page.</p>
+        <div className="button-group">
+          <button onClick={goToProfileCompletion}>Complete Profile</button>
+          <button onClick={dismissReminder}>Not Now</button>
         </div>
-        <Outlet />
       </div>
     );
   }
 
-  // If user is authenticated, admin verified if required, and profile complete or not required, render the child routes
+  // If all checks pass, render the protected content
   return <Outlet />;
 } 

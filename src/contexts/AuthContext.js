@@ -18,9 +18,10 @@ import {
   getUserDocument, 
   findUserByEmail, 
   syncUserData,
-  mergeUserAccounts // For backward compatibility
+  mergeUserAccounts, // For backward compatibility
+  addAdminRole
 } from '../utils/firebaseUtils';
-import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../utils/firebaseConfig';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -38,19 +39,67 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [userFullname, setUserFullname] = useState('');
   const [hasSeenProfileReminder, setHasSeenProfileReminder] = useState(false);
+  const [error, setError] = useState(null);
 
   async function refreshAdminStatus() {
     if (currentUser) {
       try {
-        // Force check from Firestore using email
-        const adminStatus = await checkUserAdmin(currentUser);
-        console.log("Admin status checked:", adminStatus);
-        setIsAdmin(adminStatus);
-        return adminStatus;
+        console.log("Refreshing admin status for:", currentUser.email);
+        
+        // Get the user's ID token to check custom claims
+        const idTokenResult = await currentUser.getIdTokenResult(true); // Force token refresh
+        const hasAdminClaim = idTokenResult.claims.admin === true;
+        console.log("Admin claim from token:", hasAdminClaim);
+
+        // Check Firestore for admin status by email first
+        let userDoc = await getDoc(doc(db, 'users', currentUser.email));
+        
+        // If not found by email, try by UID
+        if (!userDoc.exists()) {
+          console.log("User document not found by email, trying UID:", currentUser.uid);
+          userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        }
+        
+        // If still not found, query by email field
+        if (!userDoc.exists()) {
+          console.log("User document not found by UID, querying by email field");
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where('email', '==', currentUser.email));
+          const querySnapshot = await getDocs(q);
+          
+          if (!querySnapshot.empty) {
+            userDoc = querySnapshot.docs[0];
+          }
+        }
+        
+        const hasAdminDoc = userDoc.exists() && userDoc.data().isAdmin === true;
+        console.log("Admin status in Firestore:", hasAdminDoc);
+        console.log("User document data:", userDoc.exists() ? userDoc.data() : "No document");
+        
+        // For now we'll only require one of the two checks to be true
+        // This allows admins to start using the dashboard even if one side is not yet updated
+        const isUserAdmin = hasAdminClaim || hasAdminDoc;
+        
+        // If admin in Firestore but not in claims, attempt to fix
+        if (hasAdminDoc && !hasAdminClaim) {
+          console.log("Admin in Firestore but not in claims - will need to call addAdminRole function");
+          try {
+            const addAdminRoleFunction = httpsCallable(functions, 'addAdminRole');
+            await addAdminRoleFunction({ email: currentUser.email });
+            console.log("Called addAdminRole to fix missing admin claim");
+          } catch (fixError) {
+            console.error("Error fixing admin claim:", fixError);
+            // Continue anyway since we're allowing access with just Firestore admin status
+          }
+        }
+        
+        console.log("Final admin status:", isUserAdmin);
+        setIsAdmin(isUserAdmin);
+        return isUserAdmin;
       } catch (error) {
-        console.error("Error checking admin status:", error);
+        console.error('Error checking admin status:', error);
         setIsAdmin(false);
-        return false;
+        throw new Error('Failed to verify admin status: ' + error.message);
       }
     }
     return false;
@@ -58,31 +107,38 @@ export function AuthProvider({ children }) {
 
   async function fetchUserData(user) {
     if (!user) {
-      console.error("Cannot fetch user data: User is undefined");
-      return null;
+      throw new Error('User object is required');
     }
-    
-    console.log("Fetching data for user:", user.email);
     
     try {
       // First, try to get the user document by UID
-      let userData = await getUserDocument(user);
+      let userData = null;
+      try {
+        userData = await getUserDocument(user.uid);
+      } catch (err) {
+        console.error('Error fetching user data by UID:', err);
+      }
       
       // If no document found by UID but we have an email, check for document by email
       if (!userData && user.email) {
-        console.log("No user document found by UID, checking by email...");
-        const userByEmail = await findUserByEmail(user.email);
-        
-        if (userByEmail && userByEmail.id !== user.uid) {
-          console.log("Found user document by email but with different UID");
-          // Only sync profile data between accounts, not linking authentication methods
-          userData = await syncUserData(user, userByEmail);
+        try {
+          const userByEmail = await findUserByEmail(user.email);
+          
+          if (userByEmail) {
+            if (userByEmail.id !== user.uid) {
+              // Only sync profile data between accounts, not linking authentication methods
+              userData = await syncUserData(user, userByEmail);
+            } else {
+              userData = userByEmail;
+            }
+          }
+        } catch (emailErr) {
+          console.error('Error fetching user data by email:', emailErr);
         }
       }
       
       if (userData) {
         // Update admin status
-        console.log("User data fetched:", userData);
         setIsAdmin(userData.isAdmin === true);
         
         // Update user fullname if available
@@ -91,75 +147,102 @@ export function AuthProvider({ children }) {
         }
         
         // Update auth providers if needed
-        const userRef = doc(db, 'users', user.uid);
-        if (!userData.authProviders) {
-          // If no auth providers tracked yet, set based on current auth method
-          const defaultProvider = user.providerData && 
-            user.providerData[0] && 
-            user.providerData[0].providerId.includes('google.com') ? 'social' : 'email';
-          
-          await updateDoc(userRef, { 
-            authProviders: [defaultProvider],
-            lastLogin: new Date()
-          });
+        try {
+          const userRef = doc(db, 'users', user.uid);
+          if (!userData.authProviders) {
+            const defaultProvider = user.providerData && 
+              user.providerData[0] && 
+              user.providerData[0].providerId.includes('google.com') ? 'social' : 'email';
+            
+            await updateDoc(userRef, { 
+              authProviders: [defaultProvider],
+              lastLogin: new Date()
+            });
+          }
+        } catch (updateErr) {
+          console.error('Error updating user auth providers:', updateErr);
+          // Don't throw here, just continue
         }
         
         return userData;
       } else {
-        console.log("No user document found. Creating one now...");
         // If no user document found, create one
-        await createUserDocument(user);
-        return null;
+        try {
+          const newUserData = {
+            uid: user.uid,
+            email: user.email || '',
+            displayName: user.displayName || '',
+            fullname: user.displayName || '',
+            createdAt: new Date(),
+            lastLogin: new Date(),
+            profileCompleted: false,
+            isAdmin: false,
+            authProviders: user.providerData ? 
+              user.providerData.map(provider => 
+                provider.providerId.includes('google.com') ? 'social' : 'email'
+              ) : ['email']
+          };
+          
+          await setDoc(doc(db, 'users', user.uid), newUserData);
+          
+          // Also create a document with email as ID for easier lookups
+          if (user.email) {
+            await setDoc(doc(db, 'users', user.email), {
+              ...newUserData,
+              referenceUid: user.uid
+            });
+          }
+          
+          return newUserData;
+        } catch (createErr) {
+          console.error('Error creating user document:', createErr);
+          throw new Error('Failed to create user document');
+        }
       }
     } catch (error) {
-      console.error("Error fetching user data:", error);
-      return null;
+      console.error('Error in fetchUserData:', error);
+      throw new Error('Failed to fetch user data');
     }
   }
 
-  // Check if an email already exists in Firebase Auth or Firestore
   async function checkEmailExists(email) {
+    if (!email) {
+      throw new Error('Email is required');
+    }
+
     try {
-      console.log("Starting email existence check for:", email);
-      
       // First check if email exists in Firebase Authentication
-      console.log("Checking Firebase Auth...");
       const methods = await fetchSignInMethodsForEmail(auth, email);
-      console.log("Firebase Auth sign-in methods:", methods);
       
       if (methods && methods.length > 0) {
-        console.log("Email found in Firebase Auth");
         return true;
       }
       
       // Also check if email exists in Firestore users collection
-      // In Firestore, email is used as the document ID
-      console.log("Checking Firestore users collection...");
       try {
         const userDoc = await getUserDocument(email);
-        console.log("Firestore check result:", userDoc ? "User found" : "User not found");
         return userDoc !== null;
       } catch (firestoreError) {
-        console.error("Error checking Firestore for email:", firestoreError);
-        // If there's an error checking Firestore, we still want to continue
-        // so return the result from the Authentication check
+        console.error('Error checking Firestore for email:', firestoreError);
         return false;
       }
     } catch (error) {
-      console.error("Error checking if email exists:", error);
-      throw error;
+      console.error('Error checking if email exists:', error);
+      throw new Error('Failed to check email existence');
     }
   }
 
   async function signup(email, password, displayName, userData = {}) {
+    if (!email || !password || !displayName) {
+      throw new Error('Email, password, and display name are required');
+    }
+
     try {
-      // Create the user in Firebase Authentication
+      setError(null);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
-      // Update the user's profile with display name
       await updateProfile(userCredential.user, { displayName });
       
-      // Prepare user data for Firestore
       const userDataForFirestore = {
         uid: userCredential.user.uid,
         email: email,
@@ -172,285 +255,180 @@ export function AuthProvider({ children }) {
         lastName: userData.lastName || '',
         phoneNumber: userData.phoneNumber || '',
         receiveOffers: userData.receiveOffers || false,
-        isAdmin: false, // Explicitly set isAdmin to false
+        isAdmin: false,
         profileCompleted: true,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
         lastLogin: new Date(),
-        authProviders: ['email'] // Track authentication providers
+        authProviders: ['email']
       };
       
-      // Create a document in Firestore for this user - using our manually constructed object
-      // rather than passing userCredential.user which might not contain all the form data
-      await createUserDocument(userDataForFirestore);
+      await setDoc(doc(db, 'users', email), userDataForFirestore);
       
       setUserFullname(userDataForFirestore.fullname);
       
-      return userCredential;
+      return userCredential.user;
     } catch (error) {
-      throw error;
+      setError(error.message);
+      throw new Error('Failed to create account');
     }
   }
 
   async function login(email, password) {
+    if (!email || !password) {
+      throw new Error('Email and password are required');
+    }
+
     try {
+      setError(null);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      
-      // Fetch user data including admin status and fullname
-      if (userCredential.user) {
-        await fetchUserData(userCredential.user);
-      }
-      
-      return userCredential;
+      await refreshAdminStatus();
+      return userCredential.user;
     } catch (error) {
-      throw error;
+      setError(error.message);
+      throw new Error('Failed to log in');
     }
   }
 
   async function logout() {
     try {
-      // Reset all states
+      setError(null);
       setIsAdmin(false);
       setUserFullname('');
       setHasSeenProfileReminder(false);
-      
-      // Sign out from Firebase
       await signOut(auth);
-      
       return true;
     } catch (error) {
-      console.error("Error during logout:", error);
-      throw error;
+      console.error('Error during logout:', error);
+      setError(error.message);
+      throw new Error('Failed to log out');
     }
   }
 
   async function resetPassword(email) {
+    if (!email) {
+      throw new Error('Email is required');
+    }
+
     try {
-      console.log("Sending password reset email to:", email);
       await sendPasswordResetEmail(auth, email);
-      console.log("Password reset email sent successfully");
       return true;
     } catch (error) {
-      console.error("Error in resetPassword:", error);
-      throw error;
+      console.error('Error in resetPassword:', error);
+      setError(error.message);
+      throw new Error('Failed to send password reset email');
     }
   }
 
-  // Update user profile
   async function updateUserProfile(updates) {
+    if (!currentUser) {
+      throw new Error('No user logged in');
+    }
+
+    if (!updates || typeof updates !== 'object') {
+      throw new Error('Invalid update data');
+    }
+
     try {
-      if (!currentUser) {
-        console.error("No user logged in");
-        throw new Error("No user logged in");
-      }
-
-      console.log("Updating profile for user:", currentUser.uid, "with data:", updates);
-
-      // If there's a displayName update from fullname, apply it to Auth profile
       if (updates.fullname) {
-        try {
-          console.log("Updating display name in Auth profile to:", updates.fullname);
-          await updateProfile(currentUser, { displayName: updates.fullname });
-          console.log("Auth profile display name updated successfully");
-        } catch (authUpdateError) {
-          console.error("Error updating Auth profile:", authUpdateError);
-          // Continue with Firestore update even if Auth update fails
-        }
+        await updateProfile(currentUser, { displayName: updates.fullname });
       }
       
-      // Use the firebaseUtils implementation for updating user profile
-      // This ensures consistent handling of isAdmin field
-      try {
-        const { updateUserProfile: updateUserProfileInFirestore } = await import('../utils/firebaseUtils');
-        await updateUserProfileInFirestore(currentUser.uid, updates);
-        
-        // Set userFullname state to keep local state in sync
-        if (updates.fullname) {
-          setUserFullname(updates.fullname);
-        }
-        
-        return true;
-      } catch (firestoreError) {
-        console.error("Error updating Firestore document:", firestoreError);
-        throw firestoreError;
+      const { updateUserProfile: updateUserProfileInFirestore } = await import('../utils/firebaseUtils');
+      await updateUserProfileInFirestore(currentUser.uid, updates);
+      
+      if (updates.fullname) {
+        setUserFullname(updates.fullname);
       }
+      
+      return true;
     } catch (error) {
-      console.error("Error in updateUserProfile:", error);
-      throw error;
+      console.error('Error in updateUserProfile:', error);
+      setError(error.message);
+      throw new Error('Failed to update profile');
     }
   }
 
   async function signInWithGoogle() {
     try {
-      console.log("Starting Google sign-in process in AuthContext");
+      setError(null);
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-      console.log("Google sign-in successful for user:", user.email);
       
       try {
-        // Check if user document exists - use .uid instead of passing the whole user object
-        const userId = user.uid;
-        console.log("Checking if user document exists for UID:", userId);
+        // Fetch/create user data in Firestore
+        const userData = await fetchUserData(user);
+        const isNewUser = userData ? !userData.profileCompleted : true;
         
-        // Get document reference directly
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
-        
-        if (!userDoc.exists()) {
-          console.log("User document doesn't exist, creating new one");
-          
-          // Check if there's existing user data with this email
-          let existingUserData = null;
-          if (user.email) {
-            existingUserData = await findUserByEmail(user.email);
-            if (existingUserData && existingUserData.id !== user.uid) {
-              console.log("Found existing profile data with same email:", existingUserData.id);
-              // Sync the user data from the existing account - this only syncs profile data,
-              // not authentication methods or account linking
-              await syncUserData(user, existingUserData);
-            }
-          }
-          
-          // If we didn't find any existing data or didn't sync
-          if (!existingUserData || existingUserData.id === user.uid) {
-            // New user - create document and mark for profile completion
-            const userDataForFirestore = {
-              uid: user.uid,
-              email: user.email || '',
-              displayName: user.displayName || '',
-              fullname: user.displayName || '',
-              createdAt: new Date(),
-              profileCompleted: false, // Mark that profile needs completion
-              isAdmin: false, // Explicitly set isAdmin to false
-              authProviders: ['social'] // Track authentication providers
-            };
-            
-            await setDoc(userRef, userDataForFirestore);
-            console.log("Created new user document in Firestore");
-          }
-          
-          return { ...result, isNewUser: true };
-        } else {
-          // User exists, check if profile is completed
-          const userData = userDoc.data();
-          console.log("User document exists, profile completed:", userData.profileCompleted);
-          
-          // Update the auth providers array if needed
-          if (!userData.authProviders || !userData.authProviders.includes('social')) {
-            const updatedAuthProviders = userData.authProviders 
-              ? [...new Set([...userData.authProviders, 'social'])]
-              : ['social'];
-              
+        // If we have the user data, update lastLogin
+        if (userData) {
+          try {
+            const userRef = doc(db, 'users', user.uid);
             await updateDoc(userRef, { 
-              authProviders: updatedAuthProviders,
-              lastLogin: new Date()
+              lastLogin: new Date(),
+              // Ensure social provider is in authProviders
+              authProviders: userData.authProviders && userData.authProviders.includes('social') 
+                ? userData.authProviders 
+                : [...(userData.authProviders || []), 'social']
             });
-            console.log("Updated user document with social auth provider");
+          } catch (updateError) {
+            console.error('Error updating last login:', updateError);
+            // Don't throw here, just continue
           }
-          
-          if (userData.profileCompleted === false) {
-            console.log("User exists but profile not completed");
-            return { ...result, isNewUser: true };
-          }
-          
-          // Existing user with complete profile
-          console.log("Existing user with complete profile");
-          return { ...result, isNewUser: false };
         }
+        
+        // Return whether this is a new user (for profile completion routing)
+        return { ...result, isNewUser };
       } catch (firestoreError) {
-        console.error("Firestore error during Google sign-in:", firestoreError);
+        console.error('Firestore error during Google sign-in:', firestoreError);
         // If there's an error with Firestore, default to requiring profile completion
-        return { ...result, isNewUser: true };
+        return { ...result, isNewUser: true, error: firestoreError.message };
       }
     } catch (error) {
-      console.error("Google sign-in error in AuthContext:", error);
+      console.error('Google sign-in error:', error);
+      setError(error.message || 'Failed to sign in with Google');
       throw error;
     }
   }
 
   async function signInWithApple() {
     try {
-      console.log("Starting Apple sign-in process in AuthContext");
+      setError(null);
       const result = await signInWithPopup(auth, appleProvider);
       const user = result.user;
-      console.log("Apple sign-in successful for user:", user.email);
       
       try {
-        // Check if user document exists - use .uid instead of passing the whole user object
-        const userId = user.uid;
-        console.log("Checking if user document exists for UID:", userId);
+        // Fetch/create user data in Firestore
+        const userData = await fetchUserData(user);
+        const isNewUser = userData ? !userData.profileCompleted : true;
         
-        // Get document reference directly
-        const userRef = doc(db, 'users', userId);
-        const userDoc = await getDoc(userRef);
-        
-        if (!userDoc.exists()) {
-          console.log("User document doesn't exist, creating new one");
-          
-          // Check if there's existing user data with this email
-          let existingUserData = null;
-          if (user.email) {
-            existingUserData = await findUserByEmail(user.email);
-            if (existingUserData && existingUserData.id !== user.uid) {
-              console.log("Found existing profile data with same email:", existingUserData.id);
-              // Sync the user data from the existing account - this only syncs profile data,
-              // not authentication methods or account linking
-              await syncUserData(user, existingUserData);
-            }
-          }
-          
-          // If we didn't find any existing data or didn't sync
-          if (!existingUserData || existingUserData.id === user.uid) {
-            // New user - create document and mark for profile completion
-            const userDataForFirestore = {
-              uid: user.uid,
-              email: user.email || '',
-              displayName: user.displayName || '',
-              fullname: user.displayName || '',
-              createdAt: new Date(),
-              profileCompleted: false, // Mark that profile needs completion
-              isAdmin: false, // Explicitly set isAdmin to false
-              authProviders: ['social'] // Track authentication providers
-            };
-            
-            await setDoc(userRef, userDataForFirestore);
-            console.log("Created new user document in Firestore");
-          }
-          
-          return { ...result, isNewUser: true };
-        } else {
-          // User exists, check if profile is completed
-          const userData = userDoc.data();
-          console.log("User document exists, profile completed:", userData.profileCompleted);
-          
-          // Update the auth providers array if needed
-          if (!userData.authProviders || !userData.authProviders.includes('social')) {
-            const updatedAuthProviders = userData.authProviders 
-              ? [...new Set([...userData.authProviders, 'social'])]
-              : ['social'];
-              
+        // If we have the user data, update lastLogin
+        if (userData) {
+          try {
+            const userRef = doc(db, 'users', user.uid);
             await updateDoc(userRef, { 
-              authProviders: updatedAuthProviders,
-              lastLogin: new Date()
+              lastLogin: new Date(),
+              // Ensure social provider is in authProviders
+              authProviders: userData.authProviders && userData.authProviders.includes('social') 
+                ? userData.authProviders 
+                : [...(userData.authProviders || []), 'social']
             });
-            console.log("Updated user document with social auth provider");
+          } catch (updateError) {
+            console.error('Error updating last login:', updateError);
+            // Don't throw here, just continue
           }
-          
-          if (userData.profileCompleted === false) {
-            console.log("User exists but profile not completed");
-            return { ...result, isNewUser: true };
-          }
-          
-          // Existing user with complete profile
-          console.log("Existing user with complete profile");
-          return { ...result, isNewUser: false };
         }
+        
+        // Return whether this is a new user (for profile completion routing)
+        return { ...result, isNewUser };
       } catch (firestoreError) {
-        console.error("Firestore error during Apple sign-in:", firestoreError);
+        console.error('Firestore error during Apple sign-in:', firestoreError);
         // If there's an error with Firestore, default to requiring profile completion
-        return { ...result, isNewUser: true };
+        return { ...result, isNewUser: true, error: firestoreError.message };
       }
     } catch (error) {
-      console.error("Apple sign-in error in AuthContext:", error);
+      console.error('Apple sign-in error:', error);
+      setError(error.message || 'Failed to sign in with Apple');
       throw error;
     }
   }
@@ -466,6 +444,7 @@ export function AuthProvider({ children }) {
       return true;
     } catch (error) {
       console.error("Error canceling sign up:", error);
+      setError(error.message);
       throw error;
     }
   }
@@ -542,6 +521,7 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       console.error("Error syncing profile data:", error);
+      setError(error.message);
       throw error;
     }
   }
@@ -569,6 +549,8 @@ export function AuthProvider({ children }) {
     currentUser,
     isAdmin,
     userFullname,
+    loading,
+    error,
     login,
     signup,
     logout,

@@ -1,13 +1,6 @@
-import { collection, addDoc, getDocs, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, setDoc, updateDoc, deleteDoc, doc, getDoc, query, where, orderBy, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { 
-  query, 
-  where,
-  orderBy, 
-  doc, 
-  getDoc 
-} from 'firebase/firestore';
 
 const functions = getFunctions();
 
@@ -45,10 +38,12 @@ const getUserId = (user) => {
 };
 
 // User-related functions
-export const createUserDocument = async (user) => {
+export async function createUserDocument(user) {
+  if (!user) {
+    throw new Error('User object is required');
+  }
+
   try {
-    if (!user) throw new Error("User object is required");
-    
     const userId = getUserId(user);
     if (!userId) throw new Error("Could not determine user ID");
     
@@ -113,77 +108,97 @@ export const createUserDocument = async (user) => {
     console.error("Error creating/updating user document:", error);
     throw error;
   }
-};
+}
 
-export const getUserDocument = async (user) => {
-  try {
-    if (!user) throw new Error("User object or ID is required");
-    
-    const userId = getUserId(user);
-    if (!userId) throw new Error("Could not determine user ID");
-    
-    console.log("Getting user document for ID:", userId);
-    const userRef = doc(db, "users", userId);
-    
-    try {
-      const userDoc = await getDoc(userRef);
-      
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        console.log("Found user document:", userData);
-        
-        // Log specific fields that we're interested in
-        console.log("Title:", userData.title);
-        console.log("Phone Number:", userData.phoneNumber);
-        console.log("Receive Offers:", userData.receiveOffers);
-        
-        return {
-          id: userId,
-          ...userData
-        };
-      }
-      
-      console.log("No user document found for ID:", userId);
-      return null;
-    } catch (docError) {
-      console.error("Error getting document:", docError);
-      throw docError;
-    }
-  } catch (error) {
-    console.error("Error in getUserDocument:", error);
-    throw error;
+export async function getUserDocument(userId) {
+  if (!userId) {
+    throw new Error('User ID is required');
   }
-};
 
-// Find a user document by email address
-export const findUserByEmail = async (email) => {
   try {
-    if (!email) throw new Error("Email is required");
+    // First try direct lookup with the provided ID
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
     
-    console.log("Finding user document by email:", email);
-    const usersCollection = collection(db, 'users');
-    const q = query(usersCollection, where("email", "==", email));
-    
-    const querySnapshot = await getDocs(q);
-    
-    if (!querySnapshot.empty) {
-      // Return the first matching user
-      const userDoc = querySnapshot.docs[0];
-      const userData = userDoc.data();
-      console.log("Found user document by email:", userData);
+    if (userDoc.exists()) {
       return {
-        id: userDoc.id,
-        ...userData
+        id: userId,
+        ...userDoc.data()
       };
     }
     
-    console.log("No user document found for email:", email);
+    // If the document doesn't exist and looks like an email, try looking up by email
+    if (userId.includes('@')) {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', userId));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        return {
+          id: doc.id,
+          ...doc.data()
+        };
+      }
+    }
+    
+    // If the document doesn't exist and looks like a UID, try looking up by UID field
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('uid', '==', userId));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0];
+      return {
+        id: doc.id,
+        ...doc.data()
+      };
+    }
+    
     return null;
   } catch (error) {
-    console.error("Error finding user by email:", error);
-    throw error;
+    console.error('Error getting user document:', error);
+    throw new Error('Failed to get user document');
   }
-};
+}
+
+// Find a user document by email address
+export async function findUserByEmail(email) {
+  if (!email) {
+    throw new Error('Email is required');
+  }
+
+  try {
+    // First, try direct lookup by email as document ID
+    const directRef = doc(db, 'users', email);
+    const directDoc = await getDoc(directRef);
+    
+    if (directDoc.exists()) {
+      return {
+        id: email,
+        ...directDoc.data()
+      };
+    }
+    
+    // Then try query by email field
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
+    
+    if (!querySnapshot.empty) {
+      const userDoc = querySnapshot.docs[0];
+      return {
+        id: userDoc.id,
+        ...userDoc.data()
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error finding user by email:', error);
+    throw new Error('Failed to find user by email');
+  }
+}
 
 // Fetch all users from Firestore
 export const fetchAllUsers = async () => {
@@ -277,30 +292,82 @@ export const deleteUser = async (userId) => {
   }
 };
 
-export const checkUserAdmin = async (user) => {
-  try {
-    if (!user) throw new Error("User object or ID is required");
-    
-    const userId = getUserId(user);
-    if (!userId) throw new Error("Could not determine user ID");
-    
-    console.log("Checking admin status for user ID:", userId);
-    const userRef = doc(db, "users", userId);
-    const userDoc = await getDoc(userRef);
-    
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      console.log("User data from Firestore:", userData);
-      return userData.isAdmin === true;
-    } 
-    
-    console.log("No user document found for ID:", userId);
-    return false;
-  } catch (error) {
-    console.error("Error checking admin status:", error);
-    return false;
+export async function checkUserAdmin(user) {
+  if (!user) {
+    throw new Error('User object is required');
   }
-};
+
+  try {
+    console.log("Checking admin status for user:", user.email || user.uid);
+    
+    // Check custom claims first
+    let hasAdminClaim = false;
+    try {
+      const idTokenResult = await user.getIdTokenResult(true);
+      hasAdminClaim = idTokenResult.claims.admin === true;
+      console.log("Admin claim from token:", hasAdminClaim);
+    } catch (claimError) {
+      console.error("Error checking admin claim:", claimError);
+      // Continue checking Firestore
+    }
+
+    // Check Firestore by email
+    let hasAdminDoc = false;
+    
+    if (user.email) {
+      try {
+        // Try by email as document ID
+        const emailDoc = await getDoc(doc(db, 'users', user.email));
+        if (emailDoc.exists()) {
+          hasAdminDoc = emailDoc.data().isAdmin === true;
+          console.log("Admin status by email document:", hasAdminDoc);
+        }
+      } catch (emailError) {
+        console.error("Error checking admin by email document:", emailError);
+      }
+    }
+    
+    // If not found, try by UID
+    if (!hasAdminDoc) {
+      try {
+        const uidDoc = await getDoc(doc(db, 'users', user.uid));
+        if (uidDoc.exists()) {
+          hasAdminDoc = uidDoc.data().isAdmin === true;
+          console.log("Admin status by UID document:", hasAdminDoc);
+        }
+      } catch (uidError) {
+        console.error("Error checking admin by UID document:", uidError);
+      }
+    }
+    
+    // If still not found, try query by email field
+    if (!hasAdminDoc && user.email) {
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', user.email));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          hasAdminDoc = userDoc.data().isAdmin === true;
+          console.log("Admin status by email query:", hasAdminDoc);
+        }
+      } catch (queryError) {
+        console.error("Error checking admin by email query:", queryError);
+      }
+    }
+
+    // For now we'll only require one of the two checks to be true
+    // This allows admins to access even if one side is not yet updated
+    const isAdmin = hasAdminClaim || hasAdminDoc;
+    console.log("Final admin status:", isAdmin);
+    
+    return isAdmin;
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    throw new Error('Failed to verify admin status: ' + error.message);
+  }
+}
 
 // Add a course to Firestore
 export const addCourse = async (course) => {
@@ -376,56 +443,67 @@ export const removeAdminRole = async (email) => {
 };
 
 // Sync user data from an existing account with the same email
-export const syncUserData = async (currentUser, existingUserData) => {
-  try {
-    if (!currentUser || !existingUserData) {
-      throw new Error("Both current user and existing user data are required");
-    }
+export async function syncUserData(user, existingUserData) {
+  if (!user || !existingUserData) {
+    throw new Error('User and existing user data are required');
+  }
 
-    console.log("Syncing user data for:", currentUser.email);
+  try {
+    // Create a document for the current user with data from both sources
+    const userRef = doc(db, 'users', user.uid);
     
-    // We'll only update the Firestore document for the current user
-    // without disturbing any existing documents or Firebase Auth accounts
-    
-    // Create document data for the current user with synced profile data
-    const userData = {
-      uid: currentUser.uid,
-      email: currentUser.email || '',
-      displayName: currentUser.displayName || existingUserData.displayName || '',
-      fullname: existingUserData.fullname || currentUser.displayName || '',
-      // Copy any existing profile data
+    // Get any important data from the existing user document
+    const updateData = {
+      uid: user.uid,
+      email: user.email || existingUserData.email || '',
+      displayName: user.displayName || existingUserData.displayName || '',
+      fullname: existingUserData.fullname || user.displayName || '',
       firstName: existingUserData.firstName || '',
       lastName: existingUserData.lastName || '',
       phoneNumber: existingUserData.phoneNumber || '',
       title: existingUserData.title || '',
-      // Keep admin status if it exists, otherwise set to false
-      isAdmin: existingUserData.isAdmin === true ? true : false,
-      // Keep profile completion status
+      // Don't copy over admin status - preserve as false for security
+      isAdmin: false,
+      // Keep profile completion status from existing data or default to false
       profileCompleted: existingUserData.profileCompleted === true,
-      // Keep user preferences
-      receiveOffers: existingUserData.receiveOffers === true,
       // Update timestamps
-      createdAt: existingUserData.createdAt || new Date(),
+      updatedAt: serverTimestamp(),
+      createdAt: existingUserData.createdAt || serverTimestamp(),
       lastLogin: new Date(),
-      // Track authentication methods - we're not modifying auth providers here
-      // just preserving the current authentication method
-      authProviders: ['social']
+      // Add social to auth providers
+      authProviders: existingUserData.authProviders && existingUserData.authProviders.includes('social')
+        ? existingUserData.authProviders
+        : [...(existingUserData.authProviders || []), 'social']
     };
+
+    // Check if the document exists first
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists()) {
+      // Update existing document
+      await updateDoc(userRef, updateData);
+    } else {
+      // Create new document
+      await setDoc(userRef, updateData);
+    }
     
-    // Update document for the current user with synced data
-    console.log("Updating user document with synced data for:", currentUser.uid);
-    const userRef = doc(db, 'users', currentUser.uid);
-    await setDoc(userRef, userData);
+    // Also ensure we have a document with email as ID for easier lookups
+    if (user.email) {
+      const emailRef = doc(db, 'users', user.email);
+      await setDoc(emailRef, {
+        ...updateData,
+        referenceUid: user.uid
+      }, { merge: true });
+    }
     
     return {
-      id: currentUser.uid,
-      ...userData
+      id: user.uid,
+      ...updateData
     };
   } catch (error) {
-    console.error("Error syncing user data:", error);
-    throw error;
+    console.error('Error syncing user data:', error);
+    throw new Error('Failed to sync user data');
   }
-};
+}
 
 // For backward compatibility
 export const mergeUserAccounts = syncUserData;
@@ -514,52 +592,38 @@ export const updateInquiryStatus = async (inquiryId, status) => {
 };
 
 // Update user profile
-export const updateUserProfile = async (uid, updates) => {
+export async function updateUserProfile(userId, updates) {
+  if (!userId) {
+    throw new Error('User ID is required');
+  }
+
+  if (!updates || typeof updates !== 'object') {
+    throw new Error('Invalid update data');
+  }
+
   try {
-    if (!uid) {
-      throw new Error("User ID is required");
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+
+    if (!userDoc.exists()) {
+      throw new Error('User not found');
     }
-    
-    console.log("Updating user profile in firebaseUtils:", uid, updates);
-    
-    // Reference to the user document
-    const userRef = doc(db, "users", uid);
-    
-    // Check if document exists
-    const docSnap = await getDoc(userRef);
-    
-    if (!docSnap.exists()) {
-      console.warn("User document doesn't exist, creating new one");
-      
-      // Ensure admin status is explicitly set to false for new documents
-      const userData = {
-        uid: uid,
-        createdAt: new Date(),
-        lastLogin: new Date(),
-        isAdmin: false, // Explicitly set isAdmin to false
-        ...updates
-      };
-      
-      await setDoc(userRef, userData);
-      return true;
+
+    // Prevent direct modification of admin status
+    if ('isAdmin' in updates) {
+      throw new Error('Cannot modify admin status directly');
     }
-    
-    // Get current data
-    const currentData = docSnap.data();
-    
-    // Don't allow overriding isAdmin status through regular profile updates
-    if (updates.hasOwnProperty('isAdmin') && updates.isAdmin !== currentData.isAdmin) {
-      console.warn("Attempting to change isAdmin status through regular profile update - ignoring");
-      delete updates.isAdmin;
-    }
-    
-    // Update the document
-    await updateDoc(userRef, updates);
-    
-    console.log("User profile updated successfully");
+
+    // Add timestamp for the update
+    const updateData = {
+      ...updates,
+      updatedAt: serverTimestamp()
+    };
+
+    await updateDoc(userRef, updateData);
     return true;
   } catch (error) {
-    console.error("Error updating user profile:", error);
-    throw error;
+    console.error('Error updating user profile:', error);
+    throw new Error('Failed to update user profile');
   }
-};
+}

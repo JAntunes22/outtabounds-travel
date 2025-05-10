@@ -2,17 +2,39 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Files are accessible to all users for reading
-    match /{allPaths=**} {
-      allow read: if true;
-      // Only admin users can upload, update, or delete files
-      allow write, create, delete: if request.auth.token.admin == true;
+    // Function to check if the current user is an admin
+    function isAdmin() {
+      return request.auth != null && 
+        firestore.get(/databases/(default)/documents/users/$(request.auth.token.email)).data.isAdmin == true;
     }
     
-    // Allow users to upload their profile images
+    // Function to check if the user is accessing their own data
+    function isOwner(userId) {
+      return request.auth != null && request.auth.token.email == userId;
+    }
+    
+    // Default rules for all files
+    match /{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+    
+    // Rules for user profile images
     match /users/{userId}/profile.jpg {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow write: if isOwner(userId);
+    }
+    
+    // Rules for course images
+    match /courses/{courseId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+    
+    // Rules for experience images
+    match /experiences/{experienceId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
     }
   }
 } 

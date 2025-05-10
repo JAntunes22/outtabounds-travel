@@ -2,206 +2,188 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp();
 
+// Rate limiting for admin creation
+const adminCreationLimiter = {
+  attempts: new Map(),
+  maxAttempts: 3,
+  windowMs: 24 * 60 * 60 * 1000, // 24 hours
+};
+
 // Function to add admin role to a user
 exports.addAdminRole = functions.https.onCall(async (data, context) => {
-  // Check if the request is made by an admin
+  // Check if the requester is authenticated and is an admin
   if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'Only authenticated users can add admin roles'
-    );
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
   }
+
+  const requesterEmail = context.auth.token.email;
+  const requesterDoc = await admin.firestore().collection('users').doc(requesterEmail).get();
   
-  // Verify that the caller is already an admin
-  const callerEmail = context.auth.token.email || '';
-  
-  // Check admin status in the database - using email as document ID
-  const callerSnapshot = await admin.firestore().collection('users').doc(callerEmail).get();
-  
-  if (!callerSnapshot.exists || !callerSnapshot.data().isAdmin) {
-    throw new functions.https.HttpsError(
-      'permission-denied',
-      'Only admins can add other admins'
-    );
+  if (!requesterDoc.exists || !requesterDoc.data().isAdmin) {
+    throw new functions.https.HttpsError('permission-denied', 'Only admins can add other admins');
   }
-  
-  // Get the user by email
+
   try {
     const { email } = data;
-    
     if (!email) {
-      throw new functions.https.HttpsError(
-        'invalid-argument',
-        'Email is required'
-      );
+      throw new functions.https.HttpsError('invalid-argument', 'Email is required');
     }
+
+    // Check if target user exists
+    const userRecord = await admin.auth().getUserByEmail(email);
     
-    // First check if the user document exists
+    // Check if user is already an admin
     const userDoc = await admin.firestore().collection('users').doc(email).get();
-    
-    if (!userDoc.exists) {
-      throw new functions.https.HttpsError(
-        'not-found',
-        `User with email ${email} does not have a profile. They must sign in first.`
-      );
+    if (userDoc.exists && userDoc.data().isAdmin) {
+      throw new functions.https.HttpsError('already-exists', 'User is already an admin');
     }
+
+    // Set admin custom claim
+    await admin.auth().setCustomUserClaims(userRecord.uid, { admin: true });
     
-    // Update the user document in Firestore (using email as document ID)
-    await admin.firestore().collection('users').doc(email).update({
+    // Update Firestore document
+    await admin.firestore().collection('users').doc(email).set({
       isAdmin: true,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    // Log the admin addition
+    await admin.firestore().collection('adminLogs').add({
+      action: 'add_admin',
+      targetEmail: email,
+      createdBy: requesterEmail,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
     });
-    
-    // Also set the custom claim for backward compatibility
-    try {
-      const user = await admin.auth().getUserByEmail(email);
-      await admin.auth().setCustomUserClaims(user.uid, {
-        admin: true
-      });
-    } catch (authError) {
-      console.error('Error setting custom claims:', authError);
-      // Continue even if custom claim fails
-    }
-    
-    // Return the updated user
-    return {
-      message: `Success! ${email} has been made an admin.`
-    };
+
+    return { success: true, message: 'Admin role assigned successfully' };
   } catch (error) {
-    throw new functions.https.HttpsError(
-      'internal',
-      `Error adding admin role: ${error.message}`
-    );
+    console.error('Error adding admin role:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to add admin role');
   }
 });
 
 // Function to remove admin role from a user
 exports.removeAdminRole = functions.https.onCall(async (data, context) => {
-  // Check if the request is made by an admin
+  // Check if the requester is authenticated and is an admin
   if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'Only authenticated users can remove admin roles'
-    );
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
   }
+
+  const requesterEmail = context.auth.token.email;
+  const requesterDoc = await admin.firestore().collection('users').doc(requesterEmail).get();
   
-  // Verify that the caller is already an admin
-  const callerEmail = context.auth.token.email || '';
-  
-  // Check admin status in the database - using email as document ID
-  const callerSnapshot = await admin.firestore().collection('users').doc(callerEmail).get();
-  
-  if (!callerSnapshot.exists || !callerSnapshot.data().isAdmin) {
-    throw new functions.https.HttpsError(
-      'permission-denied',
-      'Only admins can remove admin privileges'
-    );
+  if (!requesterDoc.exists || !requesterDoc.data().isAdmin) {
+    throw new functions.https.HttpsError('permission-denied', 'Only admins can remove admin roles');
   }
-  
-  // Get the user by email
+
   try {
     const { email } = data;
-    
     if (!email) {
-      throw new functions.https.HttpsError(
-        'invalid-argument',
-        'Email is required'
-      );
+      throw new functions.https.HttpsError('invalid-argument', 'Email is required');
     }
+
+    // Prevent removing the last admin
+    const adminCount = await admin.firestore().collection('users')
+      .where('isAdmin', '==', true)
+      .count()
+      .get();
     
-    // Make sure you're not removing your own admin privileges
-    if (email === callerEmail) {
-      throw new functions.https.HttpsError(
-        'failed-precondition',
-        'You cannot remove your own admin privileges'
-      );
+    if (adminCount.data().count <= 1) {
+      throw new functions.https.HttpsError('failed-precondition', 'Cannot remove the last admin');
     }
+
+    // Check if target user exists
+    const userRecord = await admin.auth().getUserByEmail(email);
     
-    // First check if the user document exists
+    // Check if user is actually an admin
     const userDoc = await admin.firestore().collection('users').doc(email).get();
-    
-    if (!userDoc.exists) {
-      throw new functions.https.HttpsError(
-        'not-found',
-        `User with email ${email} does not have a profile.`
-      );
+    if (!userDoc.exists || !userDoc.data().isAdmin) {
+      throw new functions.https.HttpsError('not-found', 'User is not an admin');
     }
+
+    // Remove admin custom claim
+    await admin.auth().setCustomUserClaims(userRecord.uid, { admin: false });
     
-    // Update the user document in Firestore (using email as document ID)
-    await admin.firestore().collection('users').doc(email).update({
+    // Update Firestore document
+    await admin.firestore().collection('users').doc(email).set({
       isAdmin: false,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    // Log the admin removal
+    await admin.firestore().collection('adminLogs').add({
+      action: 'remove_admin',
+      targetEmail: email,
+      createdBy: requesterEmail,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
     });
-    
-    // Also update the custom claim for backward compatibility
-    try {
-      const user = await admin.auth().getUserByEmail(email);
-      await admin.auth().setCustomUserClaims(user.uid, {
-        admin: false
-      });
-    } catch (authError) {
-      console.error('Error updating custom claims:', authError);
-      // Continue even if custom claim fails
-    }
-    
-    // Return success
-    return {
-      message: `Success! Admin privileges removed from ${email}.`
-    };
+
+    return { success: true, message: 'Admin role removed successfully' };
   } catch (error) {
-    throw new functions.https.HttpsError(
-      'internal',
-      `Error removing admin role: ${error.message}`
-    );
+    console.error('Error removing admin role:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to remove admin role');
   }
 });
 
 // Create initial admin - This function is for bootstrapping the first admin
 // Use with caution and delete or disable after creating the first admin
-exports.createInitialAdmin = functions.https.onRequest(async (req, res) => {
-  // This should be secured with an API key or other authentication in production
-  const API_KEY = functions.config().admin?.key || 'secure-api-key';
+exports.createInitialAdmin = functions.https.onCall(async (data, context) => {
+  // Check API key
+  const apiKey = data.apiKey;
+  if (!apiKey || apiKey !== process.env.ADMIN_CREATION_API_KEY) {
+    throw new functions.https.HttpsError('permission-denied', 'Invalid API key');
+  }
+
+  // Rate limiting check
+  const ip = context.rawRequest.ip;
+  const now = Date.now();
+  const userAttempts = adminCreationLimiter.attempts.get(ip) || [];
+  const recentAttempts = userAttempts.filter(time => now - time < adminCreationLimiter.windowMs);
   
-  if (req.query.key !== API_KEY) {
-    res.status(401).send('Unauthorized');
-    return;
+  if (recentAttempts.length >= adminCreationLimiter.maxAttempts) {
+    throw new functions.https.HttpsError('resource-exhausted', 'Too many attempts. Please try again later.');
   }
   
+  // Add current attempt
+  recentAttempts.push(now);
+  adminCreationLimiter.attempts.set(ip, recentAttempts);
+
   try {
-    const email = req.query.email;
-    
+    const { email } = data;
     if (!email) {
-      res.status(400).send('Email parameter is required');
-      return;
+      throw new functions.https.HttpsError('invalid-argument', 'Email is required');
     }
+
+    // Check if user exists
+    const userRecord = await admin.auth().getUserByEmail(email);
     
-    // Check if user exists in Authentication
-    try {
-      const user = await admin.auth().getUserByEmail(email);
-      
-      // Update user document in Firestore (using email as document ID)
-      await admin.firestore().collection('users').doc(email).set({
-        email: email,
-        displayName: user.displayName || '',
-        isAdmin: true,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-      
-      // Also set admin claim for backward compatibility
-      await admin.auth().setCustomUserClaims(user.uid, {
-        admin: true
-      });
-      
-      res.status(200).send(`Success! ${email} has been made an admin.`);
-    } catch (error) {
-      if (error.code === 'auth/user-not-found') {
-        res.status(404).send(`User with email ${email} not found. They must sign up first.`);
-      } else {
-        res.status(500).send(`Error: ${error.message}`);
-      }
+    // Check if user is already an admin
+    const userDoc = await admin.firestore().collection('users').doc(email).get();
+    if (userDoc.exists && userDoc.data().isAdmin) {
+      throw new functions.https.HttpsError('already-exists', 'User is already an admin');
     }
+
+    // Set admin custom claim
+    await admin.auth().setCustomUserClaims(userRecord.uid, { admin: true });
+    
+    // Update Firestore document
+    await admin.firestore().collection('users').doc(email).set({
+      isAdmin: true,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    // Log the admin creation
+    await admin.firestore().collection('adminLogs').add({
+      action: 'create_admin',
+      targetEmail: email,
+      createdBy: 'system',
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { success: true, message: 'Admin role assigned successfully' };
   } catch (error) {
-    res.status(500).send(`Server error: ${error.message}`);
+    console.error('Error creating admin:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to create admin');
   }
 });
 

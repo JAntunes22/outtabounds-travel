@@ -1,104 +1,128 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { addAdminRole, removeAdminRole } from '../../utils/firebaseUtils';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../../utils/firebaseConfig';
 import './Admin.css';
 
 export default function AdminSettings() {
   const { currentUser, refreshAdminStatus, userFullname } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ text: '', type: '' });
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
   const emailRef = useRef();
   const [adminToRemove, setAdminToRemove] = useState('');
   const [showModal, setShowModal] = useState(false);
   
   useEffect(() => {
-    // Force refresh admin status when component mounts
-    const checkAdmin = async () => {
-      await refreshAdminStatus();
-    };
-    
-    checkAdmin();
-  }, [refreshAdminStatus]);
+    fetchUsers();
+  }, []);
   
-  async function handleAddAdmin(e) {
-    e.preventDefault();
-    setLoading(true);
-    setMessage({ text: '', type: '' });
-    
+  const fetchUsers = async () => {
     try {
-      const email = emailRef.current.value;
-      
-      if (!email) {
-        throw new Error('Email is required');
-      }
-      
-      const result = await addAdminRole(email);
-      setMessage({
-        text: result.message || `Success! ${email} has been made an admin.`,
-        type: 'success'
-      });
-      
-      // Clear the form
-      emailRef.current.value = '';
+      setError(null);
+      setLoading(true);
+      const usersRef = collection(db, 'users');
+      const snapshot = await getDocs(usersRef);
+      const usersList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setUsers(usersList);
     } catch (error) {
-      setMessage({
-        text: error.message || 'Failed to add admin role',
-        type: 'error'
-      });
+      console.error('Error fetching users:', error);
+      setError('Failed to fetch users');
     } finally {
       setLoading(false);
     }
-  }
+  };
+  
+  const handleAddAdmin = async (email) => {
+    try {
+      setError(null);
+      setSuccess(null);
+      console.log("Adding admin role to:", email);
+      
+      const result = await addAdminRole(email);
+      console.log("Admin role added result:", result);
+      
+      setSuccess(`Successfully added admin role to ${email}`);
+      
+      // Force refresh the current user's admin status as well
+      try {
+        await refreshAdminStatus();
+      } catch (refreshError) {
+        console.error("Error refreshing admin status:", refreshError);
+      }
+      
+      await fetchUsers(); // Refresh the user list
+    } catch (error) {
+      console.error('Error adding admin role:', error);
+      setError(error.message || 'Failed to add admin role');
+    }
+  };
+  
+  const handleRemoveAdmin = async (email) => {
+    try {
+      setError(null);
+      setSuccess(null);
+      console.log("Removing admin role from:", email);
+      
+      const result = await removeAdminRole(email);
+      console.log("Admin role removed result:", result);
+      
+      setSuccess(`Successfully removed admin role from ${email}`);
+      
+      // Force refresh the current user's admin status as well
+      try {
+        await refreshAdminStatus();
+      } catch (refreshError) {
+        console.error("Error refreshing admin status:", refreshError);
+      }
+      
+      await fetchUsers(); // Refresh the user list
+    } catch (error) {
+      console.error('Error removing admin role:', error);
+      setError(error.message || 'Failed to remove admin role');
+    }
+  };
   
   function confirmRemoveAdmin(email) {
     setAdminToRemove(email);
     setShowModal(true);
   }
   
-  async function handleRemoveAdmin() {
+  async function handleRefreshAdminStatus() {
     setLoading(true);
-    setMessage({ text: '', type: '' });
+    setError(null);
+    setSuccess(null);
     
     try {
-      const result = await removeAdminRole(adminToRemove);
-      setMessage({
-        text: result.message || `Admin privileges removed from ${adminToRemove}.`,
-        type: 'success'
-      });
-      
-      setShowModal(false);
-      setAdminToRemove('');
+      const isAdmin = await refreshAdminStatus();
+      if (isAdmin) {
+        setSuccess('Admin status confirmed successfully!');
+      } else {
+        setError('You do not have admin privileges.');
+      }
     } catch (error) {
-      setMessage({
-        text: error.message || 'Failed to remove admin role',
-        type: 'error'
-      });
-      setShowModal(false);
+      setError('Failed to refresh admin status: ' + error.message);
     } finally {
       setLoading(false);
     }
   }
-  
-  async function handleRefreshAdminStatus() {
-    setLoading(true);
-    setMessage({ text: '', type: '' });
-    
-    try {
-      const isAdmin = await refreshAdminStatus();
-      setMessage({
-        text: isAdmin 
-          ? 'Admin status confirmed successfully!' 
-          : 'You do not have admin privileges.',
-        type: isAdmin ? 'success' : 'error'
-      });
-    } catch (error) {
-      setMessage({
-        text: 'Failed to refresh admin status',
-        type: 'error'
-      });
-    } finally {
-      setLoading(false);
-    }
+
+  if (loading) {
+    return <div className="text-center p-4">Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <strong className="font-bold">Error: </strong>
+        <span className="block sm:inline">{error}</span>
+      </div>
+    );
   }
 
   return (
@@ -108,9 +132,9 @@ export default function AdminSettings() {
         <p>Welcome, {(userFullname || currentUser?.displayName || currentUser?.email).split(' ')[0]}</p>
       </div>
       
-      {message.text && (
-        <div className={`auth-${message.type === 'error' ? 'error' : 'success'}`} style={{ marginBottom: '20px' }}>
-          {message.text}
+      {success && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <span className="block sm:inline">{success}</span>
         </div>
       )}
       
@@ -210,7 +234,7 @@ export default function AdminSettings() {
               <button 
                 className="admin-action-btn" 
                 style={{ backgroundColor: '#f44336' }}
-                onClick={handleRemoveAdmin}
+                onClick={() => handleRemoveAdmin(adminToRemove)}
                 disabled={loading}
               >
                 {loading ? 'Processing...' : 'Remove Admin'}
