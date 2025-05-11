@@ -24,6 +24,7 @@ import BookingDetails from "./pages/BookingDetails";
 import TravelerDetails from "./pages/TravelerDetails";
 import ReviewInquiry from "./pages/ReviewInquiry";
 import Profile from "./pages/Profile";
+import Packs from "./pages/Packs";
 
 // Auth Components
 import MultiStepSignup from './components/auth/MultiStepSignup';
@@ -39,6 +40,8 @@ import CourseForm from './components/admin/CourseForm';
 import AdminSettings from './components/admin/AdminSettings';
 import UserList from './components/admin/UserList';
 import InquiriesList from './components/admin/InquiriesList';
+import PackList from './components/admin/PackList';
+import PackForm from './components/admin/PackForm';
 
 // Import the admin components from pages
 import UserManagement from './pages/admin/UserManagement';
@@ -60,6 +63,7 @@ const Layout = () => {
           <Route path="/experiences" element={<Experiences />} />
           <Route path="/houses" element={<Houses />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/packs" element={<Packs />} />
           
           {/* Pack & Booking Routes */}
           <Route path="/your-pack" element={<YourPack />} />
@@ -91,6 +95,11 @@ const Layout = () => {
               <Route path="courses" element={<CourseList />} />
               <Route path="courses/new" element={<CourseForm />} />
               <Route path="courses/edit/:id" element={<CourseForm />} />
+              
+              {/* Packs Management */}
+              <Route path="packs" element={<PackList />} />
+              <Route path="packs/new" element={<PackForm />} />
+              <Route path="packs/edit/:id" element={<PackForm />} />
               
               {/* User Management */}
               <Route path="users" element={<UserList />} />

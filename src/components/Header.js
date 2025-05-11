@@ -319,6 +319,14 @@ export default function Header() {
             </li>
             <li>
               <Link 
+                to="/packs" 
+                onClick={handleMenuLinkClick}
+              >
+                Packs
+              </Link>
+            </li>
+            <li>
+              <Link 
                 to="/courses" 
                 onClick={handleMenuLinkClick}
               >

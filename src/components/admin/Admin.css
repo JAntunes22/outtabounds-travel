@@ -1201,4 +1201,37 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Styles for Pack Management */
+.admin-selection-container {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 15px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.admin-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.admin-checkbox-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.admin-checkbox-item label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: normal;
+}
+
+.admin-checkbox-item input[type="checkbox"] {
+  margin-right: 8px;
 } 

@@ -84,6 +84,30 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
+    // Rules for packs collection
+    match /packs/{packId} {
+      // Anyone can read packs (for marketing purposes)
+      allow read: if true;
+      // Only admins can write to packs
+      allow write: if isAdmin();
+    }
+    
+    // Rules for accommodations collection
+    match /accommodations/{accommodationId} {
+      // Anyone can read accommodations (for marketing purposes)
+      allow read: if true;
+      // Only admins can write to accommodations
+      allow write: if isAdmin();
+    }
+    
+    // Rules for services collection
+    match /services/{serviceId} {
+      // Anyone can read services (for marketing purposes)
+      allow read: if true;
+      // Only admins can write to services
+      allow write: if isAdmin();
+    }
+    
     // Rules for adminLogs collection
     match /adminLogs/{logId} {
       // Only admins can read admin logs
