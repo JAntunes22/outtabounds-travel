@@ -22,16 +22,17 @@ const getUserId = (user) => {
     return user.uid;
   }
   
-  // Fallback to other identifiers
+  // Fallback to id if uid is not available
   if (user.id) {
     console.log("Using user.id:", user.id);
     return user.id;
   }
   
-  if (user.email) {
-    console.log("Using user.email:", user.email);
-    return user.email;
-  }
+  // Don't use email as document ID anymore
+  // if (user.email) {
+  //   console.log("Using user.email:", user.email);
+  //   return user.email;
+  // }
   
   console.log("Could not determine user ID");
   return null;
@@ -684,9 +685,16 @@ export async function debugUserDocuments(user) {
     throw new Error('User object is required');
   }
   
+  // Extract email from provider data if not available in the user object
+  let email = user.email;
+  if (!email && user.providerData && user.providerData.length > 0) {
+    email = user.providerData[0].email;
+    console.log("debugUserDocuments: Found email in provider data:", email);
+  }
+  
   const results = {
     uid: user.uid,
-    email: user.email,
+    email: email,
     displayName: user.displayName,
     uidDocExists: false,
     emailDocExists: false,
@@ -694,7 +702,7 @@ export async function debugUserDocuments(user) {
     createdDocuments: []
   };
   
-  console.log("debugUserDocuments: Starting for user:", user.uid, user.email);
+  console.log("debugUserDocuments: Starting for user:", user.uid, email);
   
   try {
     // Check for document with UID as ID
@@ -709,9 +717,9 @@ export async function debugUserDocuments(user) {
     }
     
     // Check for document with email as ID
-    if (user.email) {
+    if (email) {
       try {
-        const emailRef = doc(db, 'users', user.email);
+        const emailRef = doc(db, 'users', email);
         const emailDoc = await getDoc(emailRef);
         results.emailDocExists = emailDoc.exists();
         results.emailDocData = emailDoc.exists() ? emailDoc.data() : null;
@@ -722,10 +730,10 @@ export async function debugUserDocuments(user) {
     }
     
     // Check for documents with email field matching
-    if (user.email) {
+    if (email) {
       try {
         const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('email', '==', user.email));
+        const q = query(usersRef, where('email', '==', email));
         const querySnapshot = await getDocs(q);
         results.emailQueryExists = !querySnapshot.empty;
         results.emailQueryDocs = [];
@@ -748,13 +756,13 @@ export async function debugUserDocuments(user) {
     
     // Create documents if missing
     const needsUidDoc = !results.uidDocExists;
-    const needsEmailDoc = user.email && !results.emailDocExists;
+    const needsEmailDoc = email && !results.emailDocExists;
     
     if (needsUidDoc || needsEmailDoc) {
       // Prepare user data
       const newUserData = {
         uid: user.uid,
-        email: user.email || '',
+        email: email || '', // Use the potentially extracted email
         displayName: user.displayName || '',
         fullname: user.displayName || '',
         createdAt: serverTimestamp(),
@@ -763,9 +771,11 @@ export async function debugUserDocuments(user) {
         profileCompleted: false,
         isAdmin: false,
         authProviders: user.providerData ? 
-          user.providerData.map(provider => 
-            provider.providerId.includes('google.com') ? 'social' : 'email'
-          ) : ['email']
+          user.providerData.map(provider => {
+            if (provider.providerId.includes('google.com')) return 'social';
+            if (provider.providerId.includes('apple.com')) return 'social';
+            return 'email';
+          }) : ['email']
       };
       
       // Create UID document if needed
@@ -784,13 +794,13 @@ export async function debugUserDocuments(user) {
       // Create email document if needed
       if (needsEmailDoc) {
         try {
-          console.log("debugUserDocuments: Creating document with email as ID:", user.email);
-          const emailRef = doc(db, 'users', user.email);
+          console.log("debugUserDocuments: Creating document with email as ID:", email);
+          const emailRef = doc(db, 'users', email);
           await setDoc(emailRef, {
             ...newUserData,
             referenceUid: user.uid
           });
-          results.createdDocuments.push(`Email document: ${user.email}`);
+          results.createdDocuments.push(`Email document: ${email}`);
           console.log("debugUserDocuments: Created email document successfully");
         } catch (emailError) {
           console.error("debugUserDocuments: Error creating email document:", emailError);

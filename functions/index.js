@@ -220,16 +220,43 @@ exports.createUserProfile = functions.https.onCall(async (data, context) => {
 exports.createUserOnSignup = functions.auth.user().onCreate(async (user) => {
   try {
     const userId = user.uid;
-    const email = user.email || '';
+    let email = user.email || '';
     
-    console.log(`Processing new user signup: ${userId} with email ${email}`);
+    console.log(`Processing new user signup: ${userId} with initial email ${email}`);
     
     // Determine auth provider for the new user
     let provider = 'email';
     if (user.providerData && user.providerData.length > 0) {
+      // Check all provider data for an email if we don't have one
+      if (!email) {
+        for (const providerData of user.providerData) {
+          if (providerData.email) {
+            email = providerData.email;
+            console.log(`Found email in provider data: ${email}`);
+            break;
+          }
+        }
+      }
+      
+      // Determine the provider type
       const providerId = user.providerData[0].providerId;
       if (providerId.includes('google.com') || providerId.includes('apple.com')) {
         provider = 'social';
+      }
+    }
+    
+    // If we found an email but it's not set in the user record,
+    // update the authentication record to include the email
+    if (email && !user.email) {
+      try {
+        await admin.auth().updateUser(userId, {
+          email: email,
+          emailVerified: true // Since we're getting this from a social provider
+        });
+        console.log(`Updated authentication record with email: ${email}`);
+      } catch (authUpdateError) {
+        console.error('Error updating authentication record:', authUpdateError);
+        // Continue with creating the document even if auth update fails
       }
     }
     
@@ -298,9 +325,18 @@ exports.createUserOnSignup = functions.auth.user().onCreate(async (user) => {
       }
     }
     
-    // Create user document with the final data
+    // Always create the user document with UID as the document ID, never use email
     await admin.firestore().collection('users').doc(userId).set(userData);
-    console.log(`User document created for ${userId}`);
+    console.log(`User document created for ${userId} with uid field ${userId} and email ${email}`);
+    
+    // Also create a reference document with email for easy lookups, if email exists
+    if (email) {
+      await admin.firestore().collection('users').doc(email).set({
+        ...userData,
+        referenceUid: userId
+      });
+      console.log(`Reference document created with email ${email}`);
+    }
     
     return null;
   } catch (error) {
@@ -494,5 +530,69 @@ exports.linkUserAccounts = functions.https.onCall(async (data, context) => {
   } catch (error) {
     console.error('Error syncing profile data:', error);
     throw new functions.https.HttpsError('internal', `Error syncing profile data: ${error.message}`);
+  }
+});
+
+// Function to update user email in Authentication
+exports.updateUserEmail = functions.https.onCall(async (data, context) => {
+  try {
+    // Make sure the user is authenticated
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        'unauthenticated',
+        'You must be logged in to update email'
+      );
+    }
+    
+    const { uid, email } = data;
+    
+    if (!uid || !email) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'User ID and email are required'
+      );
+    }
+    
+    // Security check: User can only update their own email
+    if (context.auth.uid !== uid) {
+      throw new functions.https.HttpsError(
+        'permission-denied',
+        'You can only update your own email'
+      );
+    }
+    
+    console.log(`Updating email for user ${uid} to ${email}`);
+    
+    // Get the current user data
+    const user = await admin.auth().getUser(uid);
+    
+    // If email is already set and matches, no need to update
+    if (user.email === email) {
+      console.log('Email already matches, no update needed');
+      return { success: true, message: 'Email already up to date' };
+    }
+    
+    // Update the email in Authentication
+    await admin.auth().updateUser(uid, {
+      email: email,
+      emailVerified: true // Since we're getting this from a social provider
+    });
+    
+    console.log(`Successfully updated email for user ${uid}`);
+    
+    // Update both UID and email documents in Firestore to ensure they have the correct email
+    const uidRef = admin.firestore().collection('users').doc(uid);
+    await uidRef.update({ email: email });
+    
+    // If there's an email document, make sure it's updated or created with the right reference
+    await admin.firestore().collection('users').doc(email).set({
+      referenceUid: uid,
+      email: email
+    }, { merge: true });
+    
+    return { success: true, message: 'Email updated successfully' };
+  } catch (error) {
+    console.error('Error updating user email:', error);
+    throw new functions.https.HttpsError('internal', error.message);
   }
 }); 

@@ -150,32 +150,67 @@ export function AuthProvider({ children }) {
       providerData: user.providerData
     }));
     
+    // Extract email from provider data if not available in the user object
+    let email = user.email;
+    if (!email && user.providerData && user.providerData.length > 0) {
+      email = user.providerData[0].email;
+      console.log("fetchUserData: Found email in provider data:", email);
+    }
+    
     try {
       // Create a new document for the user if needed
-      // We need to ensure users have documents with both UID and email as IDs
+      // We need to ensure users have documents with UID as the primary ID
       let userData = null;
       
-      // First try to get the existing document by UID or email
+      // First try to get the existing document by UID
       try {
         console.log("fetchUserData: Trying to get user document by UID:", user.uid);
-        // Try UID first
         const uidRef = doc(db, 'users', user.uid);
         const uidDoc = await getDoc(uidRef);
         
         if (uidDoc.exists()) {
           console.log("fetchUserData: Found user document by UID");
           userData = { id: user.uid, ...uidDoc.data() };
+          
+          // If the document exists but has no email and we have one, update it
+          if (userData.email === '' && email) {
+            console.log(`fetchUserData: Updating missing email in document to: ${email}`);
+            await updateDoc(uidRef, { email: email });
+            userData.email = email;
+          }
         } else {
           console.log("fetchUserData: No document found by UID");
-          // If not found by UID but we have an email, try by email
-          if (user.email) {
-            console.log("fetchUserData: Trying to get user document by email:", user.email);
-            const emailRef = doc(db, 'users', user.email);
+          
+          // If not found by UID but we have an email, try by email as a fallback
+          if (email) {
+            console.log("fetchUserData: Trying to get user document by email:", email);
+            const emailRef = doc(db, 'users', email);
             const emailDoc = await getDoc(emailRef);
             
             if (emailDoc.exists()) {
-              console.log("fetchUserData: Found user document by email");
-              userData = { id: user.email, ...emailDoc.data() };
+              console.log("fetchUserData: Found user document by email, will migrate to UID");
+              const emailData = emailDoc.data();
+              
+              // Create a new document with UID as ID using the data from email document
+              const migratedData = {
+                ...emailData,
+                uid: user.uid, // Ensure UID is correct
+                email: email,  // Ensure email is correct
+                updatedAt: serverTimestamp()
+              };
+              
+              // Create/update the document with UID as ID
+              await setDoc(doc(db, 'users', user.uid), migratedData);
+              console.log("fetchUserData: Migrated data from email ID to UID ID");
+              
+              // Update the email document to reference the UID document
+              await updateDoc(emailRef, { 
+                referenceUid: user.uid,
+                updatedAt: serverTimestamp()
+              });
+              console.log("fetchUserData: Updated email document with reference to UID");
+              
+              userData = { id: user.uid, ...migratedData };
             } else {
               console.log("fetchUserData: No document found by email either");
             }
@@ -196,7 +231,7 @@ export function AuthProvider({ children }) {
           // Prepare user data
           const newUserData = {
             uid: user.uid,
-            email: user.email || '',
+            email: email || '',
             displayName: user.displayName || '',
             fullname: user.displayName || '',
             createdAt: serverTimestamp(),
@@ -205,9 +240,11 @@ export function AuthProvider({ children }) {
             profileCompleted: false,
             isAdmin: false,
             authProviders: user.providerData ? 
-              user.providerData.map(provider => 
-                provider.providerId.includes('google.com') ? 'social' : 'email'
-              ) : ['email']
+              user.providerData.map(provider => {
+                if (provider.providerId.includes('google.com')) return 'social';
+                if (provider.providerId.includes('apple.com')) return 'social';
+                return 'email';
+              }) : ['email']
           };
           
           console.log("fetchUserData: Creating document with UID as ID:", user.uid);
@@ -217,9 +254,9 @@ export function AuthProvider({ children }) {
           console.log("fetchUserData: Successfully created document with UID");
           
           // Also create/update document with email as ID for easier lookups (if email exists)
-          if (user.email) {
-            console.log("fetchUserData: Creating document with email as ID:", user.email);
-            const emailRef = doc(db, 'users', user.email);
+          if (email) {
+            console.log("fetchUserData: Creating document with email as ID:", email);
+            const emailRef = doc(db, 'users', email);
             await setDoc(emailRef, {
               ...newUserData,
               referenceUid: user.uid
@@ -259,13 +296,17 @@ export function AuthProvider({ children }) {
           });
           console.log("fetchUserData: Updated last login on UID document");
           
-          if (user.email) {
-            const emailRef = doc(db, 'users', user.email);
-            await updateDoc(emailRef, { 
-              lastLogin: new Date(),
-              updatedAt: serverTimestamp()
-            });
-            console.log("fetchUserData: Updated last login on email document");
+          // Also update the email reference document if exists
+          if (email) {
+            const emailRef = doc(db, 'users', email);
+            const emailDoc = await getDoc(emailRef);
+            if (emailDoc.exists()) {
+              await updateDoc(emailRef, { 
+                lastLogin: new Date(),
+                updatedAt: serverTimestamp()
+              });
+              console.log("fetchUserData: Updated last login on email document");
+            }
           }
         } catch (updateError) {
           console.error("fetchUserData: Error updating last login:", updateError);
@@ -342,7 +383,16 @@ export function AuthProvider({ children }) {
         authProviders: ['email']
       };
       
-      await setDoc(doc(db, 'users', email), userDataForFirestore);
+      // Create document with UID as document ID (primary)
+      await setDoc(doc(db, 'users', userCredential.user.uid), userDataForFirestore);
+      console.log(`User document created with UID: ${userCredential.user.uid}`);
+      
+      // Also create reference document with email for easy lookups
+      await setDoc(doc(db, 'users', email), {
+        ...userDataForFirestore,
+        referenceUid: userCredential.user.uid
+      });
+      console.log(`Reference document created with email: ${email}`);
       
       setUserFullname(userDataForFirestore.fullname);
       
@@ -432,91 +482,192 @@ export function AuthProvider({ children }) {
     try {
       setError(null);
       console.log("signInWithGoogle: Starting Google sign-in process");
+      
+      // Show a loading state while the process is happening
+      setLoading(true);
+      
+      // Configure the provider to ensure email is requested
+      googleProvider.addScope('email');
+      
+      // Start the sign-in process
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-      console.log("signInWithGoogle: Sign-in successful, user:", user.uid, user.email);
+      
+      console.log("signInWithGoogle: Raw user data:", {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        providerData: user.providerData
+      });
+      
+      // Extract email - first try from the user object, then from provider data
+      let email = user.email;
+      
+      // If no email in user object, look in provider data
+      if (!email && user.providerData && user.providerData.length > 0) {
+        for (const provider of user.providerData) {
+          if (provider.email) {
+            email = provider.email;
+            console.log("signInWithGoogle: Found email in provider data:", email);
+            break;
+          }
+        }
+      }
+      
+      // If still no email, try to get it from the additional user info
+      if (!email && result.additionalUserInfo) {
+        const profile = result.additionalUserInfo.profile;
+        if (profile && profile.email) {
+          email = profile.email;
+          console.log("signInWithGoogle: Found email in additionalUserInfo:", email);
+        }
+      }
+      
+      // If we couldn't find an email, this is unusual for Google sign-in
+      if (!email) {
+        console.warn("signInWithGoogle: Warning - No email found for this user");
+        
+        // Prompt user to manually provide their email
+        const promptEmail = window.prompt("Please enter your email address to complete the sign-in process:");
+        if (promptEmail && promptEmail.includes('@')) {
+          email = promptEmail.trim();
+          console.log("signInWithGoogle: Using manually entered email:", email);
+        }
+      }
+      
+      // If we've found an email but it's not in the user record, update the Auth record
+      if (email && (!user.email || user.email !== email)) {
+        console.log(`signInWithGoogle: Need to update Auth record with email: ${email}`);
+        
+        try {
+          // Update the user profile to include the email
+          await updateProfile(user, { 
+            // Keep the existing display name if any
+            displayName: user.displayName || ''
+          });
+          
+          // Since we can't directly update the email in client-side code,
+          // we will force a token refresh and retrieve the updated user data
+          await user.getIdToken(true);
+          console.log("signInWithGoogle: Forced token refresh");
+          
+          // At this point we need to call a Cloud Function to update the email
+          // in the authentication record, but first let's create the Firestore document
+        } catch (updateError) {
+          console.error("signInWithGoogle: Error updating user profile:", updateError);
+          // Continue with what we have
+        }
+      }
+      
+      // Create or update the Firestore document
+      let userData = null;
       
       try {
-        // Ensure we get the most up-to-date token before proceeding
-        try {
-          await user.getIdToken(true);
-          console.log("signInWithGoogle: Refreshed ID token");
-        } catch (tokenError) {
-          console.error("signInWithGoogle: Error refreshing token, continuing anyway:", tokenError);
-        }
+        // Create a document with the UID and include the email
+        const userDocRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(userDocRef);
         
-        // Fetch/create user data in Firestore
-        console.log("signInWithGoogle: Fetching user data from Firestore");
-        let userData = null;
-        try {
-          userData = await fetchUserData(user);
-          console.log("signInWithGoogle: User data fetched successfully");
-        } catch (fetchError) {
-          console.error("signInWithGoogle: Error in fetchUserData:", fetchError);
+        if (docSnap.exists()) {
+          // Update existing document
+          console.log("signInWithGoogle: Updating existing user document");
+          const existingData = docSnap.data();
           
-          // Try the debug function as a fallback
-          try {
-            console.log("signInWithGoogle: Trying debug function to create user document");
-            const { debugUserDocuments } = await import('../utils/firebaseUtils');
-            const debugResults = await debugUserDocuments(user);
-            console.log("signInWithGoogle: Debug function results:", debugResults);
-            
-            // If we created any documents, try fetching again
-            if (debugResults.createdDocuments.length > 0) {
-              console.log("signInWithGoogle: Created documents, trying fetchUserData again");
-              userData = await fetchUserData(user);
-              console.log("signInWithGoogle: Second fetchUserData attempt succeeded");
-            }
-          } catch (debugError) {
-            console.error("signInWithGoogle: Debug function error:", debugError);
-            // Continue with fallback behavior
+          const updateData = { 
+            lastLogin: new Date(),
+            updatedAt: serverTimestamp(),
+            authProviders: existingData.authProviders && existingData.authProviders.includes('social') 
+              ? existingData.authProviders 
+              : [...(existingData.authProviders || []), 'social']
+          };
+          
+          // Update the email field if needed
+          if (email && (!existingData.email || existingData.email === '')) {
+            updateData.email = email;
           }
-        }
-        
-        const isNewUser = userData ? !userData.profileCompleted : true;
-        
-        // If we have the user data, update lastLogin
-        if (userData) {
-          try {
-            console.log("signInWithGoogle: Updating last login time");
-            const userRef = doc(db, 'users', user.uid);
-            await updateDoc(userRef, { 
-              lastLogin: new Date(),
-              // Ensure social provider is in authProviders
-              authProviders: userData.authProviders && userData.authProviders.includes('social') 
-                ? userData.authProviders 
-                : [...(userData.authProviders || []), 'social']
-            });
-            console.log("signInWithGoogle: Updated last login successfully");
-          } catch (updateError) {
-            console.error('signInWithGoogle: Error updating last login:', updateError);
-            // Don't throw here, just continue
-          }
+          
+          await updateDoc(userDocRef, updateData);
+          userData = { ...existingData, ...updateData, id: user.uid };
         } else {
-          console.warn("signInWithGoogle: No userData available for lastLogin update");
+          // Create new document
+          console.log("signInWithGoogle: Creating new user document");
+          const newUserData = {
+            uid: user.uid,
+            email: email || '',
+            displayName: user.displayName || '',
+            fullname: user.displayName || '',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            lastLogin: new Date(),
+            profileCompleted: false,
+            isAdmin: false,
+            authProviders: ['social']
+          };
+          
+          await setDoc(userDocRef, newUserData);
+          userData = { ...newUserData, id: user.uid };
+          
+          // Also create a reference document with email for easier lookups
+          if (email) {
+            const emailRef = doc(db, 'users', email);
+            await setDoc(emailRef, {
+              ...newUserData,
+              referenceUid: user.uid
+            });
+          }
         }
         
-        // Check admin status
-        try {
-          console.log("signInWithGoogle: Checking admin status");
-          await refreshAdminStatus();
-          console.log("signInWithGoogle: Admin status checked successfully");
-        } catch (adminError) {
-          console.error("signInWithGoogle: Error checking admin status:", adminError);
-          // Continue anyway
+        console.log("signInWithGoogle: User data saved successfully");
+        
+        // Now call our Cloud Function to ensure the email is properly set in Auth
+        if (email) {
+          try {
+            // Import the function
+            const { httpsCallable } = await import('firebase/functions');
+            const functions = getFunctions();
+            
+            // Create a function to update the user email in Auth
+            const updateUserEmail = httpsCallable(functions, 'updateUserEmail');
+            
+            // Call the function
+            await updateUserEmail({ uid: user.uid, email: email });
+            console.log("signInWithGoogle: Called updateUserEmail function");
+          } catch (fnError) {
+            console.error("signInWithGoogle: Error calling updateUserEmail function:", fnError);
+            // Continue anyway
+          }
         }
         
-        console.log("signInWithGoogle: Success, returning result with isNewUser:", isNewUser);
-        // Return whether this is a new user (for profile completion routing)
-        return { ...result, isNewUser };
-      } catch (firestoreError) {
-        console.error('signInWithGoogle: Firestore error during sign-in:', firestoreError);
-        // If there's an error with Firestore, default to requiring profile completion
-        return { ...result, isNewUser: true, error: firestoreError.message };
+      } catch (dbError) {
+        console.error("signInWithGoogle: Database error:", dbError);
+        setError("Error saving user data. Please try again.");
+        setLoading(false);
+        throw dbError;
       }
+      
+      // Update admin status
+      if (userData) {
+        setIsAdmin(userData.isAdmin === true);
+        
+        // Update fullname if available
+        if (userData.fullname) {
+          setUserFullname(userData.fullname);
+        } else if (user.displayName) {
+          setUserFullname(user.displayName);
+        }
+      }
+      
+      // Determine if this is a new user
+      const isNewUser = userData ? !userData.profileCompleted : true;
+      console.log("signInWithGoogle: Is new user:", isNewUser);
+      
+      // Finish the process
+      setLoading(false);
+      return { ...result, isNewUser };
+      
     } catch (error) {
       console.error('signInWithGoogle: Sign-in error:', error);
       setError(error.message || 'Failed to sign in with Google');
+      setLoading(false);
       throw error;
     }
   }
@@ -524,41 +675,193 @@ export function AuthProvider({ children }) {
   async function signInWithApple() {
     try {
       setError(null);
+      console.log("signInWithApple: Starting Apple sign-in process");
+      
+      // Show a loading state while the process is happening
+      setLoading(true);
+      
+      // Configure the Apple provider to ensure email is requested
+      appleProvider.addScope('email');
+      
+      // Start the sign-in process
       const result = await signInWithPopup(auth, appleProvider);
       const user = result.user;
       
-      try {
-        // Fetch/create user data in Firestore
-        const userData = await fetchUserData(user);
-        const isNewUser = userData ? !userData.profileCompleted : true;
+      console.log("signInWithApple: Raw user data:", {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        providerData: user.providerData
+      });
+      
+      // Extract email - first try from the user object, then from provider data
+      let email = user.email;
+      
+      // If no email in user object, look in provider data
+      if (!email && user.providerData && user.providerData.length > 0) {
+        for (const provider of user.providerData) {
+          if (provider.email) {
+            email = provider.email;
+            console.log("signInWithApple: Found email in provider data:", email);
+            break;
+          }
+        }
+      }
+      
+      // If still no email, try to get it from the additional user info
+      if (!email && result.additionalUserInfo) {
+        const profile = result.additionalUserInfo.profile;
+        if (profile && profile.email) {
+          email = profile.email;
+          console.log("signInWithApple: Found email in additionalUserInfo:", email);
+        }
+      }
+      
+      // With Apple authentication, sometimes email is hidden for privacy
+      if (!email) {
+        console.warn("signInWithApple: Warning - No email found for this user");
         
-        // If we have the user data, update lastLogin
-        if (userData) {
-          try {
-            const userRef = doc(db, 'users', user.uid);
-            await updateDoc(userRef, { 
-              lastLogin: new Date(),
-              // Ensure social provider is in authProviders
-              authProviders: userData.authProviders && userData.authProviders.includes('social') 
-                ? userData.authProviders 
-                : [...(userData.authProviders || []), 'social']
+        // Prompt user to manually provide their email
+        const promptEmail = window.prompt("Please enter your email address to complete the sign-in process:");
+        if (promptEmail && promptEmail.includes('@')) {
+          email = promptEmail.trim();
+          console.log("signInWithApple: Using manually entered email:", email);
+        }
+      }
+      
+      // If we've found an email but it's not in the user record, update the Auth record
+      if (email && (!user.email || user.email !== email)) {
+        console.log(`signInWithApple: Need to update Auth record with email: ${email}`);
+        
+        try {
+          // Update the user profile to include the email
+          await updateProfile(user, { 
+            // Keep the existing display name if any
+            displayName: user.displayName || ''
+          });
+          
+          // Since we can't directly update the email in client-side code,
+          // we will force a token refresh and retrieve the updated user data
+          await user.getIdToken(true);
+          console.log("signInWithApple: Forced token refresh");
+          
+          // At this point we need to call a Cloud Function to update the email
+          // in the authentication record, but first let's create the Firestore document
+        } catch (updateError) {
+          console.error("signInWithApple: Error updating user profile:", updateError);
+          // Continue with what we have
+        }
+      }
+      
+      // Create or update the Firestore document
+      let userData = null;
+      
+      try {
+        // Create a document with the UID and include the email
+        const userDocRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(userDocRef);
+        
+        if (docSnap.exists()) {
+          // Update existing document
+          console.log("signInWithApple: Updating existing user document");
+          const existingData = docSnap.data();
+          
+          const updateData = { 
+            lastLogin: new Date(),
+            updatedAt: serverTimestamp(),
+            authProviders: existingData.authProviders && existingData.authProviders.includes('social') 
+              ? existingData.authProviders 
+              : [...(existingData.authProviders || []), 'social']
+          };
+          
+          // Update the email field if needed
+          if (email && (!existingData.email || existingData.email === '')) {
+            updateData.email = email;
+          }
+          
+          await updateDoc(userDocRef, updateData);
+          userData = { ...existingData, ...updateData, id: user.uid };
+        } else {
+          // Create new document
+          console.log("signInWithApple: Creating new user document");
+          const newUserData = {
+            uid: user.uid,
+            email: email || '',
+            displayName: user.displayName || '',
+            fullname: user.displayName || '',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            lastLogin: new Date(),
+            profileCompleted: false,
+            isAdmin: false,
+            authProviders: ['social']
+          };
+          
+          await setDoc(userDocRef, newUserData);
+          userData = { ...newUserData, id: user.uid };
+          
+          // Also create a reference document with email for easier lookups
+          if (email) {
+            const emailRef = doc(db, 'users', email);
+            await setDoc(emailRef, {
+              ...newUserData,
+              referenceUid: user.uid
             });
-          } catch (updateError) {
-            console.error('Error updating last login:', updateError);
-            // Don't throw here, just continue
           }
         }
         
-        // Return whether this is a new user (for profile completion routing)
-        return { ...result, isNewUser };
-      } catch (firestoreError) {
-        console.error('Firestore error during Apple sign-in:', firestoreError);
-        // If there's an error with Firestore, default to requiring profile completion
-        return { ...result, isNewUser: true, error: firestoreError.message };
+        console.log("signInWithApple: User data saved successfully");
+        
+        // Now call our Cloud Function to ensure the email is properly set in Auth
+        if (email) {
+          try {
+            // Import the function
+            const { httpsCallable } = await import('firebase/functions');
+            const functions = getFunctions();
+            
+            // Create a function to update the user email in Auth
+            const updateUserEmail = httpsCallable(functions, 'updateUserEmail');
+            
+            // Call the function
+            await updateUserEmail({ uid: user.uid, email: email });
+            console.log("signInWithApple: Called updateUserEmail function");
+          } catch (fnError) {
+            console.error("signInWithApple: Error calling updateUserEmail function:", fnError);
+            // Continue anyway
+          }
+        }
+        
+      } catch (dbError) {
+        console.error("signInWithApple: Database error:", dbError);
+        setError("Error saving user data. Please try again.");
+        setLoading(false);
+        throw dbError;
       }
+      
+      // Update admin status
+      if (userData) {
+        setIsAdmin(userData.isAdmin === true);
+        
+        // Update fullname if available
+        if (userData.fullname) {
+          setUserFullname(userData.fullname);
+        } else if (user.displayName) {
+          setUserFullname(user.displayName);
+        }
+      }
+      
+      // Determine if this is a new user
+      const isNewUser = userData ? !userData.profileCompleted : true;
+      console.log("signInWithApple: Is new user:", isNewUser);
+      
+      // Finish the process
+      setLoading(false);
+      return { ...result, isNewUser };
+      
     } catch (error) {
-      console.error('Apple sign-in error:', error);
+      console.error('signInWithApple: Sign-in error:', error);
       setError(error.message || 'Failed to sign in with Apple');
+      setLoading(false);
       throw error;
     }
   }

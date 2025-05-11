@@ -23,7 +23,17 @@ const storage = getStorage(app);
 
 // Initialize providers
 const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('email'); // Explicitly request email
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
 const appleProvider = new OAuthProvider('apple.com');
+appleProvider.addScope('email'); // Explicitly request email
+appleProvider.setCustomParameters({
+  // Request email and full name from Apple
+  response_mode: 'form_post'
+});
 
 export { 
   app, 
