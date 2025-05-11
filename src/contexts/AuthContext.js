@@ -181,42 +181,33 @@ export function AuthProvider({ children }) {
         } else {
           console.log("fetchUserData: No document found by UID");
           
-          // If not found by UID but we have an email, try by email as a fallback
-          if (email) {
-            console.log("fetchUserData: Trying to get user document by email:", email);
-            const emailRef = doc(db, 'users', email);
-            const emailDoc = await getDoc(emailRef);
-            
-            if (emailDoc.exists()) {
-              console.log("fetchUserData: Found user document by email, will migrate to UID");
-              const emailData = emailDoc.data();
-              
-              // Create a new document with UID as ID using the data from email document
-              const migratedData = {
-                ...emailData,
-                uid: user.uid, // Ensure UID is correct
-                email: email,  // Ensure email is correct
-                updatedAt: serverTimestamp()
-              };
-              
-              // Create/update the document with UID as ID
-              await setDoc(doc(db, 'users', user.uid), migratedData);
-              console.log("fetchUserData: Migrated data from email ID to UID ID");
-              
-              // Update the email document to reference the UID document
-              await updateDoc(emailRef, { 
-                referenceUid: user.uid,
-                updatedAt: serverTimestamp()
-              });
-              console.log("fetchUserData: Updated email document with reference to UID");
-              
-              userData = { id: user.uid, ...migratedData };
-            } else {
-              console.log("fetchUserData: No document found by email either");
-            }
-          } else {
-            console.log("fetchUserData: No email available to try");
-          }
+          // Create a new document with UID as the document ID
+          const newUserData = {
+            uid: user.uid,
+            email: email || '',
+            displayName: user.displayName || '',
+            fullname: user.displayName || '',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            lastLogin: new Date(),
+            profileCompleted: false,
+            isAdmin: false,
+            authProviders: user.providerData ? 
+              user.providerData.map(provider => {
+                if (provider.providerId.includes('google.com')) return 'social';
+                if (provider.providerId.includes('apple.com')) return 'social';
+                return 'email';
+              }) : ['email']
+          };
+          
+          console.log("fetchUserData: Creating document with UID as ID:", user.uid);
+          // Create document with UID as document ID
+          const uidRef = doc(db, 'users', user.uid);
+          await setDoc(uidRef, newUserData);
+          console.log("fetchUserData: Successfully created document with UID");
+          
+          userData = { id: user.uid, ...newUserData };
+          console.log("fetchUserData: Created new user document successfully");
         }
       } catch (getError) {
         console.error("fetchUserData: Error getting user document:", getError);
@@ -253,17 +244,6 @@ export function AuthProvider({ children }) {
           await setDoc(uidRef, newUserData);
           console.log("fetchUserData: Successfully created document with UID");
           
-          // Also create/update document with email as ID for easier lookups (if email exists)
-          if (email) {
-            console.log("fetchUserData: Creating document with email as ID:", email);
-            const emailRef = doc(db, 'users', email);
-            await setDoc(emailRef, {
-              ...newUserData,
-              referenceUid: user.uid
-            });
-            console.log("fetchUserData: Successfully created document with email");
-          }
-          
           userData = { id: user.uid, ...newUserData };
           console.log("fetchUserData: Created new user document successfully");
         } catch (createError) {
@@ -295,19 +275,6 @@ export function AuthProvider({ children }) {
             updatedAt: serverTimestamp()
           });
           console.log("fetchUserData: Updated last login on UID document");
-          
-          // Also update the email reference document if exists
-          if (email) {
-            const emailRef = doc(db, 'users', email);
-            const emailDoc = await getDoc(emailRef);
-            if (emailDoc.exists()) {
-              await updateDoc(emailRef, { 
-                lastLogin: new Date(),
-                updatedAt: serverTimestamp()
-              });
-              console.log("fetchUserData: Updated last login on email document");
-            }
-          }
         } catch (updateError) {
           console.error("fetchUserData: Error updating last login:", updateError);
           // Continue anyway, this is not critical
@@ -359,10 +326,15 @@ export function AuthProvider({ children }) {
 
     try {
       setError(null);
+      setLoading(true);
+      
+      console.log("Signup: Creating user authentication account");
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
+      console.log("Signup: Updating user profile with displayName");
       await updateProfile(userCredential.user, { displayName });
       
+      console.log("Signup: Preparing user data for Firestore");
       const userDataForFirestore = {
         uid: userCredential.user.uid,
         email: email,
@@ -383,23 +355,29 @@ export function AuthProvider({ children }) {
         authProviders: ['email']
       };
       
-      // Create document with UID as document ID (primary)
-      await setDoc(doc(db, 'users', userCredential.user.uid), userDataForFirestore);
-      console.log(`User document created with UID: ${userCredential.user.uid}`);
+      try {
+        // Create document with UID as document ID (primary)
+        console.log(`Signup: Creating user document with UID: ${userCredential.user.uid}`);
+        await setDoc(doc(db, 'users', userCredential.user.uid), userDataForFirestore);
+        
+        // No longer creating the reference document with email as ID
+        
+        setUserFullname(userDataForFirestore.fullname);
+        console.log("Signup: User document created successfully");
+      } catch (firestoreError) {
+        console.error("Signup: Error creating user documents:", firestoreError);
+        // Even if Firestore fails, we don't want to throw here
+        // User is already authenticated, so we can repair the documents later
+        // Just log the error but continue
+      }
       
-      // Also create reference document with email for easy lookups
-      await setDoc(doc(db, 'users', email), {
-        ...userDataForFirestore,
-        referenceUid: userCredential.user.uid
-      });
-      console.log(`Reference document created with email: ${email}`);
-      
-      setUserFullname(userDataForFirestore.fullname);
-      
+      setLoading(false);
       return userCredential.user;
     } catch (error) {
+      console.error("Signup: Error during signup process:", error);
       setError(error.message);
-      throw new Error('Failed to create account');
+      setLoading(false);
+      throw new Error('Failed to create account: ' + error.message);
     }
   }
 
@@ -410,12 +388,22 @@ export function AuthProvider({ children }) {
 
     try {
       setError(null);
+      setLoading(true);
+      console.log("Login: Attempting to sign in with email and password");
+      
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log("Login: Authentication successful");
+      
+      // Refresh admin status
       await refreshAdminStatus();
+      
+      setLoading(false);
       return userCredential.user;
     } catch (error) {
+      console.error("Login: Error during login:", error);
       setError(error.message);
-      throw new Error('Failed to log in');
+      setLoading(false);
+      throw new Error('Failed to log in: ' + error.message);
     }
   }
 
@@ -534,7 +522,7 @@ export function AuthProvider({ children }) {
           console.log("signInWithGoogle: Using manually entered email:", email);
         }
       }
-      
+            
       // If we've found an email but it's not in the user record, update the Auth record
       if (email && (!user.email || user.email !== email)) {
         console.log(`signInWithGoogle: Need to update Auth record with email: ${email}`);
@@ -606,14 +594,7 @@ export function AuthProvider({ children }) {
           await setDoc(userDocRef, newUserData);
           userData = { ...newUserData, id: user.uid };
           
-          // Also create a reference document with email for easier lookups
-          if (email) {
-            const emailRef = doc(db, 'users', email);
-            await setDoc(emailRef, {
-              ...newUserData,
-              referenceUid: user.uid
-            });
-          }
+          // No longer creating reference document with email
         }
         
         console.log("signInWithGoogle: User data saved successfully");
@@ -633,8 +614,8 @@ export function AuthProvider({ children }) {
             console.log("signInWithGoogle: Called updateUserEmail function");
           } catch (fnError) {
             console.error("signInWithGoogle: Error calling updateUserEmail function:", fnError);
-            // Continue anyway
-          }
+          // Continue anyway
+        }
         }
         
       } catch (dbError) {
@@ -767,7 +748,7 @@ export function AuthProvider({ children }) {
           const existingData = docSnap.data();
           
           const updateData = { 
-            lastLogin: new Date(),
+              lastLogin: new Date(),
             updatedAt: serverTimestamp(),
             authProviders: existingData.authProviders && existingData.authProviders.includes('social') 
               ? existingData.authProviders 
@@ -800,14 +781,7 @@ export function AuthProvider({ children }) {
           await setDoc(userDocRef, newUserData);
           userData = { ...newUserData, id: user.uid };
           
-          // Also create a reference document with email for easier lookups
-          if (email) {
-            const emailRef = doc(db, 'users', email);
-            await setDoc(emailRef, {
-              ...newUserData,
-              referenceUid: user.uid
-            });
-          }
+          // No longer creating reference document with email
         }
         
         console.log("signInWithApple: User data saved successfully");

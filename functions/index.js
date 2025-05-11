@@ -221,18 +221,40 @@ exports.createUserOnSignup = functions.auth.user().onCreate(async (user) => {
   try {
     const userId = user.uid;
     let email = user.email || '';
+    let displayName = user.displayName || '';
     
     console.log(`Processing new user signup: ${userId} with initial email ${email}`);
     
     // Determine auth provider for the new user
     let provider = 'email';
+    let providerData = [];
+    
     if (user.providerData && user.providerData.length > 0) {
+      // Save provider data for logging
+      providerData = user.providerData.map(p => ({
+        providerId: p.providerId,
+        email: p.email,
+        displayName: p.displayName
+      }));
+      console.log(`Provider data:`, JSON.stringify(providerData));
+      
       // Check all provider data for an email if we don't have one
       if (!email) {
-        for (const providerData of user.providerData) {
-          if (providerData.email) {
-            email = providerData.email;
+        for (const provider of user.providerData) {
+          if (provider.email) {
+            email = provider.email;
             console.log(`Found email in provider data: ${email}`);
+            break;
+          }
+        }
+      }
+      
+      // Get display name from provider if not available
+      if (!displayName) {
+        for (const provider of user.providerData) {
+          if (provider.displayName) {
+            displayName = provider.displayName;
+            console.log(`Found displayName in provider data: ${displayName}`);
             break;
           }
         }
@@ -264,78 +286,26 @@ exports.createUserOnSignup = functions.auth.user().onCreate(async (user) => {
     const userData = {
       uid: userId,
       email: email,
-      displayName: user.displayName || '',
-      fullname: user.displayName || '',
+      displayName: displayName,
+      fullname: displayName || '',
       isAdmin: false,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       lastLogin: admin.firestore.FieldValue.serverTimestamp(),
       authProviders: [provider],
       profileCompleted: false
     };
     
-    // If this user has an email, check for existing user data with the same email
-    // This only syncs profile data, not authentication methods
-    if (email) {
-      try {
-        const existingUsersSnapshot = await admin.firestore()
-          .collection('users')
-          .where('email', '==', email)
-          .get();
-        
-        // If we found existing documents with the same email
-        if (!existingUsersSnapshot.empty) {
-          console.log(`Found ${existingUsersSnapshot.size} existing account(s) with email ${email}`);
-          
-          // Find the document with the most complete profile data
-          let mostCompleteData = null;
-          existingUsersSnapshot.forEach(doc => {
-            if (doc.id !== userId) { // Skip the current user's document if it exists
-              const docData = doc.data();
-              if (!mostCompleteData || Object.keys(docData).length > Object.keys(mostCompleteData).length) {
-                mostCompleteData = docData;
-              }
-            }
-          });
-          
-          // If we found data to sync
-          if (mostCompleteData) {
-            console.log("Found existing profile data to sync");
-            
-            // Copy only relevant profile information - this doesn't affect Firebase Auth
-            // account linking, just syncs profile data
-            if (mostCompleteData.firstName) userData.firstName = mostCompleteData.firstName;
-            if (mostCompleteData.lastName) userData.lastName = mostCompleteData.lastName;
-            if (mostCompleteData.phoneNumber) userData.phoneNumber = mostCompleteData.phoneNumber;
-            if (mostCompleteData.title) userData.title = mostCompleteData.title;
-            if (mostCompleteData.fullname) userData.fullname = mostCompleteData.fullname;
-            if (mostCompleteData.profileCompleted === true) userData.profileCompleted = true;
-            if (mostCompleteData.receiveOffers === true) userData.receiveOffers = true;
-            
-            // Track authentication methods for reference only, not affecting Firebase Auth
-            if (mostCompleteData.authProviders && Array.isArray(mostCompleteData.authProviders)) {
-              userData.authProviders = [...new Set([...mostCompleteData.authProviders, provider])];
-            }
-            
-            console.log("Synced user profile data from existing account");
-          }
-        }
-      } catch (syncError) {
-        console.error("Error syncing profile data:", syncError);
-        // Continue with original data if sync fails
-      }
-    }
-    
-    // Always create the user document with UID as the document ID, never use email
+    console.log(`Creating user document for UID: ${userId}`);
     await admin.firestore().collection('users').doc(userId).set(userData);
-    console.log(`User document created for ${userId} with uid field ${userId} and email ${email}`);
+    console.log(`User document created for UID: ${userId}`);
     
-    // Also create a reference document with email for easy lookups, if email exists
-    if (email) {
-      await admin.firestore().collection('users').doc(email).set({
-        ...userData,
-        referenceUid: userId
-      });
-      console.log(`Reference document created with email ${email}`);
+    // No longer creating reference document with email as ID
+    
+    // If we have a user without an email (rare case), log for investigation
+    if (!email) {
+      console.error(`WARNING: User ${userId} created without email. Provider data:`, 
+        JSON.stringify(providerData));
     }
     
     return null;
@@ -580,19 +550,154 @@ exports.updateUserEmail = functions.https.onCall(async (data, context) => {
     
     console.log(`Successfully updated email for user ${uid}`);
     
-    // Update both UID and email documents in Firestore to ensure they have the correct email
+    // Update UID document in Firestore to ensure it has the correct email
     const uidRef = admin.firestore().collection('users').doc(uid);
     await uidRef.update({ email: email });
+    console.log(`Updated UID document with email: ${email}`);
     
-    // If there's an email document, make sure it's updated or created with the right reference
-    await admin.firestore().collection('users').doc(email).set({
-      referenceUid: uid,
-      email: email
-    }, { merge: true });
+    // Don't create or update email document anymore
     
     return { success: true, message: 'Email updated successfully' };
   } catch (error) {
     console.error('Error updating user email:', error);
+    throw new functions.https.HttpsError('internal', error.message);
+  }
+});
+
+// Function to clean up email-based documents
+exports.cleanupEmailDocuments = functions.https.onCall(async (data, context) => {
+  try {
+    // This function should only be callable by admins
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        'unauthenticated',
+        'You must be logged in to perform cleanup'
+      );
+    }
+    
+    const isAdmin = context.auth.token.admin === true;
+    if (!isAdmin) {
+      // Double check admin status in Firestore
+      const userDoc = await admin.firestore().collection('users').doc(context.auth.uid).get();
+      if (!userDoc.exists || !userDoc.data().isAdmin) {
+        throw new functions.https.HttpsError(
+          'permission-denied',
+          'Only admins can perform database cleanup'
+        );
+      }
+    }
+    
+    console.log('Starting cleanup of email-based documents');
+    const results = {
+      processed: 0,
+      cleaned: 0,
+      errors: 0,
+      details: []
+    };
+    
+    // Get all users from Firebase Authentication
+    const listUsersResult = await admin.auth().listUsers();
+    const authUsers = listUsersResult.users;
+    
+    console.log(`Found ${authUsers.length} users in Firebase Authentication`);
+    
+    // Process each user from Auth
+    for (const authUser of authUsers) {
+      try {
+        results.processed++;
+        
+        if (!authUser.email) {
+          results.details.push(`User ${authUser.uid} has no email, skipping`);
+          continue;
+        }
+        
+        const email = authUser.email;
+        const uid = authUser.uid;
+        
+        console.log(`Processing user ${uid} with email ${email}`);
+        
+        // Check if an email document exists
+        const emailDocRef = admin.firestore().collection('users').doc(email);
+        const emailDoc = await emailDocRef.get();
+        
+        if (emailDoc.exists) {
+          // Check if UID document exists
+          const uidDocRef = admin.firestore().collection('users').doc(uid);
+          const uidDoc = await uidDocRef.get();
+          
+          if (uidDoc.exists) {
+            // Both email and UID documents exist
+            console.log(`Both email and UID documents exist for user ${uid}`);
+            
+            // Merge data (prioritize UID document but get fields from email if missing)
+            const uidData = uidDoc.data();
+            const emailData = emailDoc.data();
+            
+            const mergedData = { ...uidData };
+            
+            // Only update fields that are missing or empty in the UID document
+            const fieldsToCheck = [
+              'fullname', 'firstName', 'lastName', 'phoneNumber', 
+              'title', 'profileCompleted', 'receiveOffers'
+            ];
+            
+            let updateNeeded = false;
+            
+            for (const field of fieldsToCheck) {
+              if (!uidData[field] && emailData[field]) {
+                mergedData[field] = emailData[field];
+                updateNeeded = true;
+              }
+            }
+            
+            // Update UID document if needed
+            if (updateNeeded) {
+              await uidDocRef.update({
+                ...mergedData,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+              });
+              console.log(`Updated UID document with data from email document for user ${uid}`);
+            }
+            
+            // Delete the email document as it's no longer needed
+            await emailDocRef.delete();
+            console.log(`Deleted email document for user ${uid}`);
+            results.cleaned++;
+            results.details.push(`Merged and cleaned up documents for user ${uid} (${email})`);
+          } else {
+            // Only email document exists, create UID document with this data
+            console.log(`Only email document exists for user ${uid}, creating UID document`);
+            
+            const emailData = emailDoc.data();
+            await uidDocRef.set({
+              ...emailData,
+              uid: uid, // Ensure UID is correct
+              email: email, // Ensure email is correct
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            
+            // Delete the email document as it's no longer needed
+            await emailDocRef.delete();
+            console.log(`Created UID document and deleted email document for user ${uid}`);
+            results.cleaned++;
+            results.details.push(`Migrated email document to UID document for user ${uid} (${email})`);
+          }
+        } else {
+          // No email document exists, nothing to clean up
+          console.log(`No email document exists for user ${uid}, no cleanup needed`);
+          results.details.push(`No email document found for user ${uid} (${email})`);
+        }
+      } catch (userError) {
+        console.error(`Error processing user:`, userError);
+        results.errors++;
+        results.details.push(`Error processing user: ${userError.message}`);
+      }
+    }
+    
+    console.log(`Cleanup completed. Processed: ${results.processed}, Cleaned: ${results.cleaned}, Errors: ${results.errors}`);
+    return results;
+  } catch (error) {
+    console.error('Error in cleanupEmailDocuments function:', error);
     throw new functions.https.HttpsError('internal', error.message);
   }
 }); 

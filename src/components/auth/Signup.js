@@ -41,17 +41,21 @@ export default function Signup() {
     try {
       setError('');
       setLoading(true);
-      await signup(
+      
+      console.log("Signup: Starting email signup process");
+      const user = await signup(
         emailRef.current.value, 
         passwordRef.current.value,
         nameRef.current.value
       );
+      
+      console.log("Signup: Successfully created account, redirecting to home");
       navigate('/');
     } catch (error) {
+      console.error("Signup: Error during account creation:", error);
       setError('Failed to create an account: ' + error.message);
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   async function handleGoogleSignup() {

@@ -36,26 +36,14 @@ export function PackProvider({ children }) {
             setPackItems(userDoc.data().packItems);
             console.log("Loaded pack items from Firestore");
           } else {
-            // Check if we need to create the document or update it
-            const savedPack = localStorage.getItem('userPack');
-            let packToSave = [];
-
-            if (savedPack) {
-              try {
-                packToSave = JSON.parse(savedPack);
-                setPackItems(packToSave);
-                console.log("Migrated pack items from localStorage to Firestore");
-                // Clear localStorage since we've migrated to Firestore
-                localStorage.removeItem('userPack');
-              } catch (error) {
-                console.error('Failed to parse pack items from localStorage:', error);
-              }
-            }
-
-            // If document doesn't exist, create it with empty/localStorage pack
+            // User document doesn't exist or has no packItems
+            // Initialize with empty pack instead of transferring from localStorage
+            
+            // Check if we need to create or update the document
             if (!userDoc.exists()) {
+              // Create new document with empty pack
               await setDoc(userPackRef, { 
-                packItems: packToSave,
+                packItems: [],
                 bookingDetails: {
                   travelDates: {
                     startDate: '',
@@ -65,12 +53,18 @@ export function PackProvider({ children }) {
                   travelers: [{ email: '', firstName: '', lastName: '', age: '', gender: '', playingGolf: false, requiresEquipment: false }]
                 } 
               });
-              console.log("Created new user document with pack items");
+              console.log("Created new user document with empty pack");
             } else {
               // Document exists but doesn't have packItems field
-              await updateDoc(userPackRef, { packItems: packToSave });
-              console.log("Updated existing user document with pack items");
+              await updateDoc(userPackRef, { packItems: [] });
+              console.log("Updated existing user document with empty pack");
             }
+            
+            // Set empty pack
+            setPackItems([]);
+            
+            // Clear localStorage to avoid confusion
+            localStorage.removeItem('userPack');
           }
           
           // Load booking details
@@ -78,9 +72,8 @@ export function PackProvider({ children }) {
             setBookingDetails(userDoc.data().bookingDetails);
             console.log("Loaded booking details from Firestore");
           } else {
-            // Check localStorage for booking details
-            const savedBookingDetails = localStorage.getItem('bookingDetails');
-            let detailsToSave = {
+            // Initialize with empty booking details instead of transferring from localStorage
+            const defaultBookingDetails = {
               travelDates: {
                 startDate: '',
                 endDate: ''
@@ -88,23 +81,18 @@ export function PackProvider({ children }) {
               numberOfPeople: 1,
               travelers: [{ email: '', firstName: '', lastName: '', age: '', gender: '', playingGolf: false, requiresEquipment: false }]
             };
-
-            if (savedBookingDetails) {
-              try {
-                detailsToSave = JSON.parse(savedBookingDetails);
-                setBookingDetails(detailsToSave);
-                console.log("Migrated booking details from localStorage to Firestore");
-                // Clear localStorage
-                localStorage.removeItem('bookingDetails');
-              } catch (error) {
-                console.error('Failed to parse booking details from localStorage:', error);
-              }
-            }
-
-            // If the document exists but doesn't have bookingDetails
+            
+            // Update the document with empty booking details
             if (userDoc.exists()) {
-              await updateDoc(userPackRef, { bookingDetails: detailsToSave });
+              await updateDoc(userPackRef, { bookingDetails: defaultBookingDetails });
+              console.log("Updated document with empty booking details");
             }
+            
+            // Set empty booking details
+            setBookingDetails(defaultBookingDetails);
+            
+            // Clear localStorage to avoid confusion
+            localStorage.removeItem('bookingDetails');
           }
         } else {
           // No logged in user, use localStorage
@@ -128,13 +116,15 @@ export function PackProvider({ children }) {
         }
       } catch (error) {
         console.error('Error loading user pack:', error);
-        // Fall back to localStorage
-        const savedPack = localStorage.getItem('userPack');
-        if (savedPack) {
-          try {
-            setPackItems(JSON.parse(savedPack));
-          } catch (error) {
-            console.error('Failed to parse pack items from localStorage:', error);
+        // Fall back to localStorage only when not logged in
+        if (!currentUser) {
+          const savedPack = localStorage.getItem('userPack');
+          if (savedPack) {
+            try {
+              setPackItems(JSON.parse(savedPack));
+            } catch (error) {
+              console.error('Failed to parse pack items from localStorage:', error);
+            }
           }
         }
       }
