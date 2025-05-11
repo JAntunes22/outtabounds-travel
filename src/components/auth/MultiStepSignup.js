@@ -134,10 +134,7 @@ export default function MultiStepSignup() {
     }
     
     if (!passwordRegex.test(formData.password)) {
-      return setError(
-        'Password must be at least 8 characters long and include: ' +
-        'uppercase letter, lowercase letter, number, and special character'
-      );
+      return setError('Password does not meet the requirements');
     }
     
     // Validate phone number if provided
@@ -177,8 +174,12 @@ export default function MultiStepSignup() {
         }
       );
       
-      // Navigate to login page after successful registration
-      navigate('/login');
+      // Navigate to login page after successful registration with success message
+      navigate('/login', { 
+        state: { 
+          successMessage: 'Account successfully created, please login using your credentials.' 
+        } 
+      });
     } catch (error) {
       setError('Failed to create an account: ' + error.message);
     } finally {
@@ -304,7 +305,7 @@ export default function MultiStepSignup() {
               onChange={handleChange}
             />
             <span className="checkbox-text">
-              Please tick this box if you do not want to receive details about our latest golf trip deals and exclusive special offers.
+              Yes, send me exclusive golf travel offers and updates.
             </span>
           </label>
         </div>

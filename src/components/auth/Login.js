@@ -8,10 +8,20 @@ export default function Login() {
   const passwordRef = useRef();
   const { login, signInWithGoogle, signInWithApple } = useAuth();
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const authCardRef = useRef(null);
+
+  // Check for success message in location state
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      setSuccessMessage(location.state.successMessage);
+      // Clean up the state to prevent message showing after refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   // Add a subtle parallax effect on scroll
   useEffect(() => {
@@ -35,9 +45,12 @@ export default function Login() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    
+    // Clear any existing messages
+    setError('');
+    setSuccessMessage('');
 
     try {
-      setError('');
       setLoading(true);
       await login(emailRef.current.value, passwordRef.current.value);
       navigate(from, { replace: true });
@@ -51,6 +64,7 @@ export default function Login() {
   async function handleGoogleLogin() {
     try {
       setError('');
+      setSuccessMessage('');
       setLoading(true);
       console.log("Starting Google sign-in process");
       const result = await signInWithGoogle();
@@ -79,6 +93,7 @@ export default function Login() {
   async function handleAppleLogin() {
     try {
       setError('');
+      setSuccessMessage('');
       setLoading(true);
       console.log("Starting Apple sign-in process");
       const result = await signInWithApple();
@@ -109,6 +124,7 @@ export default function Login() {
       <div className="auth-card" ref={authCardRef}>
         <h2>Log In</h2>
         {error && <div className="auth-error">{error}</div>}
+        {successMessage && <div className="auth-success">{successMessage}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Email</label>

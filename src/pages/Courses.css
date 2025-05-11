@@ -22,6 +22,7 @@
   aspect-ratio: 3/4; /* Create a taller card with fixed aspect ratio */
   z-index: 1; /* Base z-index */
   transform-origin: center bottom; /* Ensure transform happens from bottom */
+  cursor: pointer; /* Add cursor pointer to entire card */
 }
 
 .course-item:hover {
@@ -35,6 +36,11 @@
   height: 100%;
   overflow: hidden;
   cursor: pointer;
+  position: absolute; /* Position absolutely to fill the entire card */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 .course-item img {
@@ -60,15 +66,19 @@
   display: flex;
   flex-direction: column;
   gap: 15px;
+  z-index: 10; /* Ensure content is above the image */
+  pointer-events: none; /* Make the overlay non-interactive to allow clicks to go through to the container */
 }
 
 .course-info {
   cursor: pointer;
+  pointer-events: auto; /* Allow interaction with the course info */
 }
 
 .course-actions {
   display: flex;
   justify-content: flex-end;
+  pointer-events: auto; /* Allow interaction with the buttons */
 }
 
 .course-item h2 {

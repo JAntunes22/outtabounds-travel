@@ -51,7 +51,7 @@ const CourseModal = ({ course, onClose }) => {
       <div className="course-modal">
         <button className="modal-close-btn" onClick={onClose}>×</button>
         
-        <div className="modal-content">
+        <div className="course-modal-content">
           <div className="modal-image-container">
             <img 
               src={course.url} 
@@ -97,15 +97,11 @@ const CourseModal = ({ course, onClose }) => {
             
             <div className="modal-features">
               <h3>Features</h3>
-              {console.log("Rendering features:", course.features)}
               {Array.isArray(course.features) && course.features.length > 0 ? (
                 <ul>
-                  {course.features.map((feature, index) => {
-                    console.log(`Rendering feature ${index}:`, feature);
-                    return (
-                      <li key={index}>{feature}</li>
-                    );
-                  })}
+                  {course.features.map((feature, index) => (
+                    <li key={index}>{feature}</li>
+                  ))}
                 </ul>
               ) : (
                 <p>No features available for this course.</p>
@@ -118,7 +114,7 @@ const CourseModal = ({ course, onClose }) => {
                   id: course.id,
                   name: course.name,
                   location: course.location,
-                  description: course.description,
+                  description: course.description || 'Explore this amazing golf course.',
                   imageUrl: course.url,
                   rating: course.rating
                 }} 

@@ -242,7 +242,7 @@ export default function ProfileCompletion() {
                 onChange={(e) => setReceiveOffers(e.target.checked)}
               />
               <span className="checkbox-text">
-                Please tick this box if you do not want to receive details about our latest golf trip deals and exclusive special offers.
+                Yes, send me exclusive golf travel offers and updates.
               </span>
             </label>
           </div>

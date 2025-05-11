@@ -12,7 +12,7 @@ const Courses = () => {
   const [sortBy, setSortBy] = useState("default");
   const [locationFilter, setLocationFilter] = useState("");
   const [locations, setLocations] = useState([]);
-  const [isFilterOpen, setIsFilterOpen] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [viewMode, setViewMode] = useState("list"); // "list" or "map"
   const heroContentRef = useRef(null);
@@ -256,17 +256,21 @@ const Courses = () => {
               
               <div className="course-list">
                 {filteredCourses.map((course) => (
-                  <div key={course.id} className="course-item">
-                    <div className="course-image-container" onClick={() => openCourseModal(course)}>
+                  <div 
+                    key={course.id} 
+                    className="course-item" 
+                    onClick={() => openCourseModal(course)}
+                  >
+                    <div className="course-image-container">
                       <img src={course.url} alt={course.name} />
                     </div>
                     <div className="course-content">
-                      <div className="course-info" onClick={() => openCourseModal(course)}>
+                      <div className="course-info">
                         <h2>{course.name}</h2>
                         <h3>{course.location}</h3>
                         {course.rating && <div className="course-rating">Rating: {course.rating}★</div>}
                       </div>
-                      <div className="course-actions">
+                      <div className="course-actions" onClick={(e) => e.stopPropagation()}>
                         <AddToPack 
                           item={{
                             id: course.id,
