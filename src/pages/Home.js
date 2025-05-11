@@ -11,6 +11,20 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Function to handle smooth scrolling
+  const handleExploreClick = (e) => {
+    e.preventDefault();
+    const targetId = e.currentTarget.getAttribute('href').substring(1);
+    const targetElement = document.getElementById(targetId);
+    
+    if (targetElement) {
+      window.scrollTo({
+        top: targetElement.offsetTop,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       if (heroContentRef.current && heroRef.current) {
@@ -83,34 +97,16 @@ const Home = () => {
         <div className="hero-content" ref={heroContentRef}>
           <h1>Welcome to OuttaBounds Travel</h1>
           <p>Your gateway to unforgettable adventures and experiences.</p>
-          <a href="#explore" className="btn-primary">Explore Now</a>
+          <a href="#featured-packs" className="btn-primary" onClick={handleExploreClick}>Explore Now</a>
         </div>
       </header>
-      <section id="explore" className="explore-section">
-        <h2>Discover Our Offerings</h2>
-        <div className="offerings">
-          <div className="offering">
-            <h3>Courses</h3>
-            <p>Enhance your skills with our curated travel courses.</p>
-          </div>
-          <div className="offering">
-            <h3>Experiences</h3>
-            <p>Immerse yourself in unique and memorable experiences.</p>
-          </div>
-          <div className="offering">
-            <h3>Houses</h3>
-            <p>Find the perfect place to stay during your journey.</p>
-          </div>
-        </div>
-      </section>
 
       {/* Featured Packs Section */}
-      <section className="featured-packs-section">
+      <section id="featured-packs" className="featured-packs-section">
         <div className="section-header">
           <h2>Best Packs</h2>
           <div className="subheader">
             <p>Made by us, for you</p>
-            <p className="customize-note">*all packs are customizable</p>
           </div>
         </div>
 

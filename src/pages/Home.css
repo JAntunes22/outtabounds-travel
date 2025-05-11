@@ -69,58 +69,6 @@
   background-color: #145a00;
 }
 
-.explore-section {
-  padding: 50px 20px;
-  text-align: center;
-}
-
-.explore-section h2 {
-  font-size: 2rem;
-  margin-bottom: 2rem;
-}
-
-.offerings {
-  display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
-}
-
-.offering {
-  flex: 1 1 30%;
-  margin: 10px;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background-color: #f9f9f9;
-}
-
-.offering h3 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.offering p {
-  font-size: 1rem;
-  color: #555;
-}
-
-/* Responsive adjustment for smaller screens */
-@media (max-width: 900px) {
-  .hero {
-    background-attachment: scroll; /* Disable parallax on mobile for better performance */
-  }
-}
-
-@media (max-width: 768px) {
-  .hero-content h1 {
-    font-size: 2.2rem;
-  }
-
-  .hero-content p {
-    font-size: 1.2rem;
-  }
-}
-
 /* Featured Packs Section */
 .featured-packs-section {
   padding: 50px 20px 80px;
@@ -149,12 +97,6 @@
   font-size: 1.1rem;
   color: #555;
   margin: 5px 0;
-}
-
-.customize-note {
-  font-size: 0.9rem !important;
-  color: #777 !important;
-  font-style: italic;
 }
 
 .featured-packs {
@@ -420,6 +362,13 @@
   
   .pack-card-large .pack-title {
     font-size: 2.5rem;
+  }
+}
+
+/* Responsive adjustment for smaller screens */
+@media (max-width: 900px) {
+  .hero {
+    background-attachment: scroll; /* Disable parallax on mobile for better performance */
   }
 }
 
