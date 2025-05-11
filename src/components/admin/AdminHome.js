@@ -12,23 +12,41 @@ export default function AdminHome() {
   });
   
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     async function fetchStats() {
+      setLoading(true);
+      setError(null);
+      
       try {
+        console.log("Fetching collection statistics...");
         // Fetch counts from each collection
         const collections = ['courses', 'experiences', 'accommodations'];
-        const counts = {};
+        const counts = {
+          courses: 0,
+          experiences: 0,
+          accommodations: 0
+        };
         
         for (const collName of collections) {
-          const q = query(collection(db, collName));
-          const snapshot = await getDocs(q);
-          counts[collName] = snapshot.size;
+          console.log(`Fetching ${collName} count...`);
+          try {
+            const q = query(collection(db, collName));
+            const snapshot = await getDocs(q);
+            counts[collName] = snapshot.size;
+            console.log(`Found ${snapshot.size} ${collName}`);
+          } catch (collError) {
+            console.error(`Error fetching ${collName}:`, collError);
+            // Continue with other collections even if one fails
+          }
         }
         
+        console.log("Final counts:", counts);
         setStats(counts);
       } catch (error) {
         console.error("Error fetching stats:", error);
+        setError("Failed to load dashboard statistics. Please try refreshing the page.");
       } finally {
         setLoading(false);
       }
@@ -46,6 +64,16 @@ export default function AdminHome() {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px' }}>
           Loading stats...
+        </div>
+      ) : error ? (
+        <div className="error-message" style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+          {error}
+          <button 
+            onClick={() => window.location.reload()}
+            style={{ display: 'block', margin: '10px auto', padding: '8px 16px' }}
+          >
+            Refresh
+          </button>
         </div>
       ) : (
         <>

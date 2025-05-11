@@ -40,6 +40,10 @@ import AdminSettings from './components/admin/AdminSettings';
 import UserList from './components/admin/UserList';
 import InquiriesList from './components/admin/InquiriesList';
 
+// Import the admin components from pages
+import UserManagement from './pages/admin/UserManagement';
+import Dashboard from './pages/admin/Dashboard';
+
 // Layout component that handles conditional footer rendering
 const Layout = () => {
   const location = useLocation();
@@ -81,15 +85,16 @@ const Layout = () => {
           {/* Protected Admin Routes - require profile completion */}
           <Route path="/admin" element={<PrivateRoute requireAdmin={true} requireProfileCompletion={true} />}>
             <Route element={<AdminDashboard />}>
-              <Route index element={<AdminHome />} />
+              <Route index element={<Dashboard />} />
               
               {/* Courses Management */}
               <Route path="courses" element={<CourseList />} />
               <Route path="courses/new" element={<CourseForm />} />
               <Route path="courses/edit/:id" element={<CourseForm />} />
               
-              {/* User and Inquiry Management */}
+              {/* User Management */}
               <Route path="users" element={<UserList />} />
+              <Route path="users/management" element={<UserManagement />} />
               <Route path="inquiries" element={<InquiriesList />} />
               
               {/* Future routes */}
