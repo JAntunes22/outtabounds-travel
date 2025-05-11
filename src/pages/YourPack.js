@@ -40,7 +40,7 @@ export default function YourPack() {
           </div>
         )}
 
-        <div className="pack-content">
+        <div className="your-pack-content">
           {packItems.length === 0 ? (
             <div className="empty-pack">
               <h2>Your pack is empty</h2>
@@ -58,7 +58,7 @@ export default function YourPack() {
                   <h2>Golf Courses</h2>
                   <div className="pack-items">
                     {courseItems.map(item => (
-                      <div className="pack-item" key={`${item.type}-${item.id}`}>
+                      <div className="your-pack-item" key={`${item.type}-${item.id}`}>
                         <div className="pack-item-image">
                           <img src={item.imageUrl} alt={item.name} />
                         </div>
@@ -81,7 +81,7 @@ export default function YourPack() {
               )}
 
               <div className="pack-summary">
-                <div className="pack-actions">
+                <div className="your-pack-actions">
                   <button className="clear-pack-btn" onClick={clearPack}>
                     Clear Pack
                   </button>

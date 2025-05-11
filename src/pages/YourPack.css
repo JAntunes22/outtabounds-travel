@@ -32,16 +32,19 @@
   animation: fadeIn 0.3s ease-in-out;
 }
 
-.pack-content {
+.your-pack-content {
   background-color: #fff;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
 }
 
 .empty-pack {
   padding: 60px 30px;
   text-align: center;
+  background-color: #fff;
 }
 
 .empty-pack h2 {
@@ -83,6 +86,7 @@
 .pack-section {
   padding: 30px;
   border-bottom: 1px solid #eee;
+  background-color: #fff;
 }
 
 .pack-section h2 {
@@ -97,26 +101,29 @@
   gap: 20px;
 }
 
-.pack-item {
+.your-pack-item {
   display: flex;
   position: relative;
   background-color: #f9f9f9;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  align-items: stretch;
+  min-height: 150px;
 }
 
 .pack-item-image {
   width: 200px;
-  height: 150px;
   flex-shrink: 0;
   overflow: hidden;
+  display: flex;
+  align-items: stretch;
 }
 
 .pack-item-image img {
   width: 100%;
-  height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .pack-item-details {
@@ -170,12 +177,6 @@
   background-color: #f9f9f9;
 }
 
-.pack-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .clear-pack-btn {
   background: none;
   border: 1px solid #ccc;
@@ -219,13 +220,14 @@
 }
 
 @media (max-width: 768px) {
-  .pack-item {
+  .your-pack-item {
     flex-direction: column;
   }
   
   .pack-item-image {
     width: 100%;
     height: 200px;
+    min-height: 200px;
   }
   
   .remove-item-btn {
@@ -233,12 +235,20 @@
     right: 10px;
   }
   
-  .pack-actions {
-    flex-direction: column;
-    gap: 15px;
-  }
-  
   .clear-pack-btn, .proceed-btn {
     width: 100%;
+  }
+}
+
+.your-pack-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .your-pack-actions {
+    flex-direction: column;
+    gap: 15px;
   }
 } 
