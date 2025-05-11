@@ -6,7 +6,11 @@ import {
   query, 
   getDocs, 
   doc, 
-  deleteDoc 
+  deleteDoc,
+  updateDoc,
+  orderBy,
+  getFirestore,
+  getDoc
 } from 'firebase/firestore';
 import './Admin.css';
 
@@ -15,6 +19,9 @@ export default function PackList() {
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [packToDelete, setPackToDelete] = useState(null);
+  const [reordering, setReordering] = useState(false);
+  const [debug, setDebug] = useState(false);
+  const [debugInfo, setDebugInfo] = useState(null);
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -24,23 +31,123 @@ export default function PackList() {
   async function fetchPacks() {
     setLoading(true);
     try {
-      const packsRef = collection(db, 'packs');
-      const q = query(packsRef);
-      const querySnapshot = await getDocs(q);
+      // Get all packs from Firestore
+      const packsCollection = collection(db, 'packs');
+      const querySnapshot = await getDocs(packsCollection);
       
       const packList = [];
+      let maxOrder = 0;
+      
+      // Check if we have any documents
+      if (querySnapshot.empty) {
+        console.log("No packs found in the database.");
+        setPacks([]);
+        setLoading(false);
+        return;
+      }
+      
+      // Process each pack document
       querySnapshot.forEach((doc) => {
+        const packData = doc.data();
+        console.log("Fetched pack:", doc.id, packData);
+        
+        // Ensure all packs have an order field
+        if (packData.order === undefined) {
+          packData.order = maxOrder + 1;
+          // Update the document in Firestore with the new order
+          updateDoc(doc.ref, { order: packData.order });
+        }
+        
+        if (packData.order > maxOrder) {
+          maxOrder = packData.order;
+        }
+        
         packList.push({
           id: doc.id,
-          ...doc.data()
+          ...packData
         });
       });
       
+      // Sort by order
+      packList.sort((a, b) => a.order - b.order);
+      console.log("Total packs loaded:", packList.length);
       setPacks(packList);
     } catch (error) {
       console.error("Error fetching packs:", error);
     } finally {
       setLoading(false);
+    }
+  }
+  
+  async function movePackUp(index) {
+    if (index <= 0) return; // Already at the top
+    
+    // Create a copy of the packs array
+    const newPacks = [...packs];
+    
+    // Get the current pack and the one above it
+    const packToMove = newPacks[index];
+    const packAbove = newPacks[index - 1];
+    
+    // Swap their orders
+    const tempOrder = packToMove.order;
+    packToMove.order = packAbove.order;
+    packAbove.order = tempOrder;
+    
+    // Swap their positions in the array
+    newPacks[index] = packAbove;
+    newPacks[index - 1] = packToMove;
+    
+    // Update the state
+    setPacks(newPacks);
+    setReordering(true);
+    
+    // Update in Firestore
+    try {
+      await updateDoc(doc(db, 'packs', packToMove.id), { order: packToMove.order });
+      await updateDoc(doc(db, 'packs', packAbove.id), { order: packAbove.order });
+      setReordering(false);
+    } catch (error) {
+      console.error("Error updating pack order:", error);
+      setReordering(false);
+      // Revert to original order if there's an error
+      fetchPacks();
+    }
+  }
+  
+  async function movePackDown(index) {
+    if (index >= packs.length - 1) return; // Already at the bottom
+    
+    // Create a copy of the packs array
+    const newPacks = [...packs];
+    
+    // Get the current pack and the one below it
+    const packToMove = newPacks[index];
+    const packBelow = newPacks[index + 1];
+    
+    // Swap their orders
+    const tempOrder = packToMove.order;
+    packToMove.order = packBelow.order;
+    packBelow.order = tempOrder;
+    
+    // Swap their positions in the array
+    newPacks[index] = packBelow;
+    newPacks[index + 1] = packToMove;
+    
+    // Update the state
+    setPacks(newPacks);
+    setReordering(true);
+    
+    // Update in Firestore
+    try {
+      await updateDoc(doc(db, 'packs', packToMove.id), { order: packToMove.order });
+      await updateDoc(doc(db, 'packs', packBelow.id), { order: packBelow.order });
+      setReordering(false);
+    } catch (error) {
+      console.error("Error updating pack order:", error);
+      setReordering(false);
+      // Revert to original order if there's an error
+      fetchPacks();
     }
   }
   
@@ -66,13 +173,88 @@ export default function PackList() {
     }
   }
 
+  // Function to get debug information about Firestore
+  async function getDebugInfo() {
+    setLoading(true);
+    try {
+      const packsCollection = collection(db, 'packs');
+      const snapshot = await getDocs(packsCollection);
+      
+      const info = {
+        totalDocs: snapshot.size,
+        docs: []
+      };
+      
+      snapshot.forEach(doc => {
+        info.docs.push({
+          id: doc.id,
+          exists: doc.exists(),
+          data: doc.data()
+        });
+      });
+      
+      setDebugInfo(info);
+      setDebug(true);
+    } catch (error) {
+      console.error("Error getting debug info:", error);
+      setDebugInfo({ error: error.message });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div>
       <div className="admin-header">
         <h1 className="admin-title">Manage Packs</h1>
-        <Link to="/admin/packs/new" className="admin-action-btn">
-          <span>+</span> Add New Pack
-        </Link>
+        <div className="admin-action-buttons">
+          <button 
+            className="admin-action-btn refresh-btn" 
+            onClick={fetchPacks}
+            disabled={loading}
+          >
+            Refresh Packs
+          </button>
+          <Link to="/admin/packs/add-samples" className="admin-action-btn" style={{ marginLeft: '10px' }}>
+            Add Sample Packs
+          </Link>
+          <Link to="/admin/packs/new" className="admin-action-btn" style={{ marginLeft: '10px' }}>
+            <span>+</span> Add New Pack
+          </Link>
+          <button
+            className="admin-action-btn"
+            onClick={getDebugInfo}
+            style={{ marginLeft: '10px', backgroundColor: debug ? '#e53935' : '#2196f3' }}
+          >
+            {debug ? 'Hide Debug' : 'Debug'}
+          </button>
+        </div>
+      </div>
+      
+      {debug && debugInfo && (
+        <div className="debug-section">
+          <h3>Firestore Debug Information</h3>
+          <p>Total documents in 'packs' collection: {debugInfo.totalDocs}</p>
+          {debugInfo.docs && debugInfo.docs.length > 0 ? (
+            <div className="debug-data">
+              <h4>Documents:</h4>
+              <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+            </div>
+          ) : (
+            <p>No documents found in 'packs' collection.</p>
+          )}
+          <button 
+            className="admin-action-btn"
+            onClick={() => setDebug(false)}
+            style={{ backgroundColor: '#e53935', marginTop: '10px' }}
+          >
+            Close Debug
+          </button>
+        </div>
+      )}
+      
+      <div className="pack-order-note">
+        <p><strong>Note:</strong> The order of packs determines how they appear on the homepage. The pack in position #2 will be displayed larger than the others.</p>
       </div>
       
       {loading ? (
@@ -84,9 +266,14 @@ export default function PackList() {
           {packs.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px' }}>
               <p>No packs found. Add your first pack to get started.</p>
-              <Link to="/admin/packs/new" className="admin-action-btn" style={{ display: 'inline-block', marginTop: '15px' }}>
-                Add New Pack
-              </Link>
+              <div style={{ marginTop: '15px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                <Link to="/admin/packs/new" className="admin-action-btn">
+                  Add New Pack
+                </Link>
+                <Link to="/admin/packs/add-samples" className="admin-action-btn">
+                  Add Sample Packs
+                </Link>
+              </div>
             </div>
           ) : (
             <table className="admin-table">
@@ -96,11 +283,12 @@ export default function PackList() {
                   <th>Name</th>
                   <th>Description</th>
                   <th>Price</th>
+                  <th>Order</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {packs.map(pack => (
+                {packs.map((pack, index) => (
                   <tr key={pack.id}>
                     <td style={{ width: '80px' }}>
                       {pack.imageUrl ? (
@@ -138,6 +326,30 @@ export default function PackList() {
                     <td>{pack.name}</td>
                     <td>{pack.description ? (pack.description.length > 100 ? pack.description.substring(0, 100) + '...' : pack.description) : 'No description'}</td>
                     <td>{pack.price ? `$${pack.price}` : 'Not set'}</td>
+                    <td className="order-column">
+                      <div className="order-actions">
+                        <button 
+                          className="order-btn up" 
+                          onClick={() => movePackUp(index)}
+                          disabled={reordering || index === 0}
+                          title="Move Up"
+                        >
+                          ↑
+                        </button>
+                        <span className={`order-number ${pack.order === 2 ? 'featured-position' : ''}`}>
+                          {pack.order}
+                          {pack.order === 2 && <span className="featured-star">★</span>}
+                        </span>
+                        <button 
+                          className="order-btn down" 
+                          onClick={() => movePackDown(index)}
+                          disabled={reordering || index === packs.length - 1}
+                          title="Move Down"
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    </td>
                     <td>
                       <div className="table-actions">
                         <button 

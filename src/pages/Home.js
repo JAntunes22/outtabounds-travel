@@ -1,9 +1,15 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../utils/firebaseConfig";
 import "./Home.css"; // Ensure you create and style this CSS file
 
 const Home = () => {
   const heroContentRef = useRef(null);
   const heroRef = useRef(null);
+  const [packs, setPacks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,6 +43,40 @@ const Home = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const fetchPacks = async () => {
+      setLoading(true);
+      try {
+        // Use the same approach as the Packs page but with ordering and limit
+        const packsCollection = collection(db, "packs");
+        // First get all packs to make sure we have data
+        const packsSnapshot = await getDocs(packsCollection);
+        let packsList = packsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        // Sort by order field if it exists, otherwise just take the first 5
+        packsList = packsList.sort((a, b) => {
+          if (a.order !== undefined && b.order !== undefined) {
+            return a.order - b.order;
+          }
+          return 0;
+        }).slice(0, 5); // Limit to 5 packs for the homepage
+        
+        console.log("Fetched packs:", packsList);
+        setPacks(packsList);
+      } catch (error) {
+        console.error("Error fetching packs:", error);
+        setError("Failed to fetch packs. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPacks();
+  }, []);
+
   return (
     <div className="home">
       <header className="hero" ref={heroRef}>
@@ -61,6 +101,59 @@ const Home = () => {
             <h3>Houses</h3>
             <p>Find the perfect place to stay during your journey.</p>
           </div>
+        </div>
+      </section>
+
+      {/* Featured Packs Section */}
+      <section className="featured-packs-section">
+        <div className="section-header">
+          <h2>Best Packs</h2>
+          <div className="subheader">
+            <p>Made by us, for you</p>
+            <p className="customize-note">*all packs are customizable</p>
+          </div>
+        </div>
+
+        {error ? (
+          <div className="error-message">{error}</div>
+        ) : loading ? (
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Loading packs...</p>
+          </div>
+        ) : packs.length === 0 ? (
+          <div className="no-packs-message">
+            <p>No packs available. Please check back later.</p>
+          </div>
+        ) : (
+          <div className="featured-packs">
+            {packs.map((pack, index) => (
+              <div 
+                key={pack.id} 
+                className={`pack-card ${index === 1 ? 'pack-card-large' : ''}`}
+                onClick={() => window.location.href = `/packs/${pack.id}`}
+              >
+                <div className="pack-image" style={{ backgroundImage: `url(${pack.imageUrl || 'https://via.placeholder.com/600x400?text=No+Image'})` }}>
+                  <div className="pack-title-overlay">
+                    <h3 className="pack-title">{pack.name}</h3>
+                  </div>
+                  <div className="pack-overlay">
+                    <div className="pack-price">
+                      <div className="price-amount">
+                        <span className="currency">€</span>
+                        <span className="amount">{pack.price || '---'}</span>
+                      </div>
+                      <div className="per-night">PER NIGHT</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <div className="view-all-packs">
+          <Link to="/packs" className="btn-secondary">View All Packs</Link>
         </div>
       </section>
     </div>

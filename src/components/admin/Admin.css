@@ -1234,4 +1234,133 @@
 
 .admin-checkbox-item input[type="checkbox"] {
   margin-right: 8px;
+}
+
+/* Pack reordering styles */
+.order-column {
+  width: 120px;
+}
+
+.order-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+.order-number {
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-block;
+  text-align: center;
+  padding: 2px 8px;
+  background-color: #f2f2f2;
+  border-radius: 4px;
+  min-width: 30px;
+}
+
+.featured-position {
+  background-color: #fff8e6;
+  border: 1px solid #ffcc00;
+  color: #d48806;
+  position: relative;
+}
+
+.featured-star {
+  color: #ffcc00;
+  font-size: 12px;
+  margin-left: 3px;
+  vertical-align: top;
+}
+
+.order-btn {
+  background-color: #e9ecef;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.order-btn:hover:not(:disabled) {
+  background-color: #d1d7dc;
+}
+
+.order-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.order-btn.up {
+  color: #186d00;
+}
+
+.order-btn.down {
+  color: #186d00;
+}
+
+/* Pack order note */
+.pack-order-note {
+  background-color: #e6f7ff;
+  border-left: 4px solid #1890ff;
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+}
+
+.pack-order-note p {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.pack-order-note strong {
+  color: #1890ff;
+}
+
+.admin-action-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.refresh-btn {
+  background-color: #4a6da7;
+}
+
+.refresh-btn:hover {
+  background-color: #395382;
+}
+
+.debug-section {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.debug-section h3 {
+  margin-top: 0;
+  color: #343a40;
+}
+
+.debug-data {
+  margin-top: 15px;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 10px;
+  overflow-x: auto;
+}
+
+.debug-data pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 13px;
 } 

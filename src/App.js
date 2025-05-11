@@ -46,6 +46,7 @@ import PackForm from './components/admin/PackForm';
 // Import the admin components from pages
 import UserManagement from './pages/admin/UserManagement';
 import Dashboard from './pages/admin/Dashboard';
+import AddSamplePacks from './pages/admin/AddSamplePacks';
 
 // Layout component that handles conditional footer rendering
 const Layout = () => {
@@ -100,6 +101,7 @@ const Layout = () => {
               <Route path="packs" element={<PackList />} />
               <Route path="packs/new" element={<PackForm />} />
               <Route path="packs/edit/:id" element={<PackForm />} />
+              <Route path="packs/add-samples" element={<AddSamplePacks />} />
               
               {/* User Management */}
               <Route path="users" element={<UserList />} />
