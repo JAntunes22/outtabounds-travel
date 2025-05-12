@@ -860,21 +860,41 @@ export const fetchAccommodationById = async (accommodationId) => {
 // Fetch experiences from Firestore
 export const fetchExperiences = async () => {
   try {
+    console.log("Starting to fetch experiences from Firestore");
+    
     const experiencesRef = collection(db, 'experiences');
     const q = query(experiencesRef, orderBy('name'));
     const querySnapshot = await getDocs(q);
     
     const experiences = [];
     querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      console.log(`Experience document found: ${doc.id} - ${data.name || 'unnamed'}`);
       experiences.push({
         id: doc.id,
-        ...doc.data()
+        ...data
       });
     });
     
+    console.log(`Total experiences fetched: ${experiences.length}`);
+    
+    // Return an empty array if no experiences were found
+    // This prevents errors when mapping over the experiences
     return experiences;
   } catch (error) {
     console.error("Error fetching experiences:", error);
+    throw error;
+  }
+};
+
+// Add an experience to Firestore
+export const addExperience = async (experience) => {
+  try {
+    const docRef = await addDoc(collection(db, "experiences"), experience);
+    console.log("Experience added with ID: ", docRef.id);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error adding experience: ", error);
     throw error;
   }
 };

@@ -93,10 +93,22 @@ const Courses = () => {
             }
           }
           
+          // Ensure rating is a number and properly formatted
+          let rating = course.rating;
+          if (rating) {
+            // If rating exists but is a string, convert to float
+            rating = typeof rating === 'string' ? parseFloat(rating) : rating;
+            // Ensure it's within 1-5 range and formatted to one decimal place
+            rating = Math.min(5, Math.max(1, rating)).toFixed(1);
+          } else {
+            // Generate a random rating between 3.0 and 5.0 if none exists
+            rating = (Math.random() * 2 + 3).toFixed(1);
+          }
+          
           return {
             ...course,
             popularity: course.popularity || Math.floor(Math.random() * 100),
-            rating: course.rating || (Math.random() * 3 + 2).toFixed(1),
+            rating: rating,
             normalizedLocation: normalizeLocation(course.location),
             features: courseFeatures.length > 0 ? courseFeatures : ["No features available"]
           };
@@ -201,7 +213,15 @@ const Courses = () => {
       </header>
       
       {error ? (
-        <p className="error-message">{error}</p>
+        <div className="error-message-container">
+          <p className="error-message">{error}</p>
+        </div>
+      ) : courses.length === 0 ? (
+        <div className="no-courses-container">
+          <p className="no-courses-message">
+            No courses are currently available. Please check back later for exciting golf courses!
+          </p>
+        </div>
       ) : (
         <div className="courses-content">
           {/* View toggle buttons */}
@@ -268,7 +288,18 @@ const Courses = () => {
                       <div className="course-info">
                         <h2>{course.name}</h2>
                         <h3>{course.location}</h3>
-                        {course.rating && <div className="course-rating">Rating: {course.rating}★</div>}
+                        {course.rating && (
+                          <div className="course-rating">
+                            {parseFloat(course.rating).toFixed(1)}
+                            <span className="rating-stars">
+                              {[...Array(5)].map((_, i) => (
+                                <span key={i} className={i < Math.round(parseFloat(course.rating)) ? "star filled" : "star"}>
+                                  ★
+                                </span>
+                              ))}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="course-actions" onClick={(e) => e.stopPropagation()}>
                         <AddToPack 

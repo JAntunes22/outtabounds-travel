@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import AddToPack from './AddToPack';
-import './CourseModal.css';
+import './ExperienceModal.css';
 
-const CourseModal = ({ course, onClose }) => {
+const ExperienceModal = ({ experience, onClose }) => {
   // Prevent scrolling when modal is open - more robust approach
   useEffect(() => {
     // Store the current scroll position
@@ -44,38 +44,38 @@ const CourseModal = ({ course, onClose }) => {
     };
   }, [onClose]);
 
-  if (!course) return null;
+  if (!experience) return null;
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="course-modal">
+      <div className="experience-modal">
         <button className="modal-close-btn" onClick={onClose}>×</button>
         
-        <div className="course-modal-content">
+        <div className="experience-modal-content">
           <div className="modal-image-container">
             <img 
-              src={course.url} 
-              alt={course.name} 
+              src={experience.url} 
+              alt={experience.name} 
               className="modal-image"
             />
           </div>
           
           <div className="modal-details">
-            <h2 className="modal-title">{course.name}</h2>
+            <h2 className="modal-title">{experience.name}</h2>
             
             <div className="modal-location">
               <span className="label">Location:</span>
-              <span className="value">{course.location}</span>
+              <span className="value">{experience.location}</span>
             </div>
             
-            {course.rating && (
+            {experience.rating && (
               <div className="modal-rating">
                 <span className="label">Rating:</span>
                 <span className="value">
-                  {parseFloat(course.rating).toFixed(1)}
+                  {parseFloat(experience.rating).toFixed(1)}
                   <span className="modal-rating-stars">
                     {[...Array(5)].map((_, i) => (
-                      <span key={i} className={i < Math.round(parseFloat(course.rating)) ? "modal-star filled" : "modal-star"}>
+                      <span key={i} className={i < Math.round(parseFloat(experience.rating)) ? "modal-star filled" : "modal-star"}>
                         ★
                       </span>
                     ))}
@@ -84,48 +84,48 @@ const CourseModal = ({ course, onClose }) => {
               </div>
             )}
             
-            {typeof course.popularity !== 'undefined' && (
+            {typeof experience.popularity !== 'undefined' && (
               <div className="modal-popularity">
                 <span className="label">Popularity:</span>
                 <div className="popularity-bar">
                   <div 
                     className="popularity-fill" 
-                    style={{ width: `${course.popularity}%` }}
+                    style={{ width: `${experience.popularity}%` }}
                   ></div>
                 </div>
-                <span className="popularity-percentage">{course.popularity}%</span>
+                <span className="popularity-percentage">{experience.popularity}%</span>
               </div>
             )}
             
             <div className="modal-description">
               <h3>Description</h3>
-              <p>{course.description}</p>
+              <p>{experience.description}</p>
             </div>
             
             <div className="modal-features">
-              <h3>Features</h3>
-              {Array.isArray(course.features) && course.features.length > 0 ? (
+              <h3>Highlights</h3>
+              {Array.isArray(experience.features) && experience.features.length > 0 ? (
                 <ul>
-                  {course.features.map((feature, index) => (
+                  {experience.features.map((feature, index) => (
                     <li key={index}>{feature}</li>
                   ))}
                 </ul>
               ) : (
-                <p>No features available for this course.</p>
+                <p>No highlights available for this experience.</p>
               )}
             </div>
             
             <div className="modal-cta">
               <AddToPack 
                 item={{
-                  id: course.id,
-                  name: course.name,
-                  location: course.location,
-                  description: course.description || 'Explore this amazing golf course.',
-                  imageUrl: course.url,
-                  rating: course.rating
+                  id: experience.id,
+                  name: experience.name,
+                  location: experience.location,
+                  description: experience.description || 'Explore this amazing experience.',
+                  imageUrl: experience.url,
+                  rating: experience.rating
                 }} 
-                type="course"
+                type="experience"
                 buttonStyle="primary"
               />
               <button className="learn-more-btn">Learn More</button>
@@ -137,4 +137,4 @@ const CourseModal = ({ course, onClose }) => {
   );
 };
 
-export default CourseModal; 
+export default ExperienceModal; 

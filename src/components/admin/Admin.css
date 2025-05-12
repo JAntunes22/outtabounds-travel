@@ -1426,4 +1426,81 @@
   color: #666;
   margin-bottom: 4px;
   display: block;
+}
+
+/* Add these styles for the admin utilities section */
+
+.admin-utilities {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 30px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.admin-utilities h2 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 10px;
+}
+
+.admin-utility-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.admin-utility-btn {
+  background-color: #5c6bc0;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 15px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.admin-utility-btn:hover {
+  background-color: #3f51b5;
+}
+
+.admin-help-text {
+  font-size: 0.9rem;
+  color: #666;
+  font-style: italic;
+}
+
+/* Add styles for admin rating display */
+.admin-rating {
+  display: flex;
+  align-items: center;
+}
+
+.rating-value {
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+.rating-stars {
+  display: inline-flex;
+}
+
+.admin-star {
+  color: #ccc;
+  margin-right: 2px;
+  font-size: 14px;
+}
+
+.admin-star.filled {
+  color: #f8c732;
+}
+
+.no-rating {
+  color: #999;
+  font-style: italic;
+  font-size: 0.9em;
 } 

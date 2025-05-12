@@ -18,12 +18,15 @@ export default function ExperienceForm() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    imageUrl: '',
+    url: '',
     duration: '',
     location: '',
+    position: '',
     inclusions: [],
     exclusions: [],
     highlights: [],
+    features: [],
+    rating: '',
     category: 'Activity'
   });
   
@@ -49,12 +52,16 @@ export default function ExperienceForm() {
         setFormData({
           name: experienceData.name || '',
           description: experienceData.description || '',
-          imageUrl: experienceData.imageUrl || '',
+          // Handle both url and imageUrl for backward compatibility
+          url: experienceData.url || experienceData.imageUrl || '',
           duration: experienceData.duration || '',
           location: experienceData.location || '',
+          position: experienceData.position || '',
           inclusions: experienceData.inclusions || [],
           exclusions: experienceData.exclusions || [],
           highlights: experienceData.highlights || [],
+          features: experienceData.features || [],
+          rating: experienceData.rating || '',
           category: experienceData.category || 'Activity'
         });
       } else {
@@ -168,15 +175,15 @@ export default function ExperienceForm() {
             <label>Image URL</label>
             <input 
               type="url" 
-              name="imageUrl" 
-              value={formData.imageUrl} 
+              name="url" 
+              value={formData.url} 
               onChange={handleChange} 
               placeholder="https://example.com/image.jpg" 
             />
-            {formData.imageUrl && (
+            {formData.url && (
               <div style={{ marginTop: '10px' }}>
                 <img 
-                  src={formData.imageUrl} 
+                  src={formData.url} 
                   alt="Experience Preview" 
                   style={{ maxWidth: '200px', maxHeight: '100px', objectFit: 'cover', borderRadius: '4px' }} 
                   onError={(e) => {
@@ -228,6 +235,51 @@ export default function ExperienceForm() {
           </div>
           
           <div className="admin-form-group">
+            <label>Position (latitude,longitude)</label>
+            <input 
+              type="text" 
+              name="position" 
+              value={formData.position} 
+              onChange={handleChange} 
+              placeholder="e.g., 37.7749,-122.4194" 
+            />
+            <p className="help-text">
+              Enter the position as latitude,longitude (comma-separated) for map placement
+            </p>
+          </div>
+          
+          <div className="admin-form-group">
+            <label>Rating (1.0 - 5.0)</label>
+            <input 
+              type="number" 
+              name="rating" 
+              value={formData.rating} 
+              onChange={handleChange}
+              min="1.0"
+              max="5.0"
+              step="0.1"
+              placeholder="e.g., 4.5" 
+            />
+            <p className="help-text">
+              Enter a rating between 1.0 and 5.0 (displayed as stars on the experience card)
+            </p>
+          </div>
+          
+          <div className="admin-form-group">
+            <label>Features (comma-separated)</label>
+            <textarea 
+              name="features" 
+              value={formData.features.join(', ')} 
+              onChange={(e) => handleArrayChange(e, 'features')} 
+              rows="3"
+              placeholder="e.g., Professional guides, Equipment rental, Food included" 
+            />
+            <p className="help-text">
+              Enter key features of the experience, separated by commas
+            </p>
+          </div>
+          
+          <div className="admin-form-group">
             <label>Highlights (comma-separated)</label>
             <textarea 
               name="highlights" 
@@ -248,7 +300,7 @@ export default function ExperienceForm() {
               value={formData.inclusions.join(', ')} 
               onChange={(e) => handleArrayChange(e, 'inclusions')} 
               rows="3"
-              placeholder="e.g., Transportation, Tasting fees, Lunch, Guide" 
+              placeholder="e.g., Transportation, Entrance fees, Lunch" 
             />
             <p className="help-text">
               Enter what's included in the experience, separated by commas
@@ -262,7 +314,7 @@ export default function ExperienceForm() {
               value={formData.exclusions.join(', ')} 
               onChange={(e) => handleArrayChange(e, 'exclusions')} 
               rows="3"
-              placeholder="e.g., Gratuities, Additional food and beverages, Personal expenses" 
+              placeholder="e.g., Gratuities, Personal expenses, Additional activities" 
             />
             <p className="help-text">
               Enter what's not included in the experience, separated by commas
@@ -272,15 +324,14 @@ export default function ExperienceForm() {
           <div className="admin-form-actions">
             <button 
               type="button" 
-              className="admin-action-btn cancel-btn" 
+              className="cancel-btn" 
               onClick={() => navigate('/admin/experiences')}
-              disabled={loading}
             >
               Cancel
             </button>
             <button 
               type="submit" 
-              className="admin-action-btn" 
+              className="save-btn"
               disabled={loading}
             >
               {loading ? 'Saving...' : (isEditing ? 'Update Experience' : 'Create Experience')}

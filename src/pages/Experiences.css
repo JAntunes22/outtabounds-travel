@@ -1,19 +1,532 @@
 /* Experiences page styles */
 .experiences {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+  width: 100%;
+  overflow-y: visible; /* Allow vertical overflow */
+  overflow-x: hidden; /* Maintain horizontal containment */
 }
 
 .experiences h1 {
-  margin-bottom: 1rem;
-  color: #333;
   font-size: 2.5rem;
+  margin-bottom: 30px;
+  color: #333;
 }
 
-.experiences p {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: #555;
+.experience-item {
+  overflow: hidden;
+  background-color: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 12px; /* Add rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add subtle shadow */
+  position: relative; /* For positioning the content overlay */
+  aspect-ratio: 3/4; /* Create a taller card with fixed aspect ratio */
+  z-index: 1; /* Base z-index */
+  transform-origin: center bottom; /* Ensure transform happens from bottom */
+  cursor: pointer; /* Add cursor pointer to entire card */
+}
+
+.experience-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
+  z-index: 100; /* Much higher z-index on hover to ensure it appears above everything */
+}
+
+.experience-image-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: pointer;
+  position: absolute; /* Position absolutely to fill the entire card */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.experience-item img {
+  width: 100%;
+  height: 100%; /* Fill the entire card */
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.experience-item:hover img {
+  transform: scale(1.15); /* Increased zoom effect */
+}
+
+.experience-item .experience-content {
+  position: absolute; /* Position over the image */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0) 100%); /* Gradient overlay for readability */
+  color: white;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  z-index: 10; /* Ensure content is above the image */
+  pointer-events: none; /* Make the overlay non-interactive to allow clicks to go through to the container */
+}
+
+.experience-info {
+  cursor: pointer;
+  pointer-events: auto; /* Allow interaction with the experience info */
+}
+
+.experience-actions {
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: auto; /* Allow interaction with the buttons */
+}
+
+.experience-item h2 {
+  font-size: 1.5rem;
+  margin: 5px 0;
+  color: white;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.experience-item h3 {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 5px;
+  transition: color 0.3s ease;
+}
+
+.experience-item p {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 10px;
+  transition: color 0.3s ease;
+  max-height: 80px;
+  overflow: hidden;
+}
+
+.experience-item .experience-location {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.experience-item:hover h2,
+.experience-item:hover h3,
+.experience-item:hover p {
+  color: #ffffff; /* Changed to match the Explore Now button color */
+}
+
+.hero-experiences {
+  position: relative;
+  background: url('https://i.imgur.com/qQeOsvY.jpeg') no-repeat center center/cover; /* Using the same hero image URL as courses */
+  background-attachment: fixed; /* This creates the parallax effect */
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+  margin-bottom: 100px; /* Increased spacing below hero */
+  filter: saturate(0.7); /* Reduce saturation to 70% */
+  z-index: 0; /* Ensure proper stacking */
+  overflow: hidden; /* Prevent content from escaping hero container */
+}
+
+.hero-experiences::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%; /* Full screen height */
+  width: 100%; /* Full screen width */
+  background-color: rgba(0, 0, 0, 0.3); /* Reduced contrast */
+  backdrop-filter: blur(2px); /* Added blur effect */
+  z-index: 1; /* Ensure it appears above the image */
+}
+
+.hero-experiences-content {
+  position: relative;
+  z-index: 2;
+  padding-top: 20px; /* Add space to move content down from navbar */
+  transform: translateY(0); /* Starting position for animation */
+  transition: transform 0.3s ease-out; /* Faster, smoother transition */
+  max-height: 80%; /* Limit height to prevent content from getting too close to bottom */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-experiences-content h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  font-family: 'Poppins', sans-serif;
+  color: white; /* Make the text white */
+}
+
+.hero-experiences-content p {
+  font-size: 1.5rem;
   margin-bottom: 2rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* New filter and layout styles */
+.experiences-container {
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto 100px;
+  position: relative;
+  padding: 10px 30px 0; /* Add top padding */
+  width: 100%;
+  box-sizing: border-box;
+  overflow: visible; /* Change from overflow-x: hidden to allow visible overflow */
+}
+
+.filter-sidebar {
+  width: 250px;
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  margin-right: 30px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  height: fit-content;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  flex-shrink: 0;
+}
+
+.filter-sidebar.closed {
+  transform: translateX(-280px);
+  opacity: 0;
+  position: absolute;
+  z-index: -1;
+}
+
+.experiences .view-toggle {
+  position: absolute;
+  top: -50px;
+  right: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  display: flex;
+  z-index: 30;
+}
+
+.experiences .view-toggle button {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  color: #666;
+}
+
+.experiences .view-toggle button.active {
+  background-color: #186d00;
+  color: white;
+}
+
+.experiences .view-toggle button:hover:not(.active) {
+  background-color: #f0f0f0;
+}
+
+.experiences .filter-toggle {
+  position: absolute;
+  top: -50px;
+  left: 20px;
+  background-color: #186d00;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  z-index: 20;
+  transition: background-color 0.3s ease;
+}
+
+.experiences .filter-toggle:hover {
+  background-color: #125600;
+}
+
+.filter-section {
+  margin-bottom: 25px;
+}
+
+.filter-section h3 {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.filter-section select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+}
+
+.clear-filters {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.clear-filters:hover {
+  background-color: #d32f2f;
+}
+
+.experience-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  width: 100%;
+  margin: 0;
+  padding: 8px 5px 0 0; /* Add padding to top and right */
+  box-sizing: border-box;
+  position: relative;
+}
+
+.no-results {
+  grid-column: 1 / -1;
+  padding: 50px;
+  text-align: center;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  margin: 30px 0;
+}
+
+.experience-rating {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #fff;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.rating-stars {
+  display: inline-flex;
+  margin-left: 8px;
+}
+
+.star {
+  color: rgba(255, 255, 255, 0.4);
+  margin-right: 2px;
+}
+
+.star.filled {
+  color: #ffdd57;
+}
+
+.experiences-content {
+  position: relative;
+  max-width: 1400px;
+  margin: 0 auto 100px;
+  width: 100%;
+  padding: 0 30px;
+  box-sizing: border-box;
+}
+
+.map-view {
+  display: none;
+  height: 75vh;
+  width: 100%;
+  margin-top: 60px;
+}
+
+.map-view.active {
+  display: block;
+}
+
+.list-view {
+  display: block;
+}
+
+.list-view.active {
+  display: block;
+}
+
+.list-view.hidden {
+  display: none;
+}
+
+/* Add responsive media queries */
+@media (min-width: 1200px) {
+  .experience-list {
+    grid-template-columns: repeat(4, 1fr); /* 4 per row on large screens */
+  }
+}
+
+@media (max-width: 1199px) and (min-width: 901px) {
+  .experience-list {
+    grid-template-columns: repeat(3, 1fr); /* 3 per row on medium screens */
+  }
+}
+
+@media (max-width: 900px) and (min-width: 601px) {
+  .experience-list {
+    grid-template-columns: repeat(2, 1fr); /* 2 per row on smaller screens */
+    padding: 30px 5px 0 0; 
+  }
+}
+
+@media (max-width: 600px) {
+  .experience-list {
+    grid-template-columns: 1fr; /* 1 per row on very small screens */
+    padding: 30px 5px 0 0; 
+  }
+  
+  .filter-section select {
+    font-size: 0.9rem;
+  }
+  
+  /* Improve mobile spacing */
+  .experiences-content {
+    padding: 0 15px;
+  }
+  
+  .experiences-container {
+    padding: 10px 15px 0;
+  }
+  
+  /* Make buttons more visible on small screens */
+  .experiences .view-toggle button {
+    padding: 8px 15px;
+    font-size: 13px;
+  }
+  
+  .experiences .filter-toggle {
+    padding: 7px 12px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Responsive adjustments for tablets and mobile */
+@media (max-width: 900px) {
+  .experiences-container {
+    flex-direction: column;
+    padding: 0 20px;
+  }
+  
+  .filter-sidebar {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+  }
+  
+  .filter-sidebar.closed {
+    transform: translateY(-200px);
+  }
+  
+  .experience-list {
+    width: 100%;
+  }
+  
+  .experiences .view-toggle {
+    right: 15px;
+  }
+  
+  .experiences .filter-toggle {
+    left: 15px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .hero-experiences {
+    height: 40vh;
+    margin-bottom: 60px;
+    background-attachment: scroll; /* Disable parallax on mobile for better performance */
+  }
+  
+  .hero-experiences-content h1 {
+    font-size: 2.2rem;
+  }
+  
+  .hero-experiences-content p {
+    font-size: 1.2rem;
+  }
+}
+
+/* Additional mobile-specific adjustments */
+@media (max-width: 480px) {
+  .hero-experiences {
+    height: 40vh;
+  }
+  
+  .hero-experiences-content h1 {
+    font-size: 1.8rem;
+  }
+  
+  .hero-experiences-content p {
+    font-size: 1rem;
+  }
+  
+  .experiences .view-toggle {
+    position: relative !important;
+    top: 0 !important;
+    right: auto !important;
+    margin: 20px auto !important;
+    display: inline-flex;
+    justify-content: center;
+    width: auto;
+    max-width: fit-content;
+  }
+  
+  .experiences .filter-toggle {
+    position: relative !important;
+    top: 0 !important;
+    left: auto !important;
+    margin: 0 auto 20px !important;
+    width: 70%;
+    max-width: 200px;
+    display: block;
+  }
+  
+  .experiences-container {
+    margin-bottom: 50px;
+    padding-top: 20px;
+  }
+}
+
+.error-message-container, .no-experiences-container {
+  max-width: 1200px;
+  margin: 50px auto;
+  padding: 30px;
+  text-align: center;
+  border-radius: 8px;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.error-message {
+  color: #e74c3c;
+  font-size: 18px;
+  margin-bottom: 15px;
+}
+
+.no-experiences-message {
+  color: #666;
+  font-size: 18px;
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto;
 } 

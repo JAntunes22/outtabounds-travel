@@ -94,6 +94,7 @@ export default function ExperienceList() {
                   <th>Name</th>
                   <th>Image</th>
                   <th>Category</th>
+                  <th>Rating</th>
                   <th>Duration</th>
                   <th>Location</th>
                   <th>Actions</th>
@@ -104,7 +105,17 @@ export default function ExperienceList() {
                   <tr key={experience.id}>
                     <td>{experience.name}</td>
                     <td>
-                      {experience.imageUrl ? (
+                      {experience.url ? (
+                        <img 
+                          src={experience.url} 
+                          alt={experience.name} 
+                          style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://via.placeholder.com/80x50?text=No+Image';
+                          }}
+                        />
+                      ) : experience.imageUrl ? (
                         <img 
                           src={experience.imageUrl} 
                           alt={experience.name} 
@@ -122,6 +133,22 @@ export default function ExperienceList() {
                       <span className={`category-badge category-${experience.category?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
                         {experience.category || 'Uncategorized'}
                       </span>
+                    </td>
+                    <td>
+                      {experience.rating ? (
+                        <div className="admin-rating">
+                          <span className="rating-value">{parseFloat(experience.rating).toFixed(1)}</span>
+                          <span className="rating-stars">
+                            {[...Array(5)].map((_, i) => (
+                              <span key={i} className={i < Math.round(parseFloat(experience.rating)) ? "admin-star filled" : "admin-star"}>
+                                ★
+                              </span>
+                            ))}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="no-rating">Not rated</span>
+                      )}
                     </td>
                     <td>{experience.duration || 'Not specified'}</td>
                     <td>{experience.location || 'Not specified'}</td>

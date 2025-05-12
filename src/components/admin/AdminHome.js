@@ -136,6 +136,30 @@ export default function AdminHome() {
               </Link>
             </div>
           </div>
+
+          <div className="admin-utilities">
+            <h2>Maintenance Utilities</h2>
+            <div className="admin-utility-buttons">
+              <button
+                className="admin-utility-btn"
+                onClick={async () => {
+                  try {
+                    const { migrateExperienceImageUrls } = await import('../../utils/migrationUtils');
+                    if (window.confirm('This will update all experiences with imageUrl to use url instead. Continue?')) {
+                      const result = await migrateExperienceImageUrls();
+                      alert(`Migration complete.\n\nTotal Experiences: ${result.totalExperiences}\nUpdated: ${result.updatedCount}\nAlready correct: ${result.alreadyCorrect}`);
+                    }
+                  } catch (error) {
+                    console.error("Migration failed:", error);
+                    alert(`Migration failed: ${error.message}`);
+                  }
+                }}
+              >
+                Migrate Experience Images
+              </button>
+            </div>
+            <p className="admin-help-text">Use these utilities for maintenance tasks. Run only when needed.</p>
+          </div>
         </>
       )}
     </div>

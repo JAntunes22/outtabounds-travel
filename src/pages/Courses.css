@@ -203,7 +203,7 @@
   z-index: -1;
 }
 
-.view-toggle {
+.courses .view-toggle {
   position: absolute;
   top: -50px;
   right: 20px;
@@ -215,7 +215,7 @@
   z-index: 30;
 }
 
-.view-toggle button {
+.courses .view-toggle button {
   padding: 10px 20px;
   background: none;
   border: none;
@@ -227,16 +227,16 @@
   color: #666;
 }
 
-.view-toggle button.active {
+.courses .view-toggle button.active {
   background-color: #186d00;
   color: white;
 }
 
-.view-toggle button:hover:not(.active) {
+.courses .view-toggle button:hover:not(.active) {
   background-color: #f0f0f0;
 }
 
-.filter-toggle {
+.courses .filter-toggle {
   position: absolute;
   top: -50px;
   left: 20px;
@@ -251,7 +251,7 @@
   transition: background-color 0.3s ease;
 }
 
-.filter-toggle:hover {
+.courses .filter-toggle:hover {
   background-color: #125600;
 }
 
@@ -315,8 +315,24 @@
 .course-rating {
   font-size: 0.95rem;
   font-weight: bold;
-  color: #ffdd57;
+  color: #fff;
   margin-top: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.rating-stars {
+  display: inline-flex;
+  margin-left: 8px;
+}
+
+.star {
+  color: rgba(255, 255, 255, 0.4);
+  margin-right: 2px;
+}
+
+.star.filled {
+  color: #ffdd57;
 }
 
 .courses-content {
@@ -391,12 +407,12 @@
   }
   
   /* Make buttons more visible on small screens */
-  .view-toggle button {
+  .courses .view-toggle button {
     padding: 8px 15px;
     font-size: 13px;
   }
   
-  .filter-toggle {
+  .courses .filter-toggle {
     padding: 7px 12px;
     font-size: 0.85rem;
   }
@@ -424,11 +440,11 @@
     width: 100%;
   }
   
-  .view-toggle {
+  .courses .view-toggle {
     right: 15px;
   }
   
-  .filter-toggle {
+  .courses .filter-toggle {
     left: 15px;
     padding: 8px 12px;
     font-size: 0.8rem;
@@ -463,7 +479,7 @@
     font-size: 1rem;
   }
   
-  .view-toggle {
+  .courses .view-toggle {
     position: relative !important;
     top: 0 !important;
     right: auto !important;
@@ -474,7 +490,7 @@
     max-width: fit-content;
   }
   
-  .filter-toggle {
+  .courses .filter-toggle {
     position: relative !important;
     top: 0 !important;
     left: auto !important;
@@ -488,4 +504,29 @@
     margin-bottom: 50px;
     padding-top: 20px;
   }
+}
+
+/* Error and no courses messages styling */
+.error-message-container, .no-courses-container {
+  max-width: 1200px;
+  margin: 50px auto;
+  padding: 30px;
+  text-align: center;
+  border-radius: 8px;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.error-message {
+  color: #e74c3c;
+  font-size: 18px;
+  margin-bottom: 15px;
+}
+
+.no-courses-message {
+  color: #666;
+  font-size: 18px;
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto;
 }

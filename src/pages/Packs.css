@@ -263,8 +263,8 @@
   100% { transform: rotate(360deg); }
 }
 
-/* View toggle and filter styles like Courses.css */
-.view-toggle, .filter-toggle {
+/* Scoped view toggle and filter styles for Packs page only */
+.packs .view-toggle, .packs .filter-toggle {
   display: none;
 }
 
@@ -354,7 +354,7 @@
     font-size: 1rem;
   }
   
-  .view-toggle {
+  .packs .view-toggle {
     position: static;
     margin: 0 auto 20px;
     width: 100%;
@@ -363,7 +363,7 @@
     overflow: hidden;
   }
   
-  .filter-toggle {
+  .packs .filter-toggle {
     position: static;
     margin: 0 auto 10px;
     width: calc(100% - 40px);

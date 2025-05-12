@@ -105,7 +105,22 @@ export default function CourseList() {
                     <td>{course.name}</td>
                     <td>{course.location}</td>
                     <td>{course.position || 'Not set'}</td>
-                    <td>{course.rating || 'N/A'}</td>
+                    <td>
+                      {course.rating ? (
+                        <div className="admin-rating">
+                          <span className="rating-value">{parseFloat(course.rating).toFixed(1)}</span>
+                          <span className="rating-stars">
+                            {[...Array(5)].map((_, i) => (
+                              <span key={i} className={i < Math.round(parseFloat(course.rating)) ? "admin-star filled" : "admin-star"}>
+                                ★
+                              </span>
+                            ))}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="no-rating">Not rated</span>
+                      )}
+                    </td>
                     <td>
                       <div className="table-actions">
                         <button 

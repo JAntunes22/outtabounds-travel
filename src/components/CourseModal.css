@@ -346,4 +346,24 @@ body.modal-open {
   .modal-image-container {
     height: 180px;
   }
+}
+
+/* Update the modal rating stars styling */
+.modal-rating .value {
+  display: flex;
+  align-items: center;
+}
+
+.modal-rating-stars {
+  display: inline-flex;
+  margin-left: 8px;
+}
+
+.modal-star {
+  color: #ccc;
+  margin-right: 2px;
+}
+
+.modal-star.filled {
+  color: #ffdd57;
 } 
