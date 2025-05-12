@@ -1363,4 +1363,67 @@
   white-space: pre-wrap;
   font-family: monospace;
   font-size: 13px;
+}
+
+.input-with-help {
+  width: 100%;
+}
+
+.help-text {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Category badges for experiences */
+.category-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.category-activity {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+}
+
+.category-tour {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+}
+
+.category-adventure {
+  background-color: #fbe9e7;
+  color: #bf360c;
+}
+
+.category-cultural {
+  background-color: #f3e5f5;
+  color: #6a1b9a;
+}
+
+.category-food-drink {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.category-wellness {
+  background-color: #e0f7fa;
+  color: #006064;
+}
+
+.category-other {
+  background-color: #f5f5f5;
+  color: #424242;
+}
+
+/* Input sublabel styles */
+.input-sublabel {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 4px;
+  display: block;
 } 

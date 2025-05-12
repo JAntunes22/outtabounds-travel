@@ -446,13 +446,17 @@
 
 .placeholder-image {
   width: 100%;
-  height: 180px;
-  background-color: #f0f0f0;
+  height: 100%;
   display: flex;
-  justify-content: center;
   align-items: center;
-  color: #888;
-  font-size: 14px;
+  justify-content: center;
+  background-color: #f5f5f5;
+  color: #666;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  min-height: 120px;
+  flex: 1;
 }
 
 .pack-card {
@@ -704,5 +708,824 @@ body.modal-open {
   
   .book-now-button {
     max-width: 100%;
+  }
+}
+
+/* Updated PackDetails Page Styles */
+.pack-details-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.pack-details-main {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.pack-details-left {
+  padding-right: 1rem;
+}
+
+.pack-details-right {
+  position: relative;
+}
+
+.pack-booking-card {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  position: sticky;
+  top: 80px;
+}
+
+.pack-price-container {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.price-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.currency {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #186d00;
+  line-height: 1;
+  margin-top: 0.5rem;
+}
+
+.amount {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #186d00;
+  line-height: 1;
+}
+
+.unit {
+  font-size: 1rem;
+  color: #186d00;
+  margin-top: 0.5rem;
+  margin-left: 0.25rem;
+}
+
+.price-note {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+.pack-details-info {
+  margin-bottom: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.info-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  margin-right: 1rem;
+  flex-shrink: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 24px;
+}
+
+.nights-icon {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23186d00"><path d="M20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg>');
+}
+
+.board-icon {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23186d00"><path d="M11,9H9V2H7V9H5V2H3V9C3,11.12 4.66,12.84 6.75,12.97V22H9.25V12.97C11.34,12.84 13,11.12 13,9V2H11V9M16,6V14H18.5V22H21V2C18.24,2 16,4.24 16,6Z"/></svg>');
+}
+
+.group-icon {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23186d00"><path d="M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V19H23V16.5C23,14.17 18.33,13 16,13M8,13C5.67,13 1,14.17 1,16.5V19H15V16.5C15,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z"/></svg>');
+}
+
+.info-content h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.info-content p {
+  margin: 0;
+  font-size: 1rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.book-now-button {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.button-secondary {
+  width: 100%;
+  text-align: center;
+}
+
+/* Responsive styles for pack details */
+@media (max-width: 992px) {
+  .pack-details-main {
+    grid-template-columns: 1fr;
+  }
+  
+  .pack-details-right {
+    margin-top: 2rem;
+  }
+  
+  .pack-booking-card {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .pack-details-hero-content h1 {
+    font-size: 2rem;
+  }
+  
+  .pack-details-hero {
+    min-height: 300px;
+  }
+  
+  .pack-details-content {
+    padding: 1.5rem;
+  }
+  
+  .includes-sections-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .amount {
+    font-size: 2.5rem;
+  }
+}
+
+.pack-action {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.view-details-button {
+  background-color: #186d00;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  text-align: center;
+}
+
+.view-details-button:hover {
+  background-color: #125500;
+}
+
+/* PackDetails Page Styles */
+.pack-details-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.pack-details-hero {
+  height: 50vh;
+  min-height: 400px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+  margin-top: -90px; /* Increased negative margin to better pull up under header */
+  z-index: -1; /* This will place the hero behind the header */
+  padding-top: 90px; /* This compensates for the header height */
+}
+
+.pack-details-hero-content {
+  z-index: 1;
+  padding: 2rem;
+  max-width: 800px;
+}
+
+.pack-details-hero-content h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.pack-details-hero-content .pack-price {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Updated Pack Details Content Styles */
+.pack-details-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.pack-details-main {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.pack-details-left {
+  padding-right: 1rem;
+}
+
+.pack-description-section {
+  margin-bottom: 2rem;
+}
+
+.pack-description-section h2 {
+  margin-bottom: 1rem;
+  color: #186d00;
+}
+
+.pack-includes-details {
+  margin-bottom: 2rem;
+}
+
+.pack-includes-details h2 {
+  margin-bottom: 1.5rem;
+  color: #186d00;
+}
+
+.includes-sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.includes-section {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.includes-section:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.includes-section h3 {
+  color: #186d00;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.includes-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.includes-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.includes-list li:last-child {
+  border-bottom: none;
+}
+
+/* Right side booking card styles */
+.pack-details-right {
+  position: relative;
+}
+
+.pack-booking-card {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  position: sticky;
+  top: 80px;
+}
+
+.pack-price-container {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.price-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.currency {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #186d00;
+  line-height: 1;
+  margin-top: 0.5rem;
+}
+
+.amount {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #186d00;
+  line-height: 1;
+}
+
+.unit {
+  font-size: 1rem;
+  color: #186d00;
+  margin-top: 0.5rem;
+  margin-left: 0.25rem;
+}
+
+.price-note {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+.pack-details-info {
+  margin-bottom: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.info-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  margin-right: 1rem;
+  flex-shrink: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 24px;
+}
+
+.nights-icon {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23186d00"><path d="M20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg>');
+}
+
+.board-icon {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23186d00"><path d="M11,9H9V2H7V9H5V2H3V9C3,11.12 4.66,12.84 6.75,12.97V22H9.25V12.97C11.34,12.84 13,11.12 13,9V2H11V9M16,6V14H18.5V22H21V2C18.24,2 16,4.24 16,6Z"/></svg>');
+}
+
+.group-icon {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23186d00"><path d="M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V19H23V16.5C23,14.17 18.33,13 16,13M8,13C5.67,13 1,14.17 1,16.5V19H15V16.5C15,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z"/></svg>');
+}
+
+.info-content h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.info-content p {
+  margin: 0;
+  font-size: 1rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.book-now-button {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.button-primary {
+  background-color: #186d00;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.button-primary:hover {
+  background-color: #125500;
+}
+
+.button-secondary {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  width: 100%;
+  text-align: center;
+}
+
+.button-secondary:hover {
+  background-color: #e5e5e5;
+  border-color: #ccc;
+}
+
+.error-container {
+  text-align: center;
+  padding: 4rem 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.error-container h2 {
+  color: #d32f2f;
+  margin-bottom: 1rem;
+}
+
+.error-container p {
+  margin-bottom: 2rem;
+}
+
+/* Responsive styles for pack details */
+@media (max-width: 992px) {
+  .pack-details-main {
+    grid-template-columns: 1fr;
+  }
+  
+  .pack-details-right {
+    margin-top: 2rem;
+  }
+  
+  .pack-booking-card {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .pack-details-hero-content h1 {
+    font-size: 2rem;
+  }
+  
+  .pack-details-hero {
+    min-height: 300px;
+  }
+  
+  .pack-details-content {
+    padding: 1.5rem;
+  }
+  
+  .includes-sections-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .amount {
+    font-size: 2.5rem;
+  }
+}
+
+/* Updated includes section for vertical layout */
+.includes-sections-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.includes-vertical-section {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.includes-vertical-section h3 {
+  color: #186d00;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+  font-size: 1.4rem;
+}
+
+.includes-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.includes-item-card {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f9f9f9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-height: 120px;
+  align-items: stretch;
+}
+
+.includes-item-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.item-image {
+  width: 150px;
+  height: 100%;
+  min-height: 100px;
+  flex-shrink: 0;
+  background-color: #eee;
+  display: flex;
+  align-items: stretch;
+}
+
+.item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.item-details {
+  padding: 1rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.item-details h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.item-details p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.includes-vertical-section .placeholder-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  color: #666;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  min-height: 120px;
+  flex: 1;
+}
+
+/* Booking options styles */
+.pack-booking-options {
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1.5rem;
+}
+
+.booking-option {
+  margin-bottom: 1rem;
+}
+
+.booking-option label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.booking-option input[type="date"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.number-input-control {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+  max-width: 115px;
+}
+
+.number-input-control button {
+  width: 32px;
+  height: 32px;
+  background-color: #f0f0f0;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.number-input-control button:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+.number-input-control button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.number-input-control input {
+  width: 50px;
+  height: 32px;
+  border: none;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0;
+}
+
+.number-input-control input:focus {
+  outline: none;
+}
+
+.booking-summary {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.booking-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.total-price {
+  color: #186d00;
+}
+
+.booking-summary small {
+  display: block;
+  text-align: right;
+  color: #666;
+}
+
+.book-now-button:disabled {
+  background-color: #a0a0a0;
+  cursor: not-allowed;
+}
+
+/* Responsive styles for includes section */
+@media (max-width: 768px) {
+  .includes-item-card {
+    flex-direction: column;
+  }
+  
+  .item-image {
+    width: 100%;
+    height: 150px;
+  }
+}
+
+@media (max-width: 768px) {
+  .includes-item-card {
+    flex-direction: column;
+    min-height: auto;
+  }
+  
+  .item-image {
+    width: 100%;
+    height: 180px;
+    min-height: 180px;
+  }
+}
+
+.includes-vertical-section .item-image {
+  width: 150px;
+  height: 100%;
+  min-height: 100px;
+  flex-shrink: 0;
+  background-color: #eee;
+  display: flex;
+  align-items: stretch;
+}
+
+.includes-vertical-section .item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.includes-vertical-section .item-details {
+  padding: 1rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.includes-vertical-section .includes-item-card {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f9f9f9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-height: 120px;
+  align-items: stretch;
+}
+
+@media (max-width: 768px) {
+  .includes-vertical-section .includes-item-card {
+    flex-direction: column;
+    min-height: auto;
+  }
+  
+  .includes-vertical-section .item-image {
+    width: 100%;
+    height: 180px;
+    min-height: 180px;
+  }
+}
+
+/* More specific CSS for the includes-vertical-section container */
+.pack-details-page .includes-vertical-section .item-image {
+  width: 150px;
+  height: 100%;
+  min-height: 100px;
+  flex-shrink: 0;
+  background-color: #eee;
+  display: flex;
+  align-items: stretch;
+}
+
+.pack-details-page .includes-vertical-section .item-image img {
+  width: 150%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Media query specifically for pack details page */
+@media (max-width: 768px) {
+  .pack-details-page .includes-vertical-section .includes-item-card {
+    flex-direction: column;
+    min-height: auto;
+  }
+  
+  .pack-details-page .includes-vertical-section .item-image {
+    width: 100%;
+    height: 180px;
+    min-height: 180px;
   }
 } 

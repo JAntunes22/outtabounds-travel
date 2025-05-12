@@ -25,7 +25,11 @@ export default function PackForm() {
     courses: [],
     experiences: [],
     accommodations: [],
-    services: []
+    services: [],
+    slug: '',
+    nights: '',
+    board: 'Room only',
+    recommendedGroup: '2'
   });
   
   const [loading, setLoading] = useState(false);
@@ -101,7 +105,11 @@ export default function PackForm() {
           courses: packData.courses || [],
           experiences: packData.experiences || [],
           accommodations: packData.accommodations || [],
-          services: packData.services || []
+          services: packData.services || [],
+          slug: packData.slug || '',
+          nights: packData.nights || '',
+          board: packData.board || 'Room only',
+          recommendedGroup: packData.recommendedGroup || '2'
         });
       } else {
         setError('Pack not found');
@@ -120,6 +128,16 @@ export default function PackForm() {
       ...formData,
       [name]: value
     });
+  }
+  
+  // Generate a slug from the pack name for SEO-friendly URLs
+  function generateSlug(name) {
+    return name
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '') // Remove non-word chars (except spaces and hyphens)
+      .replace(/\s+/g, '-')     // Replace spaces with hyphens
+      .replace(/--+/g, '-')     // Replace multiple hyphens with single hyphen
+      .trim();                  // Trim leading/trailing spaces/hyphens
   }
   
   function handleItemToggle(type, item) {
@@ -158,18 +176,32 @@ export default function PackForm() {
         throw new Error('Pack name is required');
       }
       
+      // Generate a slug for the pack if needed
+      const slug = formData.slug || generateSlug(formData.name);
+      
       // Prepare data for Firestore
       const packData = {
         ...formData,
-        price: formData.price ? parseFloat(formData.price) : null
+        slug: slug,
+        price: formData.price ? parseFloat(formData.price) : null,
+        updatedAt: new Date()
       };
       
+      if (!isEditing) {
+        // Add created timestamp for new packs
+        packData.createdAt = new Date();
+      }
+      
+      // Add or update the pack
+      let packId;
       if (isEditing) {
         // Update existing pack
         await updateDoc(doc(db, 'packs', id), packData);
+        packId = id;
       } else {
         // Add new pack
-        await addDoc(collection(db, 'packs'), packData);
+        const docRef = await addDoc(collection(db, 'packs'), packData);
+        packId = docRef.id;
       }
       
       // Navigate back to packs list
@@ -211,6 +243,64 @@ export default function PackForm() {
               onChange={handleChange} 
               rows="4"
             />
+          </div>
+          
+          <div className="admin-form-group">
+            <label>URL Slug</label>
+            <div className="input-with-help">
+              <input 
+                type="text" 
+                name="slug" 
+                value={formData.slug} 
+                onChange={handleChange}
+                placeholder="Leave blank to auto-generate from name" 
+              />
+              <p className="help-text">
+                The URL-friendly version of the name. Used in the pack's page URL.
+              </p>
+            </div>
+          </div>
+          
+          <div className="admin-form-group">
+            <label>Nights</label>
+            <input 
+              type="number" 
+              name="nights" 
+              value={formData.nights} 
+              onChange={handleChange} 
+              min="1"
+              placeholder="e.g., 3" 
+            />
+          </div>
+          
+          <div className="admin-form-group">
+            <label>Board Type</label>
+            <select
+              name="board"
+              value={formData.board}
+              onChange={handleChange}
+            >
+              <option value="Room only">Room only</option>
+              <option value="Breakfast">Breakfast</option>
+              <option value="Half Board">Half Board</option>
+              <option value="Full Board">Full Board</option>
+              <option value="All Inclusive">All Inclusive</option>
+            </select>
+          </div>
+          
+          <div className="admin-form-group">
+            <label>Recommended Group Size</label>
+            <input 
+              type="number" 
+              name="recommendedGroup" 
+              value={formData.recommendedGroup} 
+              onChange={handleChange} 
+              min="1"
+              placeholder="e.g., 2" 
+            />
+            <p className="help-text">
+              The recommended number of people for optimal pricing.
+            </p>
           </div>
           
           <div className="admin-form-group">

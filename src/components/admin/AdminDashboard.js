@@ -92,6 +92,12 @@ export default function AdminDashboard() {
               </Link>
             </li>
             <li>
+              <Link to="/admin/packs" className="nav-link">
+                <i className="icon">📦</i>
+                <span>Packs</span>
+              </Link>
+            </li>
+            <li>
               <Link to="/admin/experiences" className="nav-link">
                 <i className="icon">🗺️</i>
                 <span>Experiences</span>

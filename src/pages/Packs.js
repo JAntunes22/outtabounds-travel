@@ -1,54 +1,16 @@
 import React, { useEffect, useState, useRef } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../utils/firebaseConfig";
+import { useNavigate } from "react-router-dom";
 import './Packs.css';
 
 const Packs = () => {
   const [packs, setPacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedPack, setSelectedPack] = useState(null);
   const heroContentRef = useRef(null);
   const heroRef = useRef(null);
-
-  // Handle keyboard events (e.g., pressing Escape to close modal)
-  useEffect(() => {
-    const handleEscKey = (event) => {
-      if (event.key === 'Escape' && selectedPack) {
-        closePackModal();
-      }
-    };
-
-    window.addEventListener('keydown', handleEscKey);
-    
-    return () => {
-      window.removeEventListener('keydown', handleEscKey);
-    };
-  }, [selectedPack]);
-
-  // Prevent scrolling when modal is open
-  useEffect(() => {
-    if (selectedPack) {
-      // Store the current scroll position
-      const scrollY = window.scrollY;
-      
-      // Add the modal-open class to body
-      document.body.classList.add('modal-open');
-      
-      // Set the body position to maintain scroll position
-      document.body.style.top = `-${scrollY}px`;
-      
-      // Cleanup function to restore scrolling when modal is closed
-      return () => {
-        // Remove the modal-open class
-        document.body.classList.remove('modal-open');
-        
-        // Restore the scroll position
-        document.body.style.top = '';
-        window.scrollTo(0, scrollY);
-      };
-    }
-  }, [selectedPack]);
+  const navigate = useNavigate();
 
   // Add parallax effect for hero section with limits
   useEffect(() => {
@@ -105,26 +67,10 @@ const Packs = () => {
     fetchPacks();
   }, []);
 
-  const openPackModal = (pack) => {
-    setSelectedPack(pack);
-  };
-
-  const closePackModal = () => {
-    setSelectedPack(null);
-  };
-
-  // Handle click outside modal to close it
-  const handleOverlayClick = (e) => {
-    if (e.target.classList.contains('pack-modal-overlay')) {
-      closePackModal();
-    }
-  };
-
-  const handleBookNow = (packId, packName) => {
-    // Handle the booking action - for now just log it
-    console.log(`Booking pack: ${packName} (${packId})`);
-    alert(`Thank you for booking ${packName}! We'll contact you soon to complete your reservation.`);
-    // You could also add logic to redirect to a booking page or open a booking form
+  const openPackDetails = (pack) => {
+    // Use slug if available, otherwise use ID
+    const identifier = pack.slug || pack.id;
+    navigate(`/packs/${identifier}`);
   };
 
   return (
@@ -158,7 +104,7 @@ const Packs = () => {
                   <div 
                     className="pack-item" 
                     key={pack.id}
-                    onClick={() => openPackModal(pack)}
+                    onClick={() => openPackDetails(pack)}
                   >
                     <div className="pack-image-container">
                       {pack.imageUrl ? (
@@ -193,96 +139,14 @@ const Packs = () => {
                           {pack.services && pack.services.length > 0 && <span>{pack.services.length} Service{pack.services.length > 1 ? 's' : ''}</span>}
                         </div>
                       </div>
+                      <div className="pack-action">
+                        <button className="view-details-button">View Details</button>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {selectedPack && (
-        <div className="pack-modal-overlay" onClick={handleOverlayClick}>
-          <div className="pack-modal">
-            <button className="close-button" onClick={closePackModal}>×</button>
-            <div className="pack-modal-content">
-              <div className="pack-modal-image">
-                {selectedPack.imageUrl ? (
-                  <img 
-                    src={selectedPack.imageUrl} 
-                    alt={selectedPack.name} 
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "https://via.placeholder.com/800x600?text=Pack+Image+Not+Available";
-                    }}
-                  />
-                ) : (
-                  <div className="placeholder-image">No image available</div>
-                )}
-              </div>
-              <div className="pack-modal-details">
-                <h2>{selectedPack.name}</h2>
-                <h3 className="pack-price">{selectedPack.price ? `$${selectedPack.price}` : 'Price upon request'}</h3>
-                <p className="pack-description">{selectedPack.description || 'No description available'}</p>
-                
-                <div className="pack-includes">
-                  <h4 className="includes-title">What's Included</h4>
-                  <div className="includes-sections">
-                    {selectedPack.courses && selectedPack.courses.length > 0 && (
-                      <div className="includes-section">
-                        <h5>Courses</h5>
-                        <ul className="includes-list">
-                          {selectedPack.courses.map((course, index) => (
-                            <li key={`course-${index}`}>{course.name || course}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {selectedPack.experiences && selectedPack.experiences.length > 0 && (
-                      <div className="includes-section">
-                        <h5>Experiences</h5>
-                        <ul className="includes-list">
-                          {selectedPack.experiences.map((exp, index) => (
-                            <li key={`exp-${index}`}>{exp.name || exp}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {selectedPack.accommodations && selectedPack.accommodations.length > 0 && (
-                      <div className="includes-section">
-                        <h5>Accommodations</h5>
-                        <ul className="includes-list">
-                          {selectedPack.accommodations.map((acc, index) => (
-                            <li key={`acc-${index}`}>{acc.name || acc}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {selectedPack.services && selectedPack.services.length > 0 && (
-                      <div className="includes-section">
-                        <h5>Services</h5>
-                        <ul className="includes-list">
-                          {selectedPack.services.map((service, index) => (
-                            <li key={`service-${index}`}>{service.name || service}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <button 
-                  className="book-now-button"
-                  onClick={() => handleBookNow(selectedPack.id, selectedPack.name)}
-                >
-                  Book Now
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       )}

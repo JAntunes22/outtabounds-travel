@@ -25,6 +25,7 @@ import TravelerDetails from "./pages/TravelerDetails";
 import ReviewInquiry from "./pages/ReviewInquiry";
 import Profile from "./pages/Profile";
 import Packs from "./pages/Packs";
+import PackDetails from "./pages/PackDetails";
 
 // Auth Components
 import MultiStepSignup from './components/auth/MultiStepSignup';
@@ -48,6 +49,11 @@ import UserManagement from './pages/admin/UserManagement';
 import Dashboard from './pages/admin/Dashboard';
 import AddSamplePacks from './pages/admin/AddSamplePacks';
 
+import AccommodationList from './components/admin/AccommodationList';
+import AccommodationForm from './components/admin/AccommodationForm';
+import ExperienceList from './components/admin/ExperienceList';
+import ExperienceForm from './components/admin/ExperienceForm';
+
 // Layout component that handles conditional footer rendering
 const Layout = () => {
   const location = useLocation();
@@ -65,6 +71,7 @@ const Layout = () => {
           <Route path="/houses" element={<Houses />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/packs" element={<Packs />} />
+          <Route path="/packs/:packId" element={<PackDetails />} />
           
           {/* Pack & Booking Routes */}
           <Route path="/your-pack" element={<YourPack />} />
@@ -103,14 +110,22 @@ const Layout = () => {
               <Route path="packs/edit/:id" element={<PackForm />} />
               <Route path="packs/add-samples" element={<AddSamplePacks />} />
               
+              {/* Accommodations Management */}
+              <Route path="accommodations" element={<AccommodationList />} />
+              <Route path="accommodations/new" element={<AccommodationForm />} />
+              <Route path="accommodations/edit/:id" element={<AccommodationForm />} />
+              
+              {/* Experiences Management */}
+              <Route path="experiences" element={<ExperienceList />} />
+              <Route path="experiences/new" element={<ExperienceForm />} />
+              <Route path="experiences/edit/:id" element={<ExperienceForm />} />
+              
               {/* User Management */}
               <Route path="users" element={<UserList />} />
               <Route path="users/management" element={<UserManagement />} />
               <Route path="inquiries" element={<InquiriesList />} />
               
               {/* Future routes */}
-              <Route path="experiences" element={<div>Experiences Management</div>} />
-              <Route path="accommodations" element={<div>Accommodations Management</div>} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
           </Route>

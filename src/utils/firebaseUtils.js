@@ -815,3 +815,138 @@ export async function debugUserDocuments(user) {
     throw error;
   }
 }
+
+// Fetch accommodations from Firestore
+export const fetchAccommodations = async () => {
+  try {
+    const accommodationsRef = collection(db, 'accommodations');
+    const q = query(accommodationsRef, orderBy('name'));
+    const querySnapshot = await getDocs(q);
+    
+    const accommodations = [];
+    querySnapshot.forEach((doc) => {
+      accommodations.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    
+    return accommodations;
+  } catch (error) {
+    console.error("Error fetching accommodations:", error);
+    throw error;
+  }
+};
+
+// Fetch accommodation by ID
+export const fetchAccommodationById = async (accommodationId) => {
+  try {
+    const accommodationDoc = await getDoc(doc(db, 'accommodations', accommodationId));
+    
+    if (accommodationDoc.exists()) {
+      return {
+        id: accommodationDoc.id,
+        ...accommodationDoc.data()
+      };
+    } else {
+      throw new Error('Accommodation not found');
+    }
+  } catch (error) {
+    console.error("Error fetching accommodation:", error);
+    throw error;
+  }
+};
+
+// Fetch experiences from Firestore
+export const fetchExperiences = async () => {
+  try {
+    const experiencesRef = collection(db, 'experiences');
+    const q = query(experiencesRef, orderBy('name'));
+    const querySnapshot = await getDocs(q);
+    
+    const experiences = [];
+    querySnapshot.forEach((doc) => {
+      experiences.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    
+    return experiences;
+  } catch (error) {
+    console.error("Error fetching experiences:", error);
+    throw error;
+  }
+};
+
+// Fetch experience by ID
+export const fetchExperienceById = async (experienceId) => {
+  try {
+    const experienceDoc = await getDoc(doc(db, 'experiences', experienceId));
+    
+    if (experienceDoc.exists()) {
+      return {
+        id: experienceDoc.id,
+        ...experienceDoc.data()
+      };
+    } else {
+      throw new Error('Experience not found');
+    }
+  } catch (error) {
+    console.error("Error fetching experience:", error);
+    throw error;
+  }
+};
+
+// Fetch included item details regardless of type
+export const fetchIncludedItemDetails = async (itemId, itemType) => {
+  try {
+    if (!itemId) throw new Error("Item ID is required");
+    if (!itemType) throw new Error("Item type is required");
+    
+    let collectionName;
+    switch(itemType.toLowerCase()) {
+      case 'accommodation':
+      case 'accommodations':
+        collectionName = 'accommodations';
+        break;
+      case 'course':
+      case 'courses':
+        collectionName = 'courses';
+        break;
+      case 'experience':
+      case 'experiences':
+        collectionName = 'experiences';
+        break;
+      default:
+        throw new Error(`Unknown item type: ${itemType}`);
+    }
+    
+    const itemDoc = await getDoc(doc(db, collectionName, itemId));
+    
+    if (itemDoc.exists()) {
+      return {
+        id: itemDoc.id,
+        ...itemDoc.data()
+      };
+    } else {
+      // Try to find by name
+      const itemsRef = collection(db, collectionName);
+      const q = query(itemsRef, where('name', '==', itemId));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        return {
+          id: querySnapshot.docs[0].id,
+          ...querySnapshot.docs[0].data()
+        };
+      }
+      
+      // Not found
+      return null;
+    }
+  } catch (error) {
+    console.error(`Error fetching ${itemType} details:`, error);
+    return null;
+  }
+};
