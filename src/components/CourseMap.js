@@ -272,15 +272,33 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
             const popupContent = document.createElement('div');
             popupContent.className = 'popup-content';
             
+            // Add image section
+            const imageContainer = document.createElement('div');
+            imageContainer.className = 'popup-image-container';
+            
+            const image = document.createElement('img');
+            image.className = 'popup-image';
+            image.src = course.url || 'https://via.placeholder.com/300x200?text=No+Image+Available';
+            image.alt = course.name;
+            image.onerror = () => {
+              image.src = 'https://via.placeholder.com/300x200?text=Image+Error';
+            };
+            
+            imageContainer.appendChild(image);
+            popupContent.appendChild(imageContainer);
+            
+            // Add info section
+            const infoContainer = document.createElement('div');
+            infoContainer.className = 'popup-info';
+            
             const title = document.createElement('h3');
             title.textContent = course.name;
-            title.style.marginTop = '5px'; // Add margin to top of title
             
             const location = document.createElement('p');
             location.textContent = course.location;
             
             const button = document.createElement('button');
-            button.className = 'view-details-btn';
+            button.className = 'popup-btn';
             button.textContent = 'View Details';
             button.onclick = (e) => {
               e.stopPropagation();
@@ -291,9 +309,10 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
               onCourseSelect && onCourseSelect(course);
             };
             
-            popupContent.appendChild(title);
-            popupContent.appendChild(location);
-            popupContent.appendChild(button);
+            infoContainer.appendChild(title);
+            infoContainer.appendChild(location);
+            infoContainer.appendChild(button);
+            popupContent.appendChild(infoContainer);
 
             // Create popup with offset and correct positioning
             const popup = new mapboxgl.Popup({ 

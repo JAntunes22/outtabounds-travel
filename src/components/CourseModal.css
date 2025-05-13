@@ -87,6 +87,9 @@ body.modal-open {
   position: relative;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  max-height: calc(100vh - 510px); /* Account for image height (450px) + padding */
+  padding-bottom: 100px; /* Make room for the fixed CTA section */
 }
 
 .modal-title {
@@ -179,16 +182,15 @@ body.modal-open {
 .modal-features li {
   color: #555;
   font-size: 1rem;
-  padding: 8px 0;
+  padding: 8px 0 8px 30px;
   position: relative;
-  padding-left: 25px;
 }
 
 .modal-features li::before {
   content: '✓';
   color: #186d00;
   position: absolute;
-  left: 0;
+  left: 10px;
   font-weight: bold;
 }
 
@@ -197,6 +199,15 @@ body.modal-open {
   gap: 15px;
   margin-top: 30px;
   flex-shrink: 0;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: white;
+  padding: 20px 40px;
+  border-top: 1px solid #eee;
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+  z-index: 5;
 }
 
 .book-now-btn, .learn-more-btn {
@@ -296,55 +307,63 @@ body.modal-open {
 @media (max-width: 767px) {
   .course-modal {
     width: 95%;
-    max-height: 80vh;
-    overflow-y: auto;
+    margin: 10px auto;
+    max-height: 90vh;
   }
-  
+
   .modal-image-container {
     height: 250px;
-    flex-shrink: 0;
   }
-  
+
   .modal-title {
-    font-size: 1.8rem;
+    font-size: 2rem;
   }
-  
+
   .modal-details {
     padding: 20px;
-    overflow-y: auto;
-    flex: 1;
-    padding-bottom: 100px; /* Space for the fixed CTA buttons */
+    max-height: calc(90vh - 290px); /* Adjusted for smaller image */
+    padding-bottom: 90px; /* Make room for the CTA section */
   }
-  
+
   .modal-description p {
-    font-size: 0.9rem;
+    font-size: 1rem;
   }
-  
+
   .modal-features ul {
     grid-template-columns: 1fr;
   }
-  
+
   .modal-cta {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 15px;
-    background: white;
-    box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.1);
-    z-index: 50;
     flex-direction: column;
+    padding: 15px 20px;
+  }
+
+  .book-now-btn, .learn-more-btn {
+    width: 100%;
+    padding: 12px 10px;
+    font-size: 1rem;
   }
 }
 
-/* Extra small devices */
 @media (max-width: 480px) {
   .course-modal {
-    max-height: 85vh;
+    width: 100%;
+    border-radius: 0;
+    max-height: 100vh;
+  }
+
+  .modal-image-container {
+    height: 200px;
+  }
+
+  .modal-details {
+    padding: 15px;
+    max-height: calc(100vh - 240px); /* Adjusted for smaller image */
+    padding-bottom: 80px; /* Make room for the CTA section */
   }
   
-  .modal-image-container {
-    height: 180px;
+  .modal-cta {
+    padding: 10px 15px;
   }
 }
 

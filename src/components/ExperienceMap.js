@@ -165,14 +165,26 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
     updateMarkers.current = () => {
       if (!map.current || !mapInitialized || !clusterIndex.current || markerData.current.length === 0) return;
       
-      // Skip updates if map is still moving
-      if (isMoving.current) return;
-      
-      console.log("Updating markers based on current map view");
-      
       try {
-        // Get the current map bounds
+        console.log("Updating markers");
+        
+        // Prevent updating during map movement
+        if (isMoving.current) {
+          console.log("Skipping update, map is moving");
+          return;
+        }
+
+        // Get the visible bounds and zoom level
         const bounds = map.current.getBounds();
+        const zoom = Math.floor(map.current.getZoom());
+        
+        // Track which markers are in the current view
+        const newMarkerIds = new Set();
+        
+        // Track which clusters are active
+        const activeClusters = new Set();
+        
+        // Get clusters for the current zoom and bounds
         const bbox = [
           bounds.getWest(),
           bounds.getSouth(),
@@ -180,57 +192,38 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
           bounds.getNorth()
         ];
         
-        // Get current zoom level
-        const zoom = Math.floor(map.current.getZoom());
-        
-        // Get clusters for current view
+        // Get clusters for this area
         const clusters = clusterIndex.current.getClusters(bbox, zoom);
-        console.log(`Found ${clusters.length} clusters/points at zoom level ${zoom}`);
+        console.log(`Found ${clusters.length} clusters at zoom ${zoom}`);
         
-        // Track existing marker IDs to only remove what's necessary
-        const newMarkerIds = new Set();
-        
-        // Track active cluster IDs to clean up old ones
-        const activeClusters = new Set();
-        
-        // Create markers for each cluster or individual point
+        // Process each cluster
         clusters.forEach(cluster => {
           // Check if this is a cluster or an individual point
-          if (cluster.properties.cluster) {
-            // This is a cluster
-            const clusterId = cluster.properties.cluster_id;
-            const pointCount = cluster.properties.point_count;
-            const clusterCoordinates = cluster.geometry.coordinates;
-            
-            // Add this cluster ID to active clusters
-            activeClusters.add(clusterId);
-            
-            // Check if we already have a marker for this cluster
-            const existingClusterMarker = clusterMarkers.current.find(
-              marker => marker._clusterId === clusterId
-            );
-            
-            if (existingClusterMarker) {
-              // Update position if needed
-              existingClusterMarker.setLngLat([clusterCoordinates[0], clusterCoordinates[1]]);
+          const isCluster = cluster.properties.cluster;
+          const clusterId = cluster.properties.cluster_id;
+          
+          if (isCluster) {
+            // Skip clusters that already have markers
+            const hasMarker = clusterMarkers.current.some(m => m._clusterId === clusterId);
+            if (hasMarker) {
+              activeClusters.add(clusterId);
               return;
             }
             
-            // Create cluster marker 
+            // Get cluster coordinates
+            const clusterCoordinates = cluster.geometry.coordinates;
+            const pointCount = cluster.properties.point_count;
+            
+            // Create an HTML element for the cluster marker
             const el = document.createElement('div');
             el.className = 'cluster-marker';
-            el.style.width = `${Math.min(60, 30 + pointCount * 3)}px`; // Size based on point count
-            el.style.height = `${Math.min(60, 30 + pointCount * 3)}px`;
-            el.style.borderRadius = '50%';
-            el.style.backgroundColor = '#186d00';
-            el.style.display = 'flex';
-            el.style.justifyContent = 'center';
-            el.style.alignItems = 'center';
-            el.style.color = 'white';
-            el.style.fontWeight = 'bold';
-            el.style.border = '2px solid white';
-            el.style.willChange = 'transform'; // Optimize for transform changes
-            el.innerText = pointCount;
+            el.style.width = `${30 + (pointCount / markerData.current.length) * 20}px`;
+            el.style.height = `${30 + (pointCount / markerData.current.length) * 20}px`;
+            el.style.lineHeight = `${30 + (pointCount / markerData.current.length) * 20}px`;
+            el.textContent = pointCount;
+            
+            // Track this cluster as active
+            activeClusters.add(clusterId);
             
             // Create marker for this cluster
             const marker = new mapboxgl.Marker({
@@ -287,12 +280,126 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
             const existingMarker = markers.current.find(m => m._id === markerId);
             if (existingMarker) {
               // Ensure it's at the correct position (may have moved slightly)
-              existingMarker.setLngLat([position[0], position[1]]);
+              existingMarker.setLngLat(position);
               return;
             }
             
-            // Create a marker for the individual point
-            addMarkerForExperience(experience, [position[0], position[1]]);
+            // If we're here, we need to create a new marker
+            
+            // Create custom popup
+            const popupContent = document.createElement('div');
+            popupContent.className = 'popup-content';
+            
+            // Add image section
+            const imageContainer = document.createElement('div');
+            imageContainer.className = 'popup-image-container';
+            
+            const image = document.createElement('img');
+            image.className = 'popup-image';
+            image.src = experience.url || 'https://via.placeholder.com/300x200?text=No+Image+Available';
+            image.alt = experience.name;
+            image.onerror = () => {
+              image.src = 'https://via.placeholder.com/300x200?text=Image+Error';
+            };
+            
+            imageContainer.appendChild(image);
+            popupContent.appendChild(imageContainer);
+            
+            // Add info section
+            const infoContainer = document.createElement('div');
+            infoContainer.className = 'popup-info';
+            
+            const title = document.createElement('h3');
+            title.textContent = experience.name;
+            
+            const location = document.createElement('p');
+            location.textContent = experience.location;
+            
+            const button = document.createElement('button');
+            button.className = 'popup-btn';
+            button.textContent = 'View Details';
+            button.onclick = (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              // Close the popup when opening the details view
+              if (marker && marker.getPopup()) {
+                marker.getPopup().remove();
+              }
+              onExperienceSelect && onExperienceSelect(experience);
+            };
+            
+            infoContainer.appendChild(title);
+            infoContainer.appendChild(location);
+            infoContainer.appendChild(button);
+            popupContent.appendChild(infoContainer);
+
+            // Create popup with offset and correct positioning
+            const popup = new mapboxgl.Popup({ 
+              offset: 25,
+              closeButton: true,
+              closeOnClick: false,
+              className: 'experience-popup' // Add custom class for styling
+            }).setDOMContent(popupContent);
+            
+            // Track popup open/close state
+            popup.on('open', () => {
+              console.log(`Popup opened for experience: ${experience.name}`);
+              openPopups.current[markerId] = true;
+              
+              // Ensure the marker stays in the same place
+              if (marker && marker.getLngLat) {
+                marker.setLngLat(position);
+              }
+            });
+            
+            popup.on('close', () => {
+              console.log(`Popup closed for experience: ${experience.name}`);
+              delete openPopups.current[markerId];
+              
+              // Subtle delay before potentially running updateMarkers
+              // to prevent visual jumps after closing popup
+              setTimeout(() => {
+                if (!isMoving.current && map.current && map.current.loaded()) {
+                  debouncedUpdateMarkers();
+                }
+              }, 50);
+            });
+
+            // Create marker for individual experience
+            const marker = new mapboxgl.Marker({
+              color: '#186d00', // Match the green color used in the app
+              anchor: 'center', // Ensure proper centering
+            })
+              .setLngLat(position)
+              .setPopup(popup)
+              .addTo(map.current);
+              
+            // Store the ID with the marker for tracking
+            marker._id = markerId;
+              
+            // Add a tooltip as a child of the mapboxgl-marker element
+            const markerElement = marker.getElement();
+            const tooltipElement = document.createElement('div');
+            tooltipElement.className = 'experience-tooltip';
+            tooltipElement.textContent = experience.name;
+            
+            // Add the tooltip to the marker element
+            markerElement.appendChild(tooltipElement);
+            
+            // Add click handler to the marker element
+            markerElement.addEventListener('click', (e) => {
+              e.stopPropagation();
+              marker.togglePopup();
+            });
+            
+            // Add click handler specifically to the tooltip
+            tooltipElement.addEventListener('click', (e) => {
+              e.stopPropagation();
+              marker.togglePopup();
+            });
+              
+            // Store marker reference for later cleanup
+            markers.current.push(marker);
           }
         });
         
@@ -324,116 +431,6 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
       }
     };
   }, [mapInitialized, clearAllMarkers, onExperienceSelect, debouncedUpdateMarkers]);
-
-  // Add individual marker for an experience
-  const addMarkerForExperience = (experience, position) => {
-    try {
-      const markerId = `marker-${experience.id}`;
-      
-      // Create custom popup
-      const popupContent = document.createElement('div');
-      popupContent.className = 'popup-content';
-      
-      const title = document.createElement('h3');
-      title.textContent = experience.name;
-      title.style.marginTop = '5px'; // Add margin to top of title
-      
-      const location = document.createElement('p');
-      location.textContent = experience.location;
-      
-      const button = document.createElement('button');
-      button.className = 'view-details-btn';
-      button.textContent = 'View Details';
-      button.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        // Close the popup when opening the details view
-        if (marker && marker.getPopup()) {
-          marker.getPopup().remove();
-        }
-        onExperienceSelect && onExperienceSelect(experience);
-      };
-      
-      popupContent.appendChild(title);
-      popupContent.appendChild(location);
-      popupContent.appendChild(button);
-
-      // Create popup with offset and correct positioning
-      const popup = new mapboxgl.Popup({ 
-        offset: 25,
-        closeButton: true,
-        closeOnClick: false,
-        className: 'experience-popup'
-      })
-        .setDOMContent(popupContent);
-
-      // Track popup open/close state
-      popup.on('open', () => {
-        console.log(`Popup opened for experience: ${experience.name}`);
-        openPopups.current[markerId] = true;
-      });
-
-      popup.on('close', () => {
-        console.log(`Popup closed for experience: ${experience.name}`);
-        delete openPopups.current[markerId];
-        
-        // Subtle delay before potentially running updateMarkers
-        // to prevent visual jumps after closing popup
-        setTimeout(() => {
-          if (!isMoving.current && map.current && map.current.loaded()) {
-            debouncedUpdateMarkers();
-          }
-        }, 50);
-      });
-
-      // Create a standard marker with color instead of a custom HTML element
-      const marker = new mapboxgl.Marker({
-        color: '#186d00', // Match the green color used in the app
-        anchor: 'center', // Important: Use center anchor like CourseMap
-      })
-        .setLngLat([position[0], position[1]])
-        .setPopup(popup)
-        .addTo(map.current);
-        
-      // Add a tooltip as a child of the mapboxgl-marker element (like in CourseMap)
-      const markerElement = marker.getElement();
-      const tooltipElement = document.createElement('div');
-      tooltipElement.className = 'experience-tooltip'; // Match the class name in CSS
-      tooltipElement.textContent = experience.name;
-      tooltipElement.style.pointerEvents = 'auto';
-      tooltipElement.style.cursor = 'pointer';
-      tooltipElement.style.position = 'absolute';
-      tooltipElement.style.top = '-30px';
-      tooltipElement.style.left = '50%';
-      tooltipElement.style.transform = 'translateX(-50%)';
-      tooltipElement.style.backgroundColor = 'rgba(24, 109, 0, 0.8)';
-      tooltipElement.style.color = 'white';
-      tooltipElement.style.padding = '4px 10px';
-      tooltipElement.style.borderRadius = '20px';
-      tooltipElement.style.fontSize = '12px';
-      tooltipElement.style.fontWeight = '600';
-      tooltipElement.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
-      tooltipElement.style.whiteSpace = 'nowrap';
-      tooltipElement.style.zIndex = '1';
-      
-      // Add the tooltip to the marker element
-      markerElement.appendChild(tooltipElement);
-      
-      // Add click handler to the tooltip
-      tooltipElement.addEventListener('click', (e) => {
-        e.stopPropagation();
-        marker.togglePopup();
-      });
-        
-      // Store the ID with the marker for tracking
-      marker._id = markerId;
-      
-      // Store marker reference for later cleanup
-      markers.current.push(marker);
-    } catch (err) {
-      console.error("Error adding marker for experience:", experience.name, err);
-    }
-  };
 
   // Update the map initialization
   useEffect(() => {

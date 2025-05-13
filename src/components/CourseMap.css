@@ -151,35 +151,90 @@
 
 /* Popup styles */
 .popup-content {
-  text-align: center;
-  min-width: 150px;
+  width: 260px;
+  overflow: hidden;
+  border-radius: 0 0 8px 8px;
 }
 
-.popup-content h3 {
-  margin: 0 0 5px 0;
+.popup-image-container {
+  width: 100%;
+  height: 150px;
+  overflow: hidden;
+}
+
+.popup-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.popup-info {
+  padding: 12px 15px;
+}
+
+.popup-info h3 {
+  margin: 0 0 8px 0;
   font-size: 16px;
-  color: #186d00;
+  font-weight: 600;
+  color: #222;
 }
 
-.popup-content p {
-  margin: 0 0 10px 0;
+.popup-info p {
+  margin: 0 0 12px 0;
   font-size: 14px;
   color: #666;
 }
 
-.view-details-btn {
+.popup-btn {
   background-color: #186d00;
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 8px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
-  transition: background-color 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
 }
 
-.view-details-btn:hover {
+.popup-btn:hover {
   background-color: #125600;
+}
+
+/* Custom class for course popups */
+.course-popup .mapboxgl-popup-content {
+  padding: 0 !important;
+  overflow: hidden;
+  border-radius: 8px !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+.course-popup .mapboxgl-popup-tip {
+  border-top-color: white !important;
+}
+
+/* Make popup close button more visible */
+.mapboxgl-popup-close-button {
+  width: 30px !important;
+  height: 30px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 20px !important;
+  padding: 0 !important;
+  color: white !important;
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  border-radius: 50% !important;
+  margin: 5px !important;
+  z-index: 10 !important;
+  right: 3px !important;
+  top: 3px !important;
+  line-height: 1 !important;
+}
+
+.mapboxgl-popup-close-button:hover {
+  background-color: rgba(0, 0, 0, 0.6) !important;
 }
 
 /* Override Leaflet styles */
@@ -247,30 +302,6 @@
   position: relative;
 }
 
-/* Custom class for course popups to make them less disruptive */
-.course-popup {
-  position: absolute;
-  z-index: 10;
-}
-
-.course-popup .mapboxgl-popup-content {
-  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(24, 109, 0, 0.1);
-}
-
-.course-popup .mapboxgl-popup-tip {
-  border-top-color: white;
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.1));
-}
-
-.mapboxgl-popup-close-button {
-  font-size: 16px;
-  color: #666;
-  top: 5px;
-  right: 5px;
-  padding: 0 6px;
-}
-
 /* Cluster marker styles */
 .cluster-marker {
   cursor: pointer;
@@ -310,25 +341,29 @@
 /* Mobile view adjustments for popups */
 @media (max-width: 768px) {
   .popup-content {
-    max-width: 220px;
-    max-height: 60vh;
-    overflow-y: auto;
-    padding: 5px;
+    width: 220px;
   }
   
-  .popup-content h3 {
-    font-size: 14px;
-    margin-bottom: 3px;
+  .popup-image-container {
+    height: 130px;
   }
   
-  .popup-content p {
-    font-size: 12px;
-    margin-bottom: 5px;
+  .popup-info {
+    padding: 10px 12px;
   }
   
-  .view-details-btn {
-    padding: 4px 8px;
-    font-size: 12px;
+  .popup-info h3 {
+    font-size: 15px;
+  }
+  
+  .popup-info p {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+  
+  .popup-btn {
+    padding: 6px 10px;
+    font-size: 13px;
   }
   
   .course-popup {

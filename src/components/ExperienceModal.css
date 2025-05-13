@@ -75,8 +75,9 @@ body.modal-open {
 .experience-modal-content {
   display: flex;
   flex-direction: column;
-  max-height: 90vh;
-  overflow-y: auto;
+  height: 100%;
+  position: relative; /* Important for absolute positioning of CTA */
+  overflow: hidden;
 }
 
 /* Modal image container */
@@ -85,6 +86,7 @@ body.modal-open {
   height: 300px;
   overflow: hidden;
   position: relative;
+  flex-shrink: 0;
 }
 
 /* Modal image */
@@ -99,6 +101,9 @@ body.modal-open {
   padding: 25px;
   color: #333;
   overflow-y: auto;
+  max-height: calc(90vh - 300px); /* Account for image height */
+  padding-bottom: 80px; /* Make room for the fixed CTA section */
+  position: relative;
 }
 
 /* Modal title */
@@ -217,11 +222,12 @@ body.modal-open {
 }
 
 .modal-features li {
-  padding: 10px 15px;
+  padding: 10px 15px 10px 30px; /* Increased left padding */
   background-color: #f5f5f5;
   border-radius: 6px;
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .modal-features li:before {
@@ -229,13 +235,23 @@ body.modal-open {
   color: #186d00;
   margin-right: 8px;
   font-weight: bold;
+  position: absolute;
+  left: 12px; /* Position the checkmark */
 }
 
 /* CTA section */
 .modal-cta {
   display: flex;
   gap: 15px;
-  margin-top: 10px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: white;
+  padding: 15px 25px;
+  border-top: 1px solid #eee;
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+  z-index: 5;
 }
 
 .learn-more-btn {
@@ -269,46 +285,73 @@ body.modal-open {
     width: 60%;
     max-height: 90vh;
     overflow-y: auto;
+    padding-bottom: 80px; /* Make room for the fixed CTA section */
   }
 }
 
 @media (max-width: 767px) {
   .experience-modal {
-    max-height: 85vh;
+    width: 95%;
+    margin: 10px auto;
+    max-height: 90vh;
   }
-  
+
   .modal-image-container {
-    height: 200px;
+    height: 220px;
   }
-  
+
+  .modal-details {
+    padding: 20px;
+    max-height: calc(90vh - 260px); /* Adjusted for smaller image */
+    padding-bottom: 90px; /* Make room for the CTA section */
+  }
+
   .modal-title {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
-  
+
   .modal-location, .modal-rating, .modal-popularity {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
-  
+
   .modal-features ul {
     grid-template-columns: 1fr;
   }
-  
+
   .modal-cta {
     flex-direction: column;
+    padding: 15px 20px;
+    width: 100%; /* Full width */
+    left: 0; /* Reset left position */
   }
 }
 
 @media (max-width: 480px) {
+  .experience-modal {
+    width: 100%;
+    border-radius: 0;
+    max-height: 100vh;
+  }
+
   .modal-image-container {
     height: 180px;
   }
-  
+
   .modal-details {
     padding: 15px;
+    max-height: calc(100vh - 220px); /* Adjusted for smaller image */
+    padding-bottom: 80px; /* Make room for the CTA section */
   }
-  
+
   .modal-title {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
+  }
+
+  .modal-cta {
+    padding: 10px 15px;
+    width: 100%; /* Ensure full width */
+    left: 0;
+    bottom: 0;
   }
   
   .label {
