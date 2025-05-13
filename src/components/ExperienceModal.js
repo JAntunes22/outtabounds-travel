@@ -114,23 +114,23 @@ const ExperienceModal = ({ experience, onClose }) => {
                 <p>No highlights available for this experience.</p>
               )}
             </div>
-            
-            <div className="modal-cta">
-              <AddToPack 
-                item={{
-                  id: experience.id,
-                  name: experience.name,
-                  location: experience.location,
-                  description: experience.description || 'Explore this amazing experience.',
-                  imageUrl: experience.url,
-                  rating: experience.rating
-                }} 
-                type="experience"
-                buttonStyle="primary"
-              />
-              <button className="learn-more-btn">Learn More</button>
-            </div>
           </div>
+        </div>
+
+        <div className="modal-cta">
+          <AddToPack 
+            item={{
+              id: experience.id,
+              name: experience.name,
+              location: experience.location,
+              description: experience.description || 'Explore this amazing experience.',
+              imageUrl: experience.url,
+              rating: experience.rating
+            }} 
+            type="experience"
+            buttonStyle="primary"
+          />
+          <button className="learn-more-btn">Learn More</button>
         </div>
       </div>
     </div>

@@ -8,10 +8,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  overflow-y: auto;
-  padding: 30px 0;
-  animation: fadeIn 0.3s ease;
+  z-index: 9999;
+  padding: 20px;
 }
 
 /* Add style to lock scrolling on both html and body */
@@ -24,17 +22,16 @@ body.modal-open {
 
 .course-modal {
   background-color: white;
-  border-radius: 15px;
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-  width: 90%;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+  width: 100%;
   max-width: 1100px;
-  position: relative;
-  margin: auto;
-  animation: slideIn 0.3s ease-out;
+  max-height: 90vh;
   overflow: hidden;
-  max-height: calc(100vh - 60px);
+  position: relative;
   display: flex;
   flex-direction: column;
+  animation: modalFadeIn 0.3s ease-out;
 }
 
 .modal-close-btn {
@@ -65,21 +62,24 @@ body.modal-open {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
 }
 
 .modal-image-container {
   width: 100%;
-  height: 450px;
+  height: 300px;
   overflow: hidden;
-  border-top-left-radius: 15px;
-  border-top-right-radius: 15px;
-  flex-shrink: 0;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  position: relative;
+  z-index: 2;
 }
 
 .modal-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .modal-details {
@@ -88,8 +88,10 @@ body.modal-open {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  max-height: calc(100vh - 510px); /* Account for image height (450px) + padding */
-  padding-bottom: 100px; /* Make room for the fixed CTA section */
+  flex: 1;
+  min-height: 0;
+  z-index: 1;
+  padding-bottom: 100px;
 }
 
 .modal-title {
@@ -197,17 +199,16 @@ body.modal-open {
 .modal-cta {
   display: flex;
   gap: 15px;
-  margin-top: 30px;
-  flex-shrink: 0;
+  justify-content: flex-end;
+  padding: 20px 40px;
+  background-color: white;
+  border-top: 1px solid #eee;
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: white;
-  padding: 20px 40px;
-  border-top: 1px solid #eee;
+  z-index: 3;
   box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
-  z-index: 5;
 }
 
 .book-now-btn, .learn-more-btn {
@@ -239,74 +240,43 @@ body.modal-open {
   background-color: #e5e5e5;
 }
 
-/* Animations */
-@keyframes fadeIn {
+@keyframes modalFadeIn {
   from {
     opacity: 0;
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
-  }
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateY(30px);
-    opacity: 0.5;
-  }
-  to {
     transform: translateY(0);
-    opacity: 1;
   }
 }
 
 /* Media Queries */
 @media (min-width: 768px) {
-  .course-modal {
-    max-height: 80vh;
-    display: flex;
-    flex-direction: row;
-  }
-  
   .course-modal-content {
     flex-direction: row;
-    height: 100%;
-    flex: 1;
   }
   
   .modal-image-container {
     width: 45%;
-    height: auto;
-    flex: 0 0 45%;
+    height: 100%;
+    position: absolute;
     border-top-right-radius: 0;
-    border-bottom-left-radius: 15px;
+    border-bottom-left-radius: 12px;
   }
   
   .modal-details {
     width: 55%;
-    flex: 1;
-    overflow-y: auto;
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    padding-bottom: 100px; /* Space for the fixed CTA buttons */
-  }
-  
-  .modal-cta {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 20px 40px;
-    background: white;
-    box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.1);
-    z-index: 50;
+    margin-left: 45%;
+    margin-top: 0;
+    max-height: calc(90vh - 80px);
+    border-top-left-radius: 0;
   }
 }
 
 @media (max-width: 767px) {
   .course-modal {
-    width: 95%;
+    width: 98%;
     margin: 10px auto;
     max-height: 90vh;
   }
@@ -321,8 +291,8 @@ body.modal-open {
 
   .modal-details {
     padding: 20px;
-    max-height: calc(90vh - 290px); /* Adjusted for smaller image */
-    padding-bottom: 90px; /* Make room for the CTA section */
+    max-height: calc(90vh - 290px);
+    padding-bottom: 90px;
   }
 
   .modal-description p {
@@ -358,8 +328,8 @@ body.modal-open {
 
   .modal-details {
     padding: 15px;
-    max-height: calc(100vh - 240px); /* Adjusted for smaller image */
-    padding-bottom: 80px; /* Make room for the CTA section */
+    max-height: calc(100vh - 240px);
+    padding-bottom: 80px;
   }
   
   .modal-cta {
