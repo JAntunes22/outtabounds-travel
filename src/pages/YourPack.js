@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePack } from '../contexts/PackContext';
-import Footer from '../components/Footer';
 import './PackCommon.css';
 import './YourPack.css';
 
@@ -12,6 +11,7 @@ export default function YourPack() {
 
   // Group pack items by type
   const courseItems = packItems.filter(item => item.type === 'course');
+  const experienceItems = packItems.filter(item => item.type === 'experience');
   
   const handleRemoveItem = (id, type) => {
     removeFromPack(id, type);
@@ -80,6 +80,33 @@ export default function YourPack() {
                 </div>
               )}
 
+              {experienceItems.length > 0 && (
+                <div className="pack-section">
+                  <h2>Experiences</h2>
+                  <div className="pack-items">
+                    {experienceItems.map(item => (
+                      <div className="your-pack-item" key={`${item.type}-${item.id}`}>
+                        <div className="pack-item-image">
+                          <img src={item.imageUrl} alt={item.name} />
+                        </div>
+                        <div className="pack-item-details">
+                          <h3>{item.name}</h3>
+                          <p className="pack-item-location">{item.location}</p>
+                          <p className="pack-item-description">{item.description}</p>
+                        </div>
+                        <button 
+                          className="remove-item-btn" 
+                          onClick={() => handleRemoveItem(item.id, item.type)}
+                          aria-label={`Remove ${item.name} from pack`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="pack-summary">
                 <div className="your-pack-actions">
                   <button className="clear-pack-btn" onClick={clearPack}>
@@ -94,7 +121,6 @@ export default function YourPack() {
           )}
         </div>
       </div>
-      {/* Footer is now managed by the main App layout */}
     </div>
   );
 } 
