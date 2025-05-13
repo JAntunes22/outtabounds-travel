@@ -43,10 +43,6 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
   const openPopups = useRef({}); // Track which popups are open
   const isMoving = useRef(false); // Track if the map is currently moving
   const updateTimeout = useRef(null); // Timeout for debounced updates
-  
-  // References to functions to avoid initialization issues
-  const updateMarkersRef = useRef(null);
-  const debouncedUpdateMarkersRef = useRef(null);
 
   // Clear all markers from the map
   const clearAllMarkers = useCallback(() => {
@@ -65,223 +61,6 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
     clusterMarkers.current.forEach(marker => marker.remove());
     clusterMarkers.current = [];
   }, []);
-  
-  // Define the debounced update function first
-  const debouncedUpdateMarkers = useCallback(() => {
-    // Clear any existing timeout
-    if (updateTimeout.current) {
-      clearTimeout(updateTimeout.current);
-    }
-    
-    // Set a new timeout
-    updateTimeout.current = setTimeout(() => {
-      // Only update if the map isn't currently moving
-      if (!isMoving.current && map.current && map.current.loaded()) {
-        updateMarkersRef.current && updateMarkersRef.current();
-      }
-    }, 150); // Reduced delay for better responsiveness
-  }, []);
-  
-  // Store reference to the debounced function
-  debouncedUpdateMarkersRef.current = debouncedUpdateMarkers;
-
-  // Update markers based on current map view
-  const updateMarkers = useCallback(() => {
-    if (!map.current || !mapInitialized || !clusterIndex.current || markerData.current.length === 0) return;
-    
-    // Skip updates if map is still moving
-    if (isMoving.current) return;
-    
-    console.log("Updating markers based on current map view");
-    
-    try {
-      // Clear existing markers first
-      clearAllMarkers();
-      
-      // Get the current map bounds
-      const bounds = map.current.getBounds();
-      const bbox = [
-        bounds.getWest(),
-        bounds.getSouth(),
-        bounds.getEast(),
-        bounds.getNorth()
-      ];
-      
-      // Get current zoom level
-      const zoom = Math.floor(map.current.getZoom());
-      
-      // Get clusters for current view
-      const clusters = clusterIndex.current.getClusters(bbox, zoom);
-      console.log(`Found ${clusters.length} clusters/points at zoom level ${zoom}`);
-      
-      // Create markers for each cluster or individual point
-      clusters.forEach(cluster => {
-        // Check if this is a cluster or an individual point
-        if (cluster.properties.cluster) {
-          // This is a cluster
-          const clusterId = cluster.properties.cluster_id;
-          const pointCount = cluster.properties.point_count;
-          const clusterCoordinates = cluster.geometry.coordinates;
-          
-          // Create cluster marker
-          const el = document.createElement('div');
-          el.className = 'cluster-marker';
-          el.style.width = `${Math.min(60, 30 + pointCount * 3)}px`;
-          el.style.height = `${Math.min(60, 30 + pointCount * 3)}px`;
-          el.style.borderRadius = '50%';
-          el.style.backgroundColor = '#186d00'; // Using the same color as in courses
-          el.style.display = 'flex';
-          el.style.justifyContent = 'center';
-          el.style.alignItems = 'center';
-          el.style.color = 'white';
-          el.style.fontWeight = 'bold';
-          el.style.border = '2px solid white';
-          el.innerText = pointCount;
-          
-          // Create marker for this cluster
-          const marker = new mapboxgl.Marker({
-            element: el,
-            anchor: 'center',
-          })
-            .setLngLat(clusterCoordinates)
-            .addTo(map.current);
-          
-          // Store cluster ID with marker for tracking
-          marker._clusterId = clusterId;
-          
-          // Add click handler to expand cluster
-          el.addEventListener('click', () => {
-            console.log(`Expanding cluster ${clusterId}`);
-            
-            // Get children of this cluster
-            const children = clusterIndex.current.getChildren(clusterId);
-            
-            // Create a bounds object from the children coordinates
-            const childrenBounds = new mapboxgl.LngLatBounds();
-            children.forEach(child => {
-              childrenBounds.extend(child.geometry.coordinates);
-            });
-            
-            // Zoom the map to fit these points
-            map.current.fitBounds(childrenBounds, {
-              padding: 80,
-              duration: 500
-            });
-          });
-          
-          // Store this cluster marker
-          clusterMarkers.current.push(marker);
-          
-        } else {
-          // This is an individual point
-          const position = cluster.geometry.coordinates;
-          const experience = cluster.properties.experience;
-          
-          // Create custom marker element
-          const el = document.createElement('div');
-          el.className = 'experience-marker';
-          el.style.backgroundImage = `url(${experience.url})`;
-          
-          // Create marker for this experience
-          const marker = new mapboxgl.Marker({
-            element: el,
-            anchor: 'bottom',
-          })
-            .setLngLat(position)
-            .addTo(map.current);
-          
-          // Store experience ID with marker for tracking
-          marker._id = experience.id;
-          
-          // Create popup but don't add it to the map yet
-          const popup = new mapboxgl.Popup({
-            closeButton: true,
-            closeOnClick: false,
-            offset: 25,
-            className: 'experience-popup'
-          });
-          
-          // Add click event to marker
-          el.addEventListener('click', () => {
-            // Clear any open popups
-            markers.current.forEach(m => {
-              if (m._popup && m._popup.isOpen()) {
-                m._popup.remove();
-              }
-            });
-            
-            // Set up popup content
-            const popupContent = document.createElement('div');
-            popupContent.className = 'popup-content';
-            
-            // Create popup image
-            const popupImg = document.createElement('img');
-            popupImg.src = experience.url;
-            popupImg.alt = experience.name;
-            popupImg.className = 'popup-image';
-            
-            // Create popup info
-            const popupInfo = document.createElement('div');
-            popupInfo.className = 'popup-info';
-            
-            // Experience name
-            const popupName = document.createElement('h3');
-            popupName.textContent = experience.name;
-            
-            // Experience location
-            const popupLocation = document.createElement('p');
-            popupLocation.textContent = experience.location;
-            
-            // View details button
-            const viewDetailsBtn = document.createElement('button');
-            viewDetailsBtn.textContent = 'View Details';
-            viewDetailsBtn.className = 'popup-btn';
-            viewDetailsBtn.addEventListener('click', () => {
-              // Close the popup
-              popup.remove();
-              
-              // Call the onExperienceSelect function
-              onExperienceSelect(experience);
-            });
-            
-            // Add elements to popup info
-            popupInfo.appendChild(popupName);
-            popupInfo.appendChild(popupLocation);
-            popupInfo.appendChild(viewDetailsBtn);
-            
-            // Add image and info to popup content
-            popupContent.appendChild(popupImg);
-            popupContent.appendChild(popupInfo);
-            
-            // Set popup content
-            popup.setLngLat(position)
-              .setDOMContent(popupContent)
-              .addTo(map.current);
-            
-            // Store reference to popup
-            marker._popup = popup;
-            
-            // Mark this popup as open
-            openPopups.current[marker._id] = true;
-            
-            // Add event listener for popup close
-            popup.on('close', () => {
-              delete openPopups.current[marker._id];
-            });
-          });
-          
-          // Store this marker
-          markers.current.push(marker);
-        }
-      });
-      
-    } catch (error) {
-      console.error("Error updating markers:", error);
-    }
-  }, [mapInitialized, clearAllMarkers, onExperienceSelect]);
-  
-  // Store reference to the updateMarkers function
-  updateMarkersRef.current = updateMarkers;
 
   // Process experience data into GeoJSON points and initialize Supercluster
   useEffect(() => {
@@ -295,24 +74,49 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
       
       experiences.forEach(experience => {
         const position = parsePosition(experience.position);
-        if (!position) return; // Skip invalid positions
-        
-        // Create a feature with proper properties
-        const feature = {
-          type: 'Feature',
-          geometry: {
-            type: 'Point',
-            coordinates: position
-          },
-          properties: {
-            id: experience.id,
-            name: experience.name,
-            location: experience.location,
-            experience // Store full experience object
-          }
-        };
-        
-        points.push(feature);
+        if (!position) {
+          // Generate random coordinates in the Algarve region for demo purposes
+          const randomLng = -8.2 + (Math.random() - 0.5) * 0.5; // +/- 0.25 degrees
+          const randomLat = 37.1 + (Math.random() - 0.5) * 0.5; // +/- 0.25 degrees
+          const randomPosition = [randomLng, randomLat];
+          console.log(`Using random position for ${experience.name}: ${randomPosition}`);
+          
+          // Create a feature with random position
+          const feature = {
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [randomPosition[0], randomPosition[1]]
+            },
+            properties: {
+              id: experience.id,
+              name: experience.name,
+              location: experience.location,
+              experience // Store full experience object
+            }
+          };
+          
+          points.push(feature);
+        } else {
+          console.log(`Experience ${experience.name} position: ${position}`);
+          
+          // Create a feature with proper properties
+          const feature = {
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [position[0], position[1]]
+            },
+            properties: {
+              id: experience.id,
+              name: experience.name,
+              location: experience.location,
+              experience // Store full experience object
+            }
+          };
+          
+          points.push(feature);
+        }
       });
       
       console.log(`Created ${points.length} valid GeoJSON points`);
@@ -334,80 +138,518 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
     }
   }, [experiences]);
 
-  // Initialize map on first render
-  useEffect(() => {
-    if (map.current) return; // Skip if already initialized
-    
-    console.log("Initializing map");
-    
-    try {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: center,
-        zoom: 9,
-        attributionControl: false
-      });
-      
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-      
-      // Add event listeners
-      map.current.on('load', () => {
-        console.log("Map loaded");
-        setMapInitialized(true);
-      });
-      
-      map.current.on('movestart', () => {
-        isMoving.current = true;
-      });
-      
-      map.current.on('moveend', () => {
-        isMoving.current = false;
-        debouncedUpdateMarkersRef.current();
-      });
-      
-      map.current.on('zoomstart', () => {
-        isMoving.current = true;
-      });
-      
-      map.current.on('zoomend', () => {
-        isMoving.current = false;
-        debouncedUpdateMarkersRef.current();
-      });
-      
-      // For initial marker update
-      map.current.once('idle', () => {
-        debouncedUpdateMarkersRef.current();
-      });
-      
-    } catch (error) {
-      console.error("Error initializing map:", error);
+  // Debounced update function to prevent too many updates during movement
+  const debouncedUpdateMarkers = useCallback(() => {
+    // Clear any existing timeout
+    if (updateTimeout.current) {
+      clearTimeout(updateTimeout.current);
     }
     
-    // Cleanup function
+    // Set a new timeout with a shorter delay for responsive updates
+    updateTimeout.current = setTimeout(() => {
+      // Only update if the map isn't currently moving
+      if (!isMoving.current && map.current && map.current.loaded()) {
+        if (updateMarkers.current) {
+          updateMarkers.current();
+        }
+      }
+    }, 150); // Reduced from 500ms to 150ms for better responsiveness
+  }, []);
+
+  // Update markers based on current map view - reference to avoid circular dependency
+  const updateMarkers = useRef(() => {});
+
+  // Update markers based on current map view - optimized to reduce flickering and lag
+  useEffect(() => {
+    // Define the actual implementation
+    updateMarkers.current = () => {
+      if (!map.current || !mapInitialized || !clusterIndex.current || markerData.current.length === 0) return;
+      
+      // Skip updates if map is still moving
+      if (isMoving.current) return;
+      
+      console.log("Updating markers based on current map view");
+      
+      try {
+        // Get the current map bounds
+        const bounds = map.current.getBounds();
+        const bbox = [
+          bounds.getWest(),
+          bounds.getSouth(),
+          bounds.getEast(),
+          bounds.getNorth()
+        ];
+        
+        // Get current zoom level
+        const zoom = Math.floor(map.current.getZoom());
+        
+        // Get clusters for current view
+        const clusters = clusterIndex.current.getClusters(bbox, zoom);
+        console.log(`Found ${clusters.length} clusters/points at zoom level ${zoom}`);
+        
+        // Track existing marker IDs to only remove what's necessary
+        const newMarkerIds = new Set();
+        
+        // Track active cluster IDs to clean up old ones
+        const activeClusters = new Set();
+        
+        // Create markers for each cluster or individual point
+        clusters.forEach(cluster => {
+          // Check if this is a cluster or an individual point
+          if (cluster.properties.cluster) {
+            // This is a cluster
+            const clusterId = cluster.properties.cluster_id;
+            const pointCount = cluster.properties.point_count;
+            const clusterCoordinates = cluster.geometry.coordinates;
+            
+            // Add this cluster ID to active clusters
+            activeClusters.add(clusterId);
+            
+            // Check if we already have a marker for this cluster
+            const existingClusterMarker = clusterMarkers.current.find(
+              marker => marker._clusterId === clusterId
+            );
+            
+            if (existingClusterMarker) {
+              // Update position if needed
+              existingClusterMarker.setLngLat([clusterCoordinates[0], clusterCoordinates[1]]);
+              return;
+            }
+            
+            // Create cluster marker 
+            const el = document.createElement('div');
+            el.className = 'cluster-marker';
+            el.style.width = `${Math.min(60, 30 + pointCount * 3)}px`; // Size based on point count
+            el.style.height = `${Math.min(60, 30 + pointCount * 3)}px`;
+            el.style.borderRadius = '50%';
+            el.style.backgroundColor = '#186d00';
+            el.style.display = 'flex';
+            el.style.justifyContent = 'center';
+            el.style.alignItems = 'center';
+            el.style.color = 'white';
+            el.style.fontWeight = 'bold';
+            el.style.border = '2px solid white';
+            el.style.willChange = 'transform'; // Optimize for transform changes
+            el.innerText = pointCount;
+            
+            // Create marker for this cluster
+            const marker = new mapboxgl.Marker({
+              element: el,
+              anchor: 'center', // Ensure proper centering
+            })
+              .setLngLat([clusterCoordinates[0], clusterCoordinates[1]])
+              .addTo(map.current);
+            
+            // Store cluster ID with marker for tracking
+            marker._clusterId = clusterId;
+            
+            // Add click handler to expand cluster
+            el.addEventListener('click', () => {
+              console.log(`Expanding cluster ${clusterId}`);
+              
+              // Get children of this cluster
+              const children = clusterIndex.current.getChildren(clusterId);
+              
+              // Get new bounds that encompass all children
+              const coordinates = children.map(child => child.geometry.coordinates);
+              
+              // Create a bounds object from the points
+              const childrenBounds = new mapboxgl.LngLatBounds();
+              coordinates.forEach(coord => {
+                childrenBounds.extend(coord);
+              });
+              
+              // Zoom the map to fit these points, with some padding
+              map.current.fitBounds(childrenBounds, {
+                padding: 80,
+                duration: 500 // Animation time in ms
+              });
+            });
+            
+            // Store this cluster marker
+            clusterMarkers.current.push(marker);
+            
+          } else {
+            // This is an individual point
+            const position = cluster.geometry.coordinates;
+            const experience = cluster.properties.experience;
+            const markerId = `marker-${experience.id}`;
+            
+            // Add the marker ID to our tracking set
+            newMarkerIds.add(markerId);
+            
+            // Skip if we already have a marker with an open popup for this experience
+            if (openPopups.current[markerId]) {
+              return;
+            }
+            
+            // Skip if this marker already exists (to reduce DOM operations)
+            const existingMarker = markers.current.find(m => m._id === markerId);
+            if (existingMarker) {
+              // Ensure it's at the correct position (may have moved slightly)
+              existingMarker.setLngLat([position[0], position[1]]);
+              return;
+            }
+            
+            // Create a marker for the individual point
+            addMarkerForExperience(experience, [position[0], position[1]]);
+          }
+        });
+        
+        // Only remove markers that are no longer in view and don't have open popups
+        // This is more efficient than clearing all markers and recreating them
+        markers.current = markers.current.filter(marker => {
+          const markerId = marker._id;
+          if (openPopups.current[markerId] || newMarkerIds.has(markerId)) {
+            return true; // Keep this marker
+          } else {
+            marker.remove();
+            return false; // Remove this marker
+          }
+        });
+        
+        // Remove cluster markers that are no longer active
+        clusterMarkers.current = clusterMarkers.current.filter(marker => {
+          const clusterId = marker._clusterId;
+          if (activeClusters.has(clusterId)) {
+            return true; // Keep this cluster marker
+          } else {
+            marker.remove();
+            return false; // Remove this cluster marker
+          }
+        });
+        
+      } catch (error) {
+        console.error("Error updating markers:", error);
+      }
+    };
+  }, [mapInitialized, clearAllMarkers, onExperienceSelect, debouncedUpdateMarkers]);
+
+  // Add individual marker for an experience
+  const addMarkerForExperience = (experience, position) => {
+    try {
+      const markerId = `marker-${experience.id}`;
+      
+      // Create custom popup
+      const popupContent = document.createElement('div');
+      popupContent.className = 'popup-content';
+      
+      const title = document.createElement('h3');
+      title.textContent = experience.name;
+      title.style.marginTop = '5px'; // Add margin to top of title
+      
+      const location = document.createElement('p');
+      location.textContent = experience.location;
+      
+      const button = document.createElement('button');
+      button.className = 'view-details-btn';
+      button.textContent = 'View Details';
+      button.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Close the popup when opening the details view
+        if (marker && marker.getPopup()) {
+          marker.getPopup().remove();
+        }
+        onExperienceSelect && onExperienceSelect(experience);
+      };
+      
+      popupContent.appendChild(title);
+      popupContent.appendChild(location);
+      popupContent.appendChild(button);
+
+      // Create popup with offset and correct positioning
+      const popup = new mapboxgl.Popup({ 
+        offset: 25,
+        closeButton: true,
+        closeOnClick: false,
+        className: 'experience-popup'
+      })
+        .setDOMContent(popupContent);
+
+      // Track popup open/close state
+      popup.on('open', () => {
+        console.log(`Popup opened for experience: ${experience.name}`);
+        openPopups.current[markerId] = true;
+      });
+
+      popup.on('close', () => {
+        console.log(`Popup closed for experience: ${experience.name}`);
+        delete openPopups.current[markerId];
+        
+        // Subtle delay before potentially running updateMarkers
+        // to prevent visual jumps after closing popup
+        setTimeout(() => {
+          if (!isMoving.current && map.current && map.current.loaded()) {
+            debouncedUpdateMarkers();
+          }
+        }, 50);
+      });
+
+      // Create a standard marker with color instead of a custom HTML element
+      const marker = new mapboxgl.Marker({
+        color: '#186d00', // Match the green color used in the app
+        anchor: 'center', // Important: Use center anchor like CourseMap
+      })
+        .setLngLat([position[0], position[1]])
+        .setPopup(popup)
+        .addTo(map.current);
+        
+      // Add a tooltip as a child of the mapboxgl-marker element (like in CourseMap)
+      const markerElement = marker.getElement();
+      const tooltipElement = document.createElement('div');
+      tooltipElement.className = 'experience-tooltip'; // Match the class name in CSS
+      tooltipElement.textContent = experience.name;
+      tooltipElement.style.pointerEvents = 'auto';
+      tooltipElement.style.cursor = 'pointer';
+      tooltipElement.style.position = 'absolute';
+      tooltipElement.style.top = '-30px';
+      tooltipElement.style.left = '50%';
+      tooltipElement.style.transform = 'translateX(-50%)';
+      tooltipElement.style.backgroundColor = 'rgba(24, 109, 0, 0.8)';
+      tooltipElement.style.color = 'white';
+      tooltipElement.style.padding = '4px 10px';
+      tooltipElement.style.borderRadius = '20px';
+      tooltipElement.style.fontSize = '12px';
+      tooltipElement.style.fontWeight = '600';
+      tooltipElement.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+      tooltipElement.style.whiteSpace = 'nowrap';
+      tooltipElement.style.zIndex = '1';
+      
+      // Add the tooltip to the marker element
+      markerElement.appendChild(tooltipElement);
+      
+      // Add click handler to the tooltip
+      tooltipElement.addEventListener('click', (e) => {
+        e.stopPropagation();
+        marker.togglePopup();
+      });
+        
+      // Store the ID with the marker for tracking
+      marker._id = markerId;
+      
+      // Store marker reference for later cleanup
+      markers.current.push(marker);
+    } catch (err) {
+      console.error("Error adding marker for experience:", experience.name, err);
+    }
+  };
+
+  // Update the map initialization
+  useEffect(() => {
+    console.log("ExperienceMap component mounted");
+    
+    // Check if map container exists and map not already initialized
+    if (mapContainer.current && !map.current) {
+      console.log("Initializing map...");
+      
+      try {
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: center,
+          zoom: 8.5, // Zoom level to show Algarve from east to west
+          fadeDuration: 0, // Disable fade animations to prevent cluster position jumps
+          trackResize: true,
+          renderWorldCopies: false, // Prevent flickering at boundaries
+          antialias: true, // Smoother rendering
+        });
+
+        // Add navigation controls
+        map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        
+        // Create supercluster instance is now handled in a separate useEffect
+        
+        // Set map initialized flag when the map is loaded
+        map.current.on('load', () => {
+          console.log("Map loaded successfully");
+          setMapInitialized(true);
+          
+          // Force resize once the map is loaded
+          if (map.current) {
+            console.log("Forcing initial resize");
+            map.current.resize();
+          }
+          
+          // Initial render of markers
+          setTimeout(() => {
+            if (updateMarkers.current) {
+              updateMarkers.current();
+            }
+          }, 100);
+        });
+        
+        // Track map movement state
+        map.current.on('movestart', () => {
+          isMoving.current = true;
+        });
+        
+        map.current.on('moveend', () => {
+          isMoving.current = false;
+          // Update markers immediately on moveend for better responsiveness
+          if (updateMarkers.current) {
+            updateMarkers.current();
+          }
+        });
+        
+        // Handle zoom changes once they complete
+        map.current.on('zoomend', () => {
+          // Update markers immediately on zoomend for better responsiveness
+          if (updateMarkers.current) {
+            updateMarkers.current();
+          }
+        });
+        
+        // More responsive render updates while preserving performance
+        let lastUpdateTime = 0;
+        map.current.on('render', () => {
+          const now = Date.now();
+          // Only consider updating if it's been at least 2 seconds since last update
+          if (now - lastUpdateTime > 2000 && // Reduced from 10s to 2s
+              map.current &&
+              map.current.loaded() && 
+              !isMoving.current && 
+              Object.keys(openPopups.current).length === 0) {
+            lastUpdateTime = now;
+            debouncedUpdateMarkers();
+          }
+        });
+
+        // Handle map style loaded event
+        map.current.on('style.load', () => {
+          console.log("Map style fully loaded");
+          // Additional trigger to ensure markers render correctly
+          setTimeout(() => {
+            if (map.current && updateMarkers.current) {
+              updateMarkers.current();
+            }
+          }, 300);
+        });
+
+        // Add a custom "postinit" handler that fires multiple update attempts
+        // after the map is fully loaded to ensure markers render correctly
+        setTimeout(() => {
+          console.log("Post-initialization marker update");
+          if (map.current && updateMarkers.current) {
+            updateMarkers.current();
+            
+            // Try additional updates with increasing delays
+            setTimeout(() => updateMarkers.current(), 200);
+            setTimeout(() => updateMarkers.current(), 500);
+            setTimeout(() => updateMarkers.current(), 1000);
+          }
+        }, 500);
+      } catch (error) {
+        console.error("Error initializing map:", error);
+      }
+    }
+
+    // Cleanup on unmount
     return () => {
+      if (updateTimeout.current) {
+        clearTimeout(updateTimeout.current);
+      }
+      
       if (map.current) {
+        console.log("Removing map instance");
+        // Remove event listeners
+        if (map.current) {
+          map.current.off('movestart');
+          map.current.off('moveend');
+          map.current.off('zoomend');
+          map.current.off('render');
+          map.current.off('style.load');
+          map.current.off('load');
+        }
+        // Remove all markers
+        clearAllMarkers();
         map.current.remove();
         map.current = null;
       }
     };
-  }, [center]);
+  }, [center, clearAllMarkers, debouncedUpdateMarkers]);
 
-  // Handle window resize
+  // This effect ensures the map resizes properly when the container becomes visible
   useEffect(() => {
     const handleResize = () => {
       if (map.current) {
+        console.log("Resizing map");
         map.current.resize();
+        
+        // Also update markers when resizing, but with a small delay
+        setTimeout(() => {
+          if (updateMarkers.current) {
+            updateMarkers.current();
+          }
+        }, 100);
       }
     };
-    
+
+    // Add resize event listener
     window.addEventListener('resize', handleResize);
+    
+    // Create a MutationObserver to detect when the map container becomes visible
+    if (containerRef.current) {
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const mapView = document.querySelector('.map-view');
+            if (mapView && mapView.classList.contains('active')) {
+              console.log("Map view became active");
+              
+              // Force map resize with increasing delays to ensure proper rendering
+              setTimeout(handleResize, 0);
+              setTimeout(handleResize, 100);
+              setTimeout(handleResize, 300);
+              setTimeout(handleResize, 500);
+              setTimeout(handleResize, 1000);
+            }
+          }
+        });
+      });
+      
+      // Start observing parent nodes up to 3 levels for changes in the 'class' attribute
+      let parent = containerRef.current.parentNode;
+      for (let i = 0; i < 3 && parent; i++) {
+        observer.observe(parent, { attributes: true, attributeFilter: ['class'] });
+        parent = parent.parentNode;
+      }
+      
+      // Clean up observer
+      return () => {
+        observer.disconnect();
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+    
+    // Force resize after delays to ensure the container is visible
+    const resizeTimers = [
+      setTimeout(handleResize, 0),
+      setTimeout(handleResize, 100),
+      setTimeout(handleResize, 300),
+      setTimeout(handleResize, 500),
+      setTimeout(handleResize, 1000)
+    ];
     
     return () => {
       window.removeEventListener('resize', handleResize);
+      resizeTimers.forEach(timer => clearTimeout(timer));
     };
   }, []);
+
+  // Update markers when experiences data changes
+  useEffect(() => {
+    if (!mapInitialized || !experiences.length || !clusterIndex.current) return;
+    
+    console.log("Experiences data updated, updating markers");
+    
+    // We need a slight delay to ensure the map is properly initialized
+    setTimeout(() => {
+      if (updateMarkers.current) {
+        updateMarkers.current();
+      }
+    }, 250);
+  }, [experiences, mapInitialized]);
 
   return (
     <div 

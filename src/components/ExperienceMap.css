@@ -11,6 +11,40 @@
   overflow: hidden;
 }
 
+.experience-marker-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  z-index: 1;
+  transform-origin: center bottom;
+  transition: transform 0.15s ease;
+}
+
+.experience-marker-container:hover {
+  transform: scale(1.1);
+  z-index: 10;
+}
+
+.experience-marker-label {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #333;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: bold;
+  white-space: nowrap;
+  margin-bottom: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  z-index: 2;
+}
+
 .experience-marker {
   width: 40px;
   height: 40px;
@@ -21,11 +55,11 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   cursor: pointer;
   transition: transform 0.2s ease;
+  z-index: 1;
 }
 
 .experience-marker:hover {
-  transform: scale(1.1);
-  z-index: 10;
+  transform: scale(1.05);
 }
 
 .cluster-marker {
@@ -49,6 +83,7 @@
 /* Custom popup styles */
 .mapboxgl-popup.experience-popup {
   max-width: 280px !important;
+  z-index: 100;
 }
 
 .mapboxgl-popup-content {
@@ -113,6 +148,22 @@
   height: 32px !important;
 }
 
+/* Make popup close button more visible */
+.mapboxgl-popup-close-button {
+  font-size: 20px !important;
+  padding: 5px 8px !important;
+  color: #333 !important;
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border-radius: 50% !important;
+  margin: 5px !important;
+  z-index: 10 !important;
+}
+
+.mapboxgl-popup-close-button:hover {
+  background-color: white !important;
+  color: #000 !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .experience-marker {
@@ -144,6 +195,12 @@
     padding: 7px 12px;
     font-size: 13px;
   }
+  
+  .experience-marker-label {
+    font-size: 10px;
+    padding: 2px 6px;
+    max-width: 100px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -163,4 +220,38 @@
   .popup-info h3 {
     font-size: 14px;
   }
+  
+  .experience-marker-label {
+    font-size: 9px;
+    padding: 2px 5px;
+    max-width: 80px;
+  }
+}
+
+/* Experience tooltip styles */
+.experience-tooltip {
+  background-color: rgba(24, 109, 0, 0.8) !important;
+  border: none !important;
+  color: white !important;
+  font-family: 'Poppins', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 4px 10px !important;
+  border-radius: 20px !important;
+  white-space: nowrap !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  transition: none;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.mapboxgl-marker:hover .experience-tooltip {
+  background-color: rgba(24, 109, 0, 1) !important;
+  transform: translateX(-50%);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3) !important;
 } 
