@@ -399,6 +399,8 @@ const PackDetails = () => {
     }
   };
 
+  const handleDecrease = (e) => { e.preventDefault(); e.stopPropagation(); handleGroupSizeChange(groupSize - 1); };
+  const handleIncrease = (e) => { e.preventDefault(); e.stopPropagation(); handleGroupSizeChange(groupSize + 1); };
   const handleBookNow = () => {
     if (pack) {
       // Include booking details in the navigation state
@@ -725,14 +727,14 @@ const PackDetails = () => {
                     <button 
                       type="button" 
                       className="decrease" 
-                      onClick={() => handleGroupSizeChange(groupSize - 1)}
+                      onClick={handleDecrease}
                       disabled={groupSize <= 1}
                     >-</button>
                     <input 
                       type="number" 
                       id="group-size"
                       value={groupSize} 
-                      onChange={(e) => handleGroupSizeChange(parseInt(e.target.value, 10))}
+                      onChange={(e) => handleGroupSizeChange(parseInt(e.target.value, 10) || 1)}
                       min="1"
                       max="20"
                       required
@@ -740,7 +742,7 @@ const PackDetails = () => {
                     <button 
                       type="button" 
                       className="increase" 
-                      onClick={() => handleGroupSizeChange(groupSize + 1)}
+                      onClick={handleIncrease}
                       disabled={groupSize >= 20}
                     >+</button>
                   </div>
