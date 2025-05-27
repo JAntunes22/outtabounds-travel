@@ -493,6 +493,31 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
             debouncedUpdateMarkers();
           }
         });
+
+        // Handle map style loaded event
+        map.current.on('style.load', () => {
+          console.log("Map style fully loaded");
+          // Additional trigger to ensure markers render correctly
+          setTimeout(() => {
+            if (map.current && updateMarkers.current) {
+              updateMarkers.current();
+            }
+          }, 300);
+        });
+
+        // Add a custom "postinit" handler that fires multiple update attempts
+        // after the map is fully loaded to ensure markers render correctly
+        setTimeout(() => {
+          console.log("Post-initialization marker update");
+          if (map.current && updateMarkers.current) {
+            updateMarkers.current();
+            
+            // Try additional updates with increasing delays
+            setTimeout(() => updateMarkers.current(), 200);
+            setTimeout(() => updateMarkers.current(), 500);
+            setTimeout(() => updateMarkers.current(), 1000);
+          }
+        }, 500);
       } catch (error) {
         console.error("Error initializing map:", error);
       }
@@ -512,6 +537,8 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
           map.current.off('moveend');
           map.current.off('zoomend');
           map.current.off('render');
+          map.current.off('style.load');
+          map.current.off('load');
         }
         // Remove all markers
         clearAllMarkers();
