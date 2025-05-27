@@ -3,6 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import Supercluster from 'supercluster';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './ExperienceMap.css';
+import Logger from '../utils/logger';
 
 // Set the Mapbox access token
 mapboxgl.accessToken = 'pk.eyJ1Ijoiam9hb2FudHVuZXMiLCJhIjoiY21hOG1wMTQxMTc2cjJtczg4ZjV0MHh3YiJ9.at1W4xUfM8x-c51nNZFyUw';
@@ -16,17 +17,9 @@ const parsePosition = (positionString) => {
     const [latitude, longitude] = positionString.split(',').map(coord => parseFloat(coord.trim()));
     return [longitude, latitude]; // Return as array for Mapbox (note: Mapbox uses [lng, lat] order)
   } catch (error) {
-    console.error("Error parsing position:", error);
+    Logger.error("Error parsing position:", error);
     return null;
   }
-};
-
-// Create a cluster marker element
-const createClusterMarker = (count) => {
-  const el = document.createElement('div');
-  el.className = 'cluster-marker';
-  el.innerHTML = `<div class="cluster-count">${count}</div>`;
-  return el;
 };
 
 const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
@@ -66,7 +59,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
   useEffect(() => {
     if (!experiences.length) return;
     
-    console.log("Processing experiences for clustering");
+    Logger.debug("Processing experiences for clustering");
     
     try {
       // Convert experiences to GeoJSON features
@@ -79,7 +72,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
           const randomLng = -8.2 + (Math.random() - 0.5) * 0.5; // +/- 0.25 degrees
           const randomLat = 37.1 + (Math.random() - 0.5) * 0.5; // +/- 0.25 degrees
           const randomPosition = [randomLng, randomLat];
-          console.log(`Using random position for ${experience.name}: ${randomPosition}`);
+          Logger.debug(`Using random position for ${experience.name}: ${randomPosition}`);
           
           // Create a feature with random position
           const feature = {
@@ -98,7 +91,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
           
           points.push(feature);
         } else {
-          console.log(`Experience ${experience.name} position: ${position}`);
+          Logger.debug(`Experience ${experience.name} position: ${position}`);
           
           // Create a feature with proper properties
           const feature = {
@@ -119,7 +112,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
         }
       });
       
-      console.log(`Created ${points.length} valid GeoJSON points`);
+      Logger.debug(`Created ${points.length} valid GeoJSON points`);
       markerData.current = points;
       
       // Create a new Supercluster instance with simpler options
@@ -131,10 +124,10 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
       if (points.length > 0) {
         // Load points into the cluster index
         clusterIndex.current.load(points);
-        console.log("Supercluster index initialized successfully");
+        Logger.debug("Supercluster index initialized successfully");
       }
     } catch (error) {
-      console.error("Error initializing clustering:", error);
+      Logger.error("Error initializing clustering:", error);
     }
   }, [experiences]);
 
@@ -166,11 +159,11 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
       if (!map.current || !mapInitialized || !clusterIndex.current || markerData.current.length === 0) return;
       
       try {
-        console.log("Updating markers");
+        Logger.debug("Updating markers");
         
         // Prevent updating during map movement
         if (isMoving.current) {
-          console.log("Skipping update, map is moving");
+          Logger.debug("Skipping update, map is moving");
           return;
         }
 
@@ -194,7 +187,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
         
         // Get clusters for this area
         const clusters = clusterIndex.current.getClusters(bbox, zoom);
-        console.log(`Found ${clusters.length} clusters at zoom ${zoom}`);
+        Logger.debug(`Found ${clusters.length} clusters at zoom ${zoom}`);
         
         // Process each cluster
         clusters.forEach(cluster => {
@@ -238,7 +231,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
             
             // Add click handler to expand cluster
             el.addEventListener('click', () => {
-              console.log(`Expanding cluster ${clusterId}`);
+              Logger.debug(`Expanding cluster ${clusterId}`);
               
               // Get children of this cluster
               const children = clusterIndex.current.getChildren(clusterId);
@@ -343,7 +336,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
             
             // Track popup open/close state
             popup.on('open', () => {
-              console.log(`Popup opened for experience: ${experience.name}`);
+              Logger.debug(`Popup opened for experience: ${experience.name}`);
               openPopups.current[markerId] = true;
               
               // Ensure the marker stays in the same place
@@ -353,7 +346,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
             });
             
             popup.on('close', () => {
-              console.log(`Popup closed for experience: ${experience.name}`);
+              Logger.debug(`Popup closed for experience: ${experience.name}`);
               delete openPopups.current[markerId];
               
               // Subtle delay before potentially running updateMarkers
@@ -427,18 +420,18 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
         });
         
       } catch (error) {
-        console.error("Error updating markers:", error);
+        Logger.error("Error updating markers:", error);
       }
     };
   }, [mapInitialized, clearAllMarkers, onExperienceSelect, debouncedUpdateMarkers]);
 
   // Update the map initialization
   useEffect(() => {
-    console.log("ExperienceMap component mounted");
+    Logger.debug("ExperienceMap component mounted");
     
     // Check if map container exists and map not already initialized
     if (mapContainer.current && !map.current) {
-      console.log("Initializing map...");
+      Logger.debug("Initializing map...");
       
       try {
         map.current = new mapboxgl.Map({
@@ -459,12 +452,12 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
         
         // Set map initialized flag when the map is loaded
         map.current.on('load', () => {
-          console.log("Map loaded successfully");
+          Logger.debug("Map loaded successfully");
           setMapInitialized(true);
           
           // Force resize once the map is loaded
           if (map.current) {
-            console.log("Forcing initial resize");
+            Logger.debug("Forcing initial resize");
             map.current.resize();
           }
           
@@ -514,7 +507,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
 
         // Handle map style loaded event
         map.current.on('style.load', () => {
-          console.log("Map style fully loaded");
+          Logger.debug("Map style fully loaded");
           // Additional trigger to ensure markers render correctly
           setTimeout(() => {
             if (map.current && updateMarkers.current) {
@@ -526,7 +519,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
         // Add a custom "postinit" handler that fires multiple update attempts
         // after the map is fully loaded to ensure markers render correctly
         setTimeout(() => {
-          console.log("Post-initialization marker update");
+          Logger.debug("Post-initialization marker update");
           if (map.current && updateMarkers.current) {
             updateMarkers.current();
             
@@ -537,7 +530,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
           }
         }, 500);
       } catch (error) {
-        console.error("Error initializing map:", error);
+        Logger.error("Error initializing map:", error);
       }
     }
 
@@ -548,7 +541,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
       }
       
       if (map.current) {
-        console.log("Removing map instance");
+        Logger.debug("Removing map instance");
         // Remove event listeners
         if (map.current) {
           map.current.off('movestart');
@@ -570,7 +563,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
   useEffect(() => {
     const handleResize = () => {
       if (map.current) {
-        console.log("Resizing map");
+        Logger.debug("Resizing map");
         map.current.resize();
         
         // Also update markers when resizing, but with a small delay
@@ -592,7 +585,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
           if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
             const mapView = document.querySelector('.map-view');
             if (mapView && mapView.classList.contains('active')) {
-              console.log("Map view became active");
+              Logger.debug("Map view became active");
               
               // Force map resize with increasing delays to ensure proper rendering
               setTimeout(handleResize, 0);
@@ -638,7 +631,7 @@ const ExperienceMap = ({ experiences = [], onExperienceSelect }) => {
   useEffect(() => {
     if (!mapInitialized || !experiences.length || !clusterIndex.current) return;
     
-    console.log("Experiences data updated, updating markers");
+    Logger.debug("Experiences data updated, updating markers");
     
     // We need a slight delay to ensure the map is properly initialized
     setTimeout(() => {

@@ -3,6 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import Supercluster from 'supercluster';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import './CourseMap.css';
+import Logger from '../utils/logger';
 
 // Set the Mapbox access token
 mapboxgl.accessToken = 'pk.eyJ1Ijoiam9hb2FudHVuZXMiLCJhIjoiY21hOG1wMTQxMTc2cjJtczg4ZjV0MHh3YiJ9.at1W4xUfM8x-c51nNZFyUw';
@@ -520,130 +521,8 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
     };
   }, [center, clearAllMarkers, debouncedUpdateMarkers]);
 
-  // Update clusters based on current map bounds and zoom level
-  const updateClusters = () => {
-    if (!map.current || !clusterIndex.current || markerData.current.length === 0) return;
-    
-    try {
-      console.log("Updating clusters at zoom level", map.current.getZoom());
-      
-      // Clear all existing individual markers but not clusters yet
-      markers.current.forEach(marker => marker.remove());
-      markers.current = [];
-      
-      // Get the current bounds of the map
-      const bounds = map.current.getBounds();
-      const bbox = [
-        bounds.getWest(),
-        bounds.getSouth(),
-        bounds.getEast(),
-        bounds.getNorth()
-      ];
-      
-      // Get the current zoom level
-      const zoom = Math.floor(map.current.getZoom());
-      console.log(`Getting clusters for zoom level ${zoom} and bounds ${bbox.join(', ')}`);
-      
-      // Get clusters based on the current zoom and bounds
-      const clusters = clusterIndex.current.getClusters(bbox, zoom);
-      console.log(`Found ${clusters.length} clusters/points`);
-      
-      // Track active cluster IDs
-      const activeClusters = new Set();
-      
-      // Add cluster markers or individual markers
-      clusters.forEach(cluster => {
-        if (cluster.properties.cluster) {
-          // This is a cluster
-          const count = cluster.properties.point_count;
-          const clusterId = cluster.properties.cluster_id;
-          
-          // Add to active clusters
-          activeClusters.add(clusterId);
-          
-          // Check if we already have a marker for this cluster
-          const existingClusterMarker = clusterMarkers.current.find(
-            marker => marker._clusterId === clusterId
-          );
-          
-          if (existingClusterMarker) {
-            // Update position if needed
-            existingClusterMarker.setLngLat(cluster.geometry.coordinates);
-            return;
-          }
-          
-          console.log(`Adding cluster of ${count} points with ID ${clusterId}`);
-          
-          // Create a marker for the cluster
-          const el = createClusterMarker(count);
-          
-          const marker = new mapboxgl.Marker({
-            element: el
-          })
-            .setLngLat(cluster.geometry.coordinates)
-            .addTo(map.current);
-            
-          // Store the cluster ID with the marker
-          marker._clusterId = clusterId;
-            
-          // Add click event to zoom in when cluster is clicked
-          el.addEventListener('click', () => {
-            try {
-              const expansionZoom = Math.min(
-                clusterIndex.current.getClusterExpansionZoom(clusterId),
-                20
-              );
-              
-              console.log(`Expanding cluster ${clusterId} to zoom level ${expansionZoom}`);
-              
-              map.current.flyTo({
-                center: cluster.geometry.coordinates,
-                zoom: expansionZoom,
-                speed: 1, // Slower speed for more reliable rendering
-                curve: 1.5,
-                essential: true // This ensures the movement is considered essential and completes
-              });
-            } catch (err) {
-              console.error("Error expanding cluster:", err);
-            }
-          });
-          
-          clusterMarkers.current.push(marker);
-        } else {
-          // This is an individual point
-          const courseId = cluster.properties.id;
-          const course = courses.find(c => c.id === courseId);
-          
-          if (!course) {
-            console.warn(`Course with ID ${courseId} not found`);
-            return;
-          }
-          
-          console.log(`Adding individual marker for course: ${course.name}`);
-          
-          // Create a marker for the individual point
-          addMarkerForCourse(course, [cluster.geometry.coordinates[0], cluster.geometry.coordinates[1]]);
-        }
-      });
-      
-      // Remove cluster markers that are no longer active
-      clusterMarkers.current = clusterMarkers.current.filter(marker => {
-        const clusterId = marker._clusterId;
-        if (activeClusters.has(clusterId)) {
-          return true; // Keep this cluster marker
-        } else {
-          marker.remove();
-          return false; // Remove this cluster marker
-        }
-      });
-      
-    } catch (err) {
-      console.error("Error updating clusters:", err);
-    }
-  };
-
   // Add individual marker for a course
-  const addMarkerForCourse = (course, position) => {
+  const addMarkerForCourse = useCallback((course, position) => {
     try {
       // Create custom popup
       const popupContent = document.createElement('div');
@@ -707,15 +586,137 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
       // Store marker reference for later cleanup
       markers.current.push(marker);
     } catch (err) {
-      console.error("Error adding marker for course:", course.name, err);
+      Logger.error("Error adding marker for course:", course.name, err);
     }
-  };
+  }, [onCourseSelect]);
+
+  // Update clusters based on current map bounds and zoom level
+  const updateClusters = useCallback(() => {
+    if (!map.current || !clusterIndex.current || markerData.current.length === 0) return;
+    
+    try {
+      Logger.debug("Updating clusters at zoom level", map.current.getZoom());
+      
+      // Clear all existing individual markers but not clusters yet
+      markers.current.forEach(marker => marker.remove());
+      markers.current = [];
+      
+      // Get the current bounds of the map
+      const bounds = map.current.getBounds();
+      const bbox = [
+        bounds.getWest(),
+        bounds.getSouth(),
+        bounds.getEast(),
+        bounds.getNorth()
+      ];
+      
+      // Get the current zoom level
+      const zoom = Math.floor(map.current.getZoom());
+      Logger.debug(`Getting clusters for zoom level ${zoom} and bounds ${bbox.join(', ')}`);
+      
+      // Get clusters based on the current zoom and bounds
+      const clusters = clusterIndex.current.getClusters(bbox, zoom);
+      Logger.debug(`Found ${clusters.length} clusters/points`);
+      
+      // Track active cluster IDs
+      const activeClusters = new Set();
+      
+      // Add cluster markers or individual markers
+      clusters.forEach(cluster => {
+        if (cluster.properties.cluster) {
+          // This is a cluster
+          const count = cluster.properties.point_count;
+          const clusterId = cluster.properties.cluster_id;
+          
+          // Add to active clusters
+          activeClusters.add(clusterId);
+          
+          // Check if we already have a marker for this cluster
+          const existingClusterMarker = clusterMarkers.current.find(
+            marker => marker._clusterId === clusterId
+          );
+          
+          if (existingClusterMarker) {
+            // Update position if needed
+            existingClusterMarker.setLngLat(cluster.geometry.coordinates);
+            return;
+          }
+          
+          Logger.debug(`Adding cluster of ${count} points with ID ${clusterId}`);
+          
+          // Create a marker for the cluster
+          const el = createClusterMarker(count);
+          
+          const marker = new mapboxgl.Marker({
+            element: el
+          })
+            .setLngLat(cluster.geometry.coordinates)
+            .addTo(map.current);
+            
+          // Store the cluster ID with the marker
+          marker._clusterId = clusterId;
+            
+          // Add click event to zoom in when cluster is clicked
+          el.addEventListener('click', () => {
+            try {
+              const expansionZoom = Math.min(
+                clusterIndex.current.getClusterExpansionZoom(clusterId),
+                20
+              );
+              
+              Logger.debug(`Expanding cluster ${clusterId} to zoom level ${expansionZoom}`);
+              
+              map.current.flyTo({
+                center: cluster.geometry.coordinates,
+                zoom: expansionZoom,
+                speed: 1, // Slower speed for more reliable rendering
+                curve: 1.5,
+                essential: true // This ensures the movement is considered essential and completes
+              });
+            } catch (err) {
+              Logger.error("Error expanding cluster:", err);
+            }
+          });
+          
+          clusterMarkers.current.push(marker);
+        } else {
+          // This is an individual point
+          const courseId = cluster.properties.id;
+          const course = courses.find(c => c.id === courseId);
+          
+          if (!course) {
+            Logger.warn(`Course with ID ${courseId} not found`);
+            return;
+          }
+          
+          Logger.debug(`Adding individual marker for course: ${course.name}`);
+          
+          // Create a marker for the individual point
+          addMarkerForCourse(course, [cluster.geometry.coordinates[0], cluster.geometry.coordinates[1]]);
+        }
+      });
+      
+      // Remove cluster markers that are no longer active
+      clusterMarkers.current = clusterMarkers.current.filter(marker => {
+        const clusterId = marker._clusterId;
+        if (activeClusters.has(clusterId)) {
+          return true; // Keep this cluster marker
+        } else {
+          marker.remove();
+          return false; // Remove this cluster marker
+        }
+      });
+      
+    } catch (err) {
+      Logger.error("Error updating clusters:", err);
+    }
+  }, [courses, addMarkerForCourse]);
 
   // This effect ensures the map resizes properly when the container becomes visible
   useEffect(() => {
     const handleResize = () => {
       if (map.current) {
-        console.log("Resizing map");
+        Logger.debug("Resizing map");
         map.current.resize();
         
         // Also update clusters when resizing, but with a small delay
@@ -733,7 +734,7 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
           if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
             const mapView = document.querySelector('.map-view');
             if (mapView && mapView.classList.contains('active')) {
-              console.log("Map view became active");
+              Logger.debug("Map view became active");
               
               // Force map resize with increasing delays to ensure proper rendering
               setTimeout(handleResize, 0);
@@ -770,13 +771,13 @@ const CourseMap = ({ courses = [], onCourseSelect }) => {
       window.removeEventListener('resize', handleResize);
       resizeTimers.forEach(timer => clearTimeout(timer));
     };
-  }, [mapInitialized]);
+  }, [mapInitialized, updateClusters]);
 
   // Update markers when courses data changes
   useEffect(() => {
     if (!mapInitialized || !courses.length || !clusterIndex.current) return;
     
-    console.log("Courses data updated, updating markers");
+    Logger.debug("Courses data updated, updating markers");
     
     // We need a slight delay to ensure the map is properly initialized
     setTimeout(() => {

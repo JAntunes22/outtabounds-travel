@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../../utils/firebaseConfig';
 import { 
@@ -31,14 +31,7 @@ export default function AccommodationForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  useEffect(() => {
-    // If editing, fetch the accommodation data
-    if (isEditing) {
-      fetchAccommodation();
-    }
-  }, [isEditing]);
-  
-  async function fetchAccommodation() {
+  const fetchAccommodation = useCallback(async () => {
     setLoading(true);
     try {
       const accommodationDoc = await getDoc(doc(db, 'accommodations', id));
@@ -68,7 +61,14 @@ export default function AccommodationForm() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
+  
+  useEffect(() => {
+    // If editing, fetch the accommodation data
+    if (isEditing) {
+      fetchAccommodation();
+    }
+  }, [isEditing, fetchAccommodation]);
   
   function handleChange(e) {
     const { name, value } = e.target;

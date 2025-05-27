@@ -2,7 +2,7 @@ import './App.css';
 
 // src/App.js
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from './contexts/AuthContext';
 import { PackProvider } from './contexts/PackContext';
 import PrivateRoute from './components/auth/PrivateRoute';
@@ -35,7 +35,6 @@ import ProfileCompletion from './components/auth/ProfileCompletion';
 
 // Admin Components
 import AdminDashboard from './components/admin/AdminDashboard';
-import AdminHome from './components/admin/AdminHome';
 import CourseList from './components/admin/CourseList';
 import CourseForm from './components/admin/CourseForm';
 import AdminSettings from './components/admin/AdminSettings';
@@ -56,8 +55,6 @@ import ExperienceForm from './components/admin/ExperienceForm';
 
 // Layout component that handles conditional footer rendering
 const Layout = () => {
-  const location = useLocation();
-  
   return (
     <div className="app">
       <Header />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../../utils/firebaseConfig';
 import { 
@@ -11,6 +11,7 @@ import {
   getDocs
 } from 'firebase/firestore';
 import './Admin.css';
+import Logger from '../../utils/logger';
 
 export default function PackForm() {
   const navigate = useNavigate();
@@ -43,6 +44,38 @@ export default function PackForm() {
     services: []
   });
   
+  const fetchPack = useCallback(async () => {
+    setLoading(true);
+    try {
+      const packDoc = await getDoc(doc(db, 'packs', id));
+      
+      if (packDoc.exists()) {
+        const packData = packDoc.data();
+        
+        // Ensure arrays are properly initialized
+        setFormData({
+          ...packData,
+          imageUrl: packData.imageUrl || '',
+          courses: packData.courses || [],
+          experiences: packData.experiences || [],
+          accommodations: packData.accommodations || [],
+          services: packData.services || [],
+          slug: packData.slug || '',
+          nights: packData.nights || '',
+          board: packData.board || 'Room only',
+          recommendedGroup: packData.recommendedGroup || '2'
+        });
+      } else {
+        setError('Pack not found');
+      }
+    } catch (error) {
+      Logger.error("Error fetching pack:", error);
+      setError('Error fetching pack data');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+  
   useEffect(() => {
     // Load available items for selection
     fetchAvailableItems();
@@ -51,7 +84,7 @@ export default function PackForm() {
     if (isEditing) {
       fetchPack();
     }
-  }, [isEditing]);
+  }, [isEditing, fetchPack]);
   
   async function fetchAvailableItems() {
     setLoading(true);
@@ -77,46 +110,14 @@ export default function PackForm() {
             });
           });
         } catch (err) {
-          console.error(`Error fetching ${collName}:`, err);
+          Logger.error(`Error fetching ${collName}:`, err);
         }
       }
       
       setAvailableItems(items);
     } catch (error) {
-      console.error("Error fetching available items:", error);
+      Logger.error("Error fetching available items:", error);
       setError('Failed to load available items for selection');
-    } finally {
-      setLoading(false);
-    }
-  }
-  
-  async function fetchPack() {
-    setLoading(true);
-    try {
-      const packDoc = await getDoc(doc(db, 'packs', id));
-      
-      if (packDoc.exists()) {
-        const packData = packDoc.data();
-        
-        // Ensure arrays are properly initialized
-        setFormData({
-          ...packData,
-          imageUrl: packData.imageUrl || '',
-          courses: packData.courses || [],
-          experiences: packData.experiences || [],
-          accommodations: packData.accommodations || [],
-          services: packData.services || [],
-          slug: packData.slug || '',
-          nights: packData.nights || '',
-          board: packData.board || 'Room only',
-          recommendedGroup: packData.recommendedGroup || '2'
-        });
-      } else {
-        setError('Pack not found');
-      }
-    } catch (error) {
-      console.error("Error fetching pack:", error);
-      setError('Error fetching pack data');
     } finally {
       setLoading(false);
     }
@@ -193,21 +194,18 @@ export default function PackForm() {
       }
       
       // Add or update the pack
-      let packId;
       if (isEditing) {
         // Update existing pack
         await updateDoc(doc(db, 'packs', id), packData);
-        packId = id;
       } else {
         // Add new pack
-        const docRef = await addDoc(collection(db, 'packs'), packData);
-        packId = docRef.id;
+        await addDoc(collection(db, 'packs'), packData);
       }
       
       // Navigate back to packs list
       navigate('/admin/packs');
     } catch (error) {
-      console.error("Error saving pack:", error);
+      Logger.error("Error saving pack:", error);
       setError(error.message);
     } finally {
       setLoading(false);

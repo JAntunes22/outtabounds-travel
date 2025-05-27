@@ -119,7 +119,7 @@ const Packs = () => {
                       ) : (
                         <img 
                           src="https://via.placeholder.com/400x600?text=No+Image+Available" 
-                          alt="No Image Available" 
+                          alt="Placeholder" 
                         />
                       )}
                     </div>

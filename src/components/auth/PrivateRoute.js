@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import Logger from '../../utils/logger';
 import "./Auth.css";
 
 // Higher-order component to protect routes that require authentication
@@ -19,33 +20,30 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
   const [adminVerified, setAdminVerified] = useState(isAdmin);
   const [checkingProfile, setCheckingProfile] = useState(requireProfileCompletion);
   const [showProfileReminder, setShowProfileReminder] = useState(false);
-  const [error, setError] = useState(null);
 
   // When component loads, force check admin status if required
   useEffect(() => {
     async function verifyAdminStatus() {
       if (requireAdmin && currentUser) {
         try {
-          console.log("Verifying admin access for user:", currentUser.email);
-          console.log("Current admin state before verification:", isAdmin);
+          Logger.debug("Verifying admin access for user:", currentUser.email);
+          Logger.debug("Current admin state before verification:", isAdmin);
           
           const adminStatus = await refreshAdminStatus();
-          console.log("Admin verification result:", adminStatus);
+          Logger.debug("Admin verification result:", adminStatus);
           setAdminVerified(adminStatus);
           
           if (!adminStatus) {
-            console.error("Admin access denied - user not an admin.");
-            setError('403'); // Set 403 Forbidden for unauthorized admin access
+            Logger.error("Admin access denied - user not an admin.");
           }
         } catch (error) {
-          console.error("Error verifying admin status:", error);
+          Logger.error("Error verifying admin status:", error);
           setAdminVerified(false);
-          setError('500'); // Set 500 Internal Server Error for verification failures
         } finally {
           setCheckingAdmin(false);
         }
       } else {
-        console.log("Admin verification not required or no current user");
+        Logger.debug("Admin verification not required or no current user");
         setCheckingAdmin(false);
       }
     }
@@ -53,16 +51,15 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
     async function verifyProfileCompletion() {
       if (requireProfileCompletion && currentUser && !hasSeenProfileReminder) {
         try {
-          console.log("Checking profile completion for user:", currentUser.email);
+          Logger.debug("Checking profile completion for user:", currentUser.email);
           const profileStatus = await isProfileCompleted();
-          console.log("Profile completion status:", profileStatus);
+          Logger.debug("Profile completion status:", profileStatus);
           
           if (!profileStatus) {
             setShowProfileReminder(true);
           }
         } catch (error) {
-          console.error("Error checking profile completion:", error);
-          setError('500'); // Set 500 Internal Server Error for verification failures
+          Logger.error("Error checking profile completion:", error);
         } finally {
           setCheckingProfile(false);
         }
@@ -73,7 +70,7 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
 
     verifyAdminStatus();
     verifyProfileCompletion();
-  }, [requireAdmin, requireProfileCompletion, currentUser, refreshAdminStatus, isProfileCompleted, hasSeenProfileReminder]);
+  }, [requireAdmin, requireProfileCompletion, currentUser, refreshAdminStatus, isProfileCompleted, hasSeenProfileReminder, isAdmin]);
 
   // Function to dismiss the reminder and continue
   const dismissReminder = () => {
@@ -103,14 +100,14 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
 
   // If requireAdmin flag is true, check if user is admin
   if (requireAdmin && !adminVerified) {
-    console.log("Admin access denied. Auth state: currentUser=", !!currentUser, 
+    Logger.debug("Admin access denied. Auth state: currentUser=", !!currentUser, 
       "isAdmin=", isAdmin, "adminVerified=", adminVerified);
     
     // Let's show more details to help diagnose the issue
     if (currentUser) {
-      console.log("User email:", currentUser.email);
-      console.log("User ID:", currentUser.uid);
-      console.log("Provider data:", currentUser.providerData);
+      Logger.debug("User email:", currentUser.email);
+      Logger.debug("User ID:", currentUser.uid);
+      Logger.debug("Provider data:", currentUser.providerData);
     }
     
     // Return 403 Forbidden for unauthorized admin access

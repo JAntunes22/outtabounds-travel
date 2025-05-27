@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "../utils/firebaseConfig";
@@ -22,6 +22,11 @@ const PackDetails = () => {
   const [accommodationsData, setAccommodationsData] = useState({});
   const [coursesData, setCoursesData] = useState({});
   const [experiencesData, setExperiencesData] = useState({});
+
+  // Calculate total price based on group size
+  const calculateTotalPrice = useCallback((basePrice, size) => {
+    return basePrice * size;
+  }, []);
 
   useEffect(() => {
     const fetchPack = async () => {
@@ -92,7 +97,7 @@ const PackDetails = () => {
     if (packId) {
       fetchPack();
     }
-  }, [packId]);
+  }, [packId, calculateTotalPrice, groupSize]);
   
   // Fetch details for included items
   const fetchItemDetails = async (packData) => {
@@ -379,11 +384,6 @@ const PackDetails = () => {
     const today = new Date();
     today.setDate(today.getDate() + 1);
     return today.toISOString().split('T')[0];
-  };
-  
-  // Calculate total price based on group size
-  const calculateTotalPrice = (basePrice, size) => {
-    return basePrice * size;
   };
   
   // Handle group size change
@@ -678,31 +678,6 @@ const PackDetails = () => {
                               <h4>{experienceDetails.name || displayName}</h4>
                               {experienceDetails.description && (
                                 <p>{experienceDetails.description}</p>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Services Section */}
-                {pack.services && pack.services.length > 0 && (
-                  <div className="includes-vertical-section">
-                    <h3>Services</h3>
-                    <div className="includes-items-list">
-                      {pack.services.map((service, index) => {
-                        const serviceDetails = typeof service === 'object' ? service : { 
-                          name: service,
-                          imageUrl: "https://via.placeholder.com/300x200?text=No+Image+Available" 
-                        };
-                        return (
-                          <div className="includes-item-card" key={`service-${index}`}>
-                            <div className="item-details">
-                              <h4>{serviceDetails.name}</h4>
-                              {serviceDetails.description && (
-                                <p>{serviceDetails.description}</p>
                               )}
                             </div>
                           </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../../utils/firebaseConfig';
 import { 
@@ -33,14 +33,7 @@ export default function ExperienceForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  useEffect(() => {
-    // If editing, fetch the experience data
-    if (isEditing) {
-      fetchExperience();
-    }
-  }, [isEditing]);
-  
-  async function fetchExperience() {
+  const fetchExperience = useCallback(async () => {
     setLoading(true);
     try {
       const experienceDoc = await getDoc(doc(db, 'experiences', id));
@@ -50,19 +43,7 @@ export default function ExperienceForm() {
         
         // Initialize form data with existing values
         setFormData({
-          name: experienceData.name || '',
-          description: experienceData.description || '',
-          // Handle both url and imageUrl for backward compatibility
-          url: experienceData.url || experienceData.imageUrl || '',
-          duration: experienceData.duration || '',
-          location: experienceData.location || '',
-          position: experienceData.position || '',
-          inclusions: experienceData.inclusions || [],
-          exclusions: experienceData.exclusions || [],
-          highlights: experienceData.highlights || [],
-          features: experienceData.features || [],
-          rating: experienceData.rating || '',
-          category: experienceData.category || 'Activity'
+          ...experienceData
         });
       } else {
         setError('Experience not found');
@@ -73,7 +54,14 @@ export default function ExperienceForm() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
+  
+  useEffect(() => {
+    // If editing, fetch the experience data
+    if (isEditing) {
+      fetchExperience();
+    }
+  }, [isEditing, fetchExperience]);
   
   function handleChange(e) {
     const { name, value } = e.target;

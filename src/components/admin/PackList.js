@@ -3,16 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { db } from '../../utils/firebaseConfig';
 import { 
   collection, 
-  query, 
   getDocs, 
   doc, 
   deleteDoc,
-  updateDoc,
-  orderBy,
-  getFirestore,
-  getDoc
+  updateDoc
 } from 'firebase/firestore';
 import './Admin.css';
+import Logger from '../../utils/logger';
 
 export default function PackList() {
   const [packs, setPacks] = useState([]);
@@ -40,7 +37,7 @@ export default function PackList() {
       
       // Check if we have any documents
       if (querySnapshot.empty) {
-        console.log("No packs found in the database.");
+        Logger.log("No packs found in the database.");
         setPacks([]);
         setLoading(false);
         return;
@@ -49,7 +46,7 @@ export default function PackList() {
       // Process each pack document
       querySnapshot.forEach((doc) => {
         const packData = doc.data();
-        console.log("Fetched pack:", doc.id, packData);
+        Logger.log("Fetched pack:", doc.id, packData);
         
         // Ensure all packs have an order field
         if (packData.order === undefined) {
@@ -70,10 +67,10 @@ export default function PackList() {
       
       // Sort by order
       packList.sort((a, b) => a.order - b.order);
-      console.log("Total packs loaded:", packList.length);
+      Logger.log("Total packs loaded:", packList.length);
       setPacks(packList);
     } catch (error) {
-      console.error("Error fetching packs:", error);
+      Logger.error("Error fetching packs:", error);
     } finally {
       setLoading(false);
     }
@@ -108,7 +105,7 @@ export default function PackList() {
       await updateDoc(doc(db, 'packs', packAbove.id), { order: packAbove.order });
       setReordering(false);
     } catch (error) {
-      console.error("Error updating pack order:", error);
+      Logger.error("Error updating pack order:", error);
       setReordering(false);
       // Revert to original order if there's an error
       fetchPacks();
@@ -144,7 +141,7 @@ export default function PackList() {
       await updateDoc(doc(db, 'packs', packBelow.id), { order: packBelow.order });
       setReordering(false);
     } catch (error) {
-      console.error("Error updating pack order:", error);
+      Logger.error("Error updating pack order:", error);
       setReordering(false);
       // Revert to original order if there's an error
       fetchPacks();
@@ -169,7 +166,7 @@ export default function PackList() {
       setShowDeleteModal(false);
       setPackToDelete(null);
     } catch (error) {
-      console.error("Error deleting pack:", error);
+      Logger.error("Error deleting pack:", error);
     }
   }
 
@@ -196,7 +193,7 @@ export default function PackList() {
       setDebugInfo(info);
       setDebug(true);
     } catch (error) {
-      console.error("Error getting debug info:", error);
+      Logger.error("Error getting debug info:", error);
       setDebugInfo({ error: error.message });
     } finally {
       setLoading(false);

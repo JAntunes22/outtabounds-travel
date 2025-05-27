@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../../utils/firebaseConfig';
 import { 
@@ -29,14 +29,7 @@ export default function CourseForm() {
   const [error, setError] = useState('');
   const [featureInput, setFeatureInput] = useState('');
   
-  useEffect(() => {
-    // If editing, fetch the course data
-    if (isEditing) {
-      fetchCourse();
-    }
-  }, [isEditing]);
-  
-  async function fetchCourse() {
+  const fetchCourse = useCallback(async () => {
     setLoading(true);
     try {
       const courseDoc = await getDoc(doc(db, 'courses', id));
@@ -52,6 +45,7 @@ export default function CourseForm() {
             : JSON.parse(courseData.features);
         }
         
+        // Initialize form data with existing values
         setFormData({
           ...courseData,
           features: features || []
@@ -65,7 +59,14 @@ export default function CourseForm() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
+  
+  useEffect(() => {
+    // If editing, fetch the course data
+    if (isEditing) {
+      fetchCourse();
+    }
+  }, [isEditing, fetchCourse]);
   
   function handleChange(e) {
     const { name, value } = e.target;

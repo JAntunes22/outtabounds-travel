@@ -1,51 +1,26 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { addAdminRole, removeAdminRole } from '../../utils/firebaseUtils';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../utils/firebaseConfig';
 import './Admin.css';
+import Logger from '../../utils/logger';
 
 export default function AdminSettings() {
   const { currentUser, refreshAdminStatus, userFullname } = useAuth();
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const emailRef = useRef();
   const [adminToRemove, setAdminToRemove] = useState('');
   const [showModal, setShowModal] = useState(false);
   
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-  
-  const fetchUsers = async () => {
-    try {
-      setError(null);
-      setLoading(true);
-      const usersRef = collection(db, 'users');
-      const snapshot = await getDocs(usersRef);
-      const usersList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setUsers(usersList);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setError('Failed to fetch users');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
   const handleAddAdmin = async (email) => {
     try {
       setError(null);
       setSuccess(null);
-      console.log("Adding admin role to:", email);
+      Logger.log("Adding admin role to:", email);
       
       const result = await addAdminRole(email);
-      console.log("Admin role added result:", result);
+      Logger.log("Admin role added result:", result);
       
       setSuccess(`Successfully added admin role to ${email}`);
       
@@ -53,12 +28,10 @@ export default function AdminSettings() {
       try {
         await refreshAdminStatus();
       } catch (refreshError) {
-        console.error("Error refreshing admin status:", refreshError);
+        Logger.error("Error refreshing admin status:", refreshError);
       }
-      
-      await fetchUsers(); // Refresh the user list
     } catch (error) {
-      console.error('Error adding admin role:', error);
+      Logger.error('Error adding admin role:', error);
       setError(error.message || 'Failed to add admin role');
     }
   };
@@ -67,10 +40,10 @@ export default function AdminSettings() {
     try {
       setError(null);
       setSuccess(null);
-      console.log("Removing admin role from:", email);
+      Logger.log("Removing admin role from:", email);
       
       const result = await removeAdminRole(email);
-      console.log("Admin role removed result:", result);
+      Logger.log("Admin role removed result:", result);
       
       setSuccess(`Successfully removed admin role from ${email}`);
       
@@ -78,12 +51,10 @@ export default function AdminSettings() {
       try {
         await refreshAdminStatus();
       } catch (refreshError) {
-        console.error("Error refreshing admin status:", refreshError);
+        Logger.error("Error refreshing admin status:", refreshError);
       }
-      
-      await fetchUsers(); // Refresh the user list
     } catch (error) {
-      console.error('Error removing admin role:', error);
+      Logger.error('Error removing admin role:', error);
       setError(error.message || 'Failed to remove admin role');
     }
   };
