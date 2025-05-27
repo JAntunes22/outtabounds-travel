@@ -10,7 +10,6 @@ const PackDetails = () => {
   const { packId } = useParams(); // This could be either an ID or a slug
   const navigate = useNavigate();
   const [pack, setPack] = useState(null);
-  const PLACEHOLDER_IMAGE = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==";
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -150,7 +149,7 @@ const PackDetails = () => {
                 // Add a default object with the name and placeholder image
                 accommodationsDetailsObj[typeof accommodation === 'string' ? accommodation : accommodation.id] = { 
                   name: accommodation,
-                  imageUrl: PLACEHOLDER_IMAGE 
+                  imageUrl: "https://via.placeholder.com/300x200?text=No+Image+Available" 
                 };
               }
             } else {
@@ -192,7 +191,7 @@ const PackDetails = () => {
                 const storeKey = typeof accommodation === 'string' ? accommodation : JSON.stringify(accommodation.id || accommodation);
                 accommodationsDetailsObj[storeKey] = { 
                   name: typeof accommodation === 'object' && accommodation.name ? accommodation.name.toString() : accommodation,
-                  imageUrl: PLACEHOLDER_IMAGE 
+                  imageUrl: "https://via.placeholder.com/300x200?text=No+Image+Available" 
                 };
               }
             }
@@ -201,7 +200,7 @@ const PackDetails = () => {
             // Add a default object for error case
             accommodationsDetailsObj[typeof accommodation === 'string' ? accommodation : 'unknown'] = { 
               name: typeof accommodation === 'string' ? accommodation : 'Unknown Accommodation',
-              imageUrl: PLACEHOLDER_IMAGE 
+              imageUrl: "https://via.placeholder.com/300x200?text=No+Image+Available" 
             };
           }
         }
@@ -279,14 +278,14 @@ const PackDetails = () => {
                 // Add a default object with the name and placeholder image
                 coursesDetailsObj[courseKey] = { 
                   name: courseName,
-                  imageUrl: PLACEHOLDER_IMAGE 
+                  imageUrl: "https://via.placeholder.com/300x200?text=No+Image+Available" 
                 };
               }
             } else {
               // Handle object that doesn't have an ID
               coursesDetailsObj[courseKey] = { 
                 name: courseName,
-                imageUrl: PLACEHOLDER_IMAGE 
+                imageUrl: "https://via.placeholder.com/300x200?text=No+Image+Available" 
               };
             }
           } catch (courseError) {
@@ -304,7 +303,7 @@ const PackDetails = () => {
             // Add a default object for error case
             coursesDetailsObj[courseKey] = { 
               name: courseName,
-              imageUrl: PLACEHOLDER_IMAGE 
+              imageUrl: "https://via.placeholder.com/300x200?text=No+Image+Available" 
             };
           }
         }
@@ -349,19 +348,17 @@ const PackDetails = () => {
                 experiencesDetailsObj[experienceKey] = details;
               } else {
                 console.log("No details found for experience:", experience);
-                console.log("Experience key:", experienceKey);
-                console.log("Experience name:", experienceName);
                 // Add a default object with the name and placeholder image
                 experiencesDetailsObj[experienceKey] = { 
                   name: experienceName,
-                  imageUrl: PLACEHOLDER_IMAGE 
+                  imageUrl: "https://via.placeholder.com/300x200?text=No+Image+Available" 
                 };
               }
             } else {
               // Handle object that doesn't have an ID
               experiencesDetailsObj[experienceKey] = { 
                 name: experienceName,
-                imageUrl: PLACEHOLDER_IMAGE 
+                imageUrl: "https://via.placeholder.com/300x200?text=No+Image+Available" 
               };
             }
           } catch (experienceError) {
@@ -370,7 +367,7 @@ const PackDetails = () => {
             const experienceKey = typeof experience === 'string' ? experience : (experience?.id?.toString() || JSON.stringify(experience));
             experiencesDetailsObj[experienceKey] = { 
               name: typeof experience === 'string' ? experience : 'Unknown Experience',
-              imageUrl: PLACEHOLDER_IMAGE 
+              imageUrl: "https://via.placeholder.com/300x200?text=No+Image+Available" 
             };
           }
         }
@@ -475,10 +472,10 @@ const PackDetails = () => {
     if (itemDetails) {
       // Check different possible image field names and use the first one that exists
       if (!itemDetails.imageUrl) {
-        if ((type === 'course' || type === 'experience') && itemDetails.url) {
-          // For courses and experiences, use the url field
+        if (type === 'course' && itemDetails.url) {
+          // For courses, use the url field
           itemDetails.imageUrl = itemDetails.url;
-          console.log(`Using 'url' field for ${type}:`, itemDetails.url);
+          console.log(`Using 'url' field for course:`, itemDetails.url);
         } else if (itemDetails.image) {
           itemDetails.imageUrl = itemDetails.image;
           console.log(`Using 'image' field for ${type} ${item}`);
@@ -493,7 +490,7 @@ const PackDetails = () => {
           console.log(`Using 'thumbnail' field for ${type} ${item}`);
         } else {
           console.log(`No image field found for ${type} ${item}, using placeholder`);
-          itemDetails.imageUrl = PLACEHOLDER_IMAGE;
+          itemDetails.imageUrl = "https://via.placeholder.com/300x200?text=No+Image+Available";
         }
       }
       return itemDetails;
@@ -502,7 +499,7 @@ const PackDetails = () => {
     // No details found, return a simple object with the name and placeholder image
     return { 
       name: item,
-      imageUrl: PLACEHOLDER_IMAGE 
+      imageUrl: "https://via.placeholder.com/300x200?text=No+Image+Available" 
     };
   };
 
@@ -562,7 +559,7 @@ const PackDetails = () => {
                         
                         // Ensure we check for all possible image fields
                         const hasImage = !!accommodationDetails.imageUrl;
-                        const imageSrc = accommodationDetails.imageUrl || PLACEHOLDER_IMAGE;
+                        const imageSrc = accommodationDetails.imageUrl || "https://via.placeholder.com/300x200?text=No+Image+Available";
                         
                         return (
                           <div className="includes-item-card" key={`acc-${index}`}>
@@ -574,7 +571,7 @@ const PackDetails = () => {
                                   onError={(e) => {
                                     console.log(`Image error for ${displayName}:`, e);
                                     e.target.onerror = null;
-                                    e.target.src = PLACEHOLDER_IMAGE;
+                                    e.target.src = "https://via.placeholder.com/300x200?text=Image+Error";
                                   }}
                                 />
                               ) : (
@@ -610,7 +607,7 @@ const PackDetails = () => {
                         
                         // Ensure we check for both imageUrl and url fields
                         const hasImage = !!(courseDetails.imageUrl || courseDetails.url);
-                        const imageSrc = courseDetails.imageUrl || courseDetails.url || PLACEHOLDER_IMAGE;
+                        const imageSrc = courseDetails.imageUrl || courseDetails.url || "https://via.placeholder.com/300x200?text=No+Image+Available";
                         
                         return (
                           <div className="includes-item-card" key={`course-${index}`}>
@@ -622,7 +619,7 @@ const PackDetails = () => {
                                   onError={(e) => {
                                     console.log(`Image error for ${displayName}:`, e);
                                     e.target.onerror = null;
-                                    e.target.src = PLACEHOLDER_IMAGE;
+                                    e.target.src = "https://via.placeholder.com/300x200?text=Image+Error";
                                   }}
                                 />
                               ) : (
@@ -657,8 +654,8 @@ const PackDetails = () => {
                         console.log(`Rendering experience ${index}:`, experienceDetails);
                         
                         // Ensure we check for all possible image fields
-                        const hasImage = !!(experienceDetails.url || experienceDetails.imageUrl);
-                        const imageSrc = experienceDetails.url || experienceDetails.imageUrl || PLACEHOLDER_IMAGE;
+                        const hasImage = !!experienceDetails.imageUrl;
+                        const imageSrc = experienceDetails.imageUrl || "https://via.placeholder.com/300x200?text=No+Image+Available";
                         
                         return (
                           <div className="includes-item-card" key={`exp-${index}`}>
@@ -670,7 +667,7 @@ const PackDetails = () => {
                                   onError={(e) => {
                                     console.log(`Image error for ${displayName}:`, e);
                                     e.target.onerror = null;
-                                    e.target.src = PLACEHOLDER_IMAGE;
+                                    e.target.src = "https://via.placeholder.com/300x200?text=Image+Error";
                                   }}
                                 />
                               ) : (
