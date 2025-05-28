@@ -806,6 +806,105 @@ const PackDetails = () => {
               </div>
             </div>
           </div>
+          
+          <div className="pack-details-right">
+            <div className="pack-booking-card">
+              <div className="pack-price-container">
+                <div className="price-main">
+                  <span className="currency">$</span>
+                  <span className="amount">{pack.price || '0'}</span>
+                  <span className="unit">pp</span>
+                </div>
+                <p className="price-note">
+                  Price per person based on {pack.recommendedGroup || 2} people sharing.
+                </p>
+              </div>
+              
+              <div className="pack-booking-options">
+                <div className="booking-option">
+                  <label htmlFor="arrival-date">Arrival Date</label>
+                  <input 
+                    type="date" 
+                    id="arrival-date"
+                    value={arrivalDate} 
+                    onChange={(e) => setArrivalDate(e.target.value)}
+                    min={getMinDate()}
+                    required
+                  />
+                </div>
+                
+                <div className="booking-option">
+                  <label htmlFor="group-size">Group Size</label>
+                  <div className="number-input-control">
+                    <button 
+                      type="button" 
+                      className="decrease" 
+                      onClick={handleDecrease}
+                      disabled={groupSize <= 1}
+                    >-</button>
+                    <input 
+                      type="number" 
+                      id="group-size"
+                      value={groupSize} 
+                      onChange={(e) => handleGroupSizeChange(parseInt(e.target.value, 10) || 1)}
+                      min="1"
+                      max="20"
+                      required
+                    />
+                    <button 
+                      type="button" 
+                      className="increase" 
+                      onClick={handleIncrease}
+                      disabled={groupSize >= 20}
+                    >+</button>
+                  </div>
+                </div>
+                
+                <div className="booking-summary">
+                  <div className="booking-total">
+                    <span>Total:</span>
+                    <span className="total-price">${totalPrice}</span>
+                  </div>
+                  <small>For {groupSize} {groupSize === 1 ? 'person' : 'people'}</small>
+                </div>
+              </div>
+              
+              <div className="pack-details-info">
+                <div className="info-item">
+                  <div className="info-icon nights-icon"></div>
+                  <div className="info-content">
+                    <h4>NIGHTS</h4>
+                    <p>{pack.nights || 'Not specified'}</p>
+                  </div>
+                </div>
+                
+                <div className="info-item">
+                  <div className="info-icon board-icon"></div>
+                  <div className="info-content">
+                    <h4>BOARD</h4>
+                    <p>{pack.board || 'Room only'}</p>
+                  </div>
+                </div>
+                
+                <div className="info-item">
+                  <div className="info-icon group-icon"></div>
+                  <div className="info-content">
+                    <h4>GROUP SIZE</h4>
+                    <p>{groupSize}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <button 
+                className="button-primary book-now-button" 
+                onClick={handleBookNow}
+                disabled={!arrivalDate}
+                style={{ margin: '0 auto', display: 'block' }}
+              >
+                BOOK NOW
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
