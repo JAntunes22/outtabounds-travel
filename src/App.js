@@ -52,6 +52,8 @@ import AccommodationList from './components/admin/AccommodationList';
 import AccommodationForm from './components/admin/AccommodationForm';
 import ExperienceList from './components/admin/ExperienceList';
 import ExperienceForm from './components/admin/ExperienceForm';
+import ServiceList from './components/admin/ServiceList';
+import ServiceForm from './components/admin/ServiceForm';
 
 // Layout component that handles conditional footer rendering
 const Layout = () => {
@@ -111,6 +113,11 @@ const Layout = () => {
               <Route path="accommodations" element={<AccommodationList />} />
               <Route path="accommodations/new" element={<AccommodationForm />} />
               <Route path="accommodations/edit/:id" element={<AccommodationForm />} />
+              
+              {/* Services Management */}
+              <Route path="services" element={<ServiceList />} />
+              <Route path="services/new" element={<ServiceForm />} />
+              <Route path="services/edit/:id" element={<ServiceForm />} />
               
               {/* Experiences Management */}
               <Route path="experiences" element={<ExperienceList />} />

@@ -918,6 +918,25 @@ export const fetchExperienceById = async (experienceId) => {
   }
 };
 
+// Fetch service by ID
+export const fetchServiceById = async (serviceId) => {
+  try {
+    const serviceDoc = await getDoc(doc(db, 'services', serviceId));
+    
+    if (serviceDoc.exists()) {
+      return {
+        id: serviceDoc.id,
+        ...serviceDoc.data()
+      };
+    } else {
+      throw new Error('Service not found');
+    }
+  } catch (error) {
+    console.error("Error fetching service:", error);
+    throw error;
+  }
+};
+
 // Fetch included item details regardless of type
 export const fetchIncludedItemDetails = async (itemId, itemType) => {
   try {
@@ -937,6 +956,10 @@ export const fetchIncludedItemDetails = async (itemId, itemType) => {
       case 'experience':
       case 'experiences':
         collectionName = 'experiences';
+        break;
+      case 'service':
+      case 'services':
+        collectionName = 'services';
         break;
       default:
         throw new Error(`Unknown item type: ${itemType}`);

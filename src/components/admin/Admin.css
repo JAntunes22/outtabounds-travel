@@ -1503,4 +1503,42 @@
   color: #999;
   font-style: italic;
   font-size: 0.9em;
+}
+
+/* Service List Styles */
+.description-preview {
+  max-width: 300px;
+  line-height: 1.4;
+  color: #555;
+}
+
+.image-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-preview img {
+  border: 1px solid #ddd;
+  transition: transform 0.2s ease;
+}
+
+.image-preview img:hover {
+  transform: scale(1.1);
+}
+
+/* Service Form Styles */
+.image-preview-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.admin-form-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
 } 

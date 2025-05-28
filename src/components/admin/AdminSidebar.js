@@ -79,6 +79,15 @@ export default function AdminSidebar() {
           </li>
           <li>
             <Link 
+              to="/admin/services" 
+              className={`nav-link ${isActive('/admin/services') ? 'active' : ''}`}
+            >
+              <span className="icon">🛎️</span>
+              <span>Services</span>
+            </Link>
+          </li>
+          <li>
+            <Link 
               to="/admin/packs" 
               className={`nav-link ${isActive('/admin/packs') ? 'active' : ''}`}
             >

@@ -9,6 +9,7 @@ export default function Dashboard() {
     courses: 0,
     experiences: 0,
     accommodations: 0,
+    services: 0,
     packs: 0
   });
   
@@ -23,11 +24,12 @@ export default function Dashboard() {
       try {
         console.log("Dashboard: Fetching collection statistics...");
         // Fetch counts from each collection
-        const collections = ['courses', 'experiences', 'accommodations', 'packs'];
+        const collections = ['courses', 'experiences', 'accommodations', 'services', 'packs'];
         const counts = {
           courses: 0,
           experiences: 0,
           accommodations: 0,
+          services: 0,
           packs: 0
         };
         
@@ -183,6 +185,37 @@ export default function Dashboard() {
               alignItems: 'center' 
             }}>
               <div style={{ marginBottom: '15px' }}>
+                <span role="img" aria-label="Service" style={{ 
+                  fontSize: '24px', 
+                  backgroundColor: '#fff3e0', 
+                  borderRadius: '50%', 
+                  padding: '10px',
+                  display: 'inline-block'
+                }}>
+                  🛎️
+                </span>
+              </div>
+              <h2 style={{ fontSize: '42px', margin: '10px 0' }}>{stats.services}</h2>
+              <Link to="/admin/services" style={{ 
+                color: '#186d00', 
+                textDecoration: 'none', 
+                fontWeight: 'bold',
+                marginTop: 'auto'
+              }}>
+                Manage Services
+              </Link>
+            </div>
+            
+            <div style={{ 
+              flex: '1 1 300px', 
+              backgroundColor: 'white', 
+              borderRadius: '8px', 
+              padding: '20px', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center' 
+            }}>
+              <div style={{ marginBottom: '15px' }}>
                 <span role="img" aria-label="Pack" style={{ 
                   fontSize: '24px', 
                   backgroundColor: '#f3e5f5', 
@@ -265,6 +298,24 @@ export default function Dashboard() {
               }}>
                 <span style={{ fontSize: '24px', marginBottom: '10px' }}>➕</span>
                 <span>Add New Accommodation</span>
+              </Link>
+              
+              <Link to="/admin/services/new" style={{ 
+                flex: '1 1 200px',
+                backgroundColor: 'white',
+                border: '1px solid #eee',
+                borderRadius: '8px',
+                padding: '20px',
+                textAlign: 'center',
+                textDecoration: 'none',
+                color: '#333',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+              }}>
+                <span style={{ fontSize: '24px', marginBottom: '10px' }}>➕</span>
+                <span>Add New Service</span>
               </Link>
               
               <Link to="/admin/packs/new" style={{ 

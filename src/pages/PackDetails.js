@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "../utils/firebaseConfig";
-import { fetchIncludedItemDetails, fetchCourseById, fetchAccommodationById, fetchExperienceById } from "../utils/firebaseUtils";
+import { fetchIncludedItemDetails, fetchCourseById, fetchAccommodationById, fetchExperienceById, fetchServiceById } from "../utils/firebaseUtils";
 import './PackCommon.css';
 import './Packs.css';
 
@@ -23,6 +23,7 @@ const PackDetails = () => {
   const [accommodationsData, setAccommodationsData] = useState({});
   const [coursesData, setCoursesData] = useState({});
   const [experiencesData, setExperiencesData] = useState({});
+  const [servicesData, setServicesData] = useState({});
 
   // Calculate total price based on group size
   const calculateTotalPrice = useCallback((basePrice, size) => {
@@ -374,6 +375,72 @@ const PackDetails = () => {
         console.log("Final experiences data:", experiencesDetailsObj);
         setExperiencesData(experiencesDetailsObj);
       }
+      
+      // Fetch services details
+      const servicesDetailsObj = {};
+      if (packData.services && packData.services.length > 0) {
+        console.log("Fetching services:", packData.services);
+        for (const service of packData.services) {
+          try {
+            // Create a consistent key for this service
+            const serviceKey = typeof service === 'string' 
+              ? service 
+              : (service?.id?.toString() || JSON.stringify(service));
+            
+            // Create a name display string
+            const serviceName = typeof service === 'string' 
+              ? service 
+              : (service?.name?.toString() || 'Unknown Service');
+              
+            if (typeof service === 'string' || service.id) {
+              // Try fetching directly by ID first
+              let details = null;
+              
+              try {
+                details = await fetchServiceById(typeof service === 'string' ? service : service.id);
+                console.log("Found service by ID:", details);
+              } catch (idError) {
+                // Try with fetchIncludedItemDetails which also tries by name
+                details = await fetchIncludedItemDetails(
+                  typeof service === 'string' ? service : service.id, 
+                  'service'
+                );
+                console.log("Found service by name:", details);
+              }
+              
+              if (details) {
+                console.log("Adding service details:", details);
+                servicesDetailsObj[serviceKey] = details;
+              } else {
+                console.log("No details found for service:", service);
+                console.log("Service key:", serviceKey);
+                console.log("Service name:", serviceName);
+                // Add a default object with the name and placeholder image
+                servicesDetailsObj[serviceKey] = { 
+                  name: serviceName,
+                  url: PLACEHOLDER_IMAGE 
+                };
+              }
+            } else {
+              // Handle object that doesn't have an ID
+              servicesDetailsObj[serviceKey] = { 
+                name: serviceName,
+                url: PLACEHOLDER_IMAGE 
+              };
+            }
+          } catch (serviceError) {
+            console.error("Error fetching service details:", serviceError);
+            // Add a default object for error case
+            const serviceKey = typeof service === 'string' ? service : (service?.id?.toString() || JSON.stringify(service));
+            servicesDetailsObj[serviceKey] = { 
+              name: typeof service === 'string' ? service : 'Unknown Service',
+              url: PLACEHOLDER_IMAGE 
+            };
+          }
+        }
+        console.log("Final services data:", servicesDetailsObj);
+        setServicesData(servicesDetailsObj);
+      }
     } catch (error) {
       console.error("Error fetching included items details:", error);
     }
@@ -464,6 +531,9 @@ const PackDetails = () => {
       }
     } else if (type === 'experience' && (experiencesData[lookupKey] || experiencesData[stringKey])) {
       itemDetails = experiencesData[lookupKey] || experiencesData[stringKey];
+      console.log(`Found ${type} details:`, itemDetails);
+    } else if (type === 'service' && (servicesData[lookupKey] || servicesData[stringKey])) {
+      itemDetails = servicesData[lookupKey] || servicesData[stringKey];
       console.log(`Found ${type} details:`, itemDetails);
     }
     
@@ -685,106 +755,55 @@ const PackDetails = () => {
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-          </div>
-          
-          <div className="pack-details-right">
-            <div className="pack-booking-card">
-              <div className="pack-price-container">
-                <div className="price-main">
-                  <span className="currency">$</span>
-                  <span className="amount">{pack.price || '0'}</span>
-                  <span className="unit">pp</span>
-                </div>
-                <p className="price-note">
-                  Price per person based on {pack.recommendedGroup || 2} people sharing.
-                </p>
-              </div>
-              
-              <div className="pack-booking-options">
-                <div className="booking-option">
-                  <label htmlFor="arrival-date">Arrival Date</label>
-                  <input 
-                    type="date" 
-                    id="arrival-date"
-                    value={arrivalDate} 
-                    onChange={(e) => setArrivalDate(e.target.value)}
-                    min={getMinDate()}
-                    required
-                  />
-                </div>
                 
-                <div className="booking-option">
-                  <label htmlFor="group-size">Group Size</label>
-                  <div className="number-input-control">
-                    <button 
-                      type="button" 
-                      className="decrease" 
-                      onClick={handleDecrease}
-                      disabled={groupSize <= 1}
-                    >-</button>
-                    <input 
-                      type="number" 
-                      id="group-size"
-                      value={groupSize} 
-                      onChange={(e) => handleGroupSizeChange(parseInt(e.target.value, 10) || 1)}
-                      min="1"
-                      max="20"
-                      required
-                    />
-                    <button 
-                      type="button" 
-                      className="increase" 
-                      onClick={handleIncrease}
-                      disabled={groupSize >= 20}
-                    >+</button>
+                {/* Services Section */}
+                {pack.services && pack.services.length > 0 && (
+                  <div className="includes-vertical-section">
+                    <h3>Services</h3>
+                    <div className="includes-items-list">
+                      {pack.services.map((service, index) => {
+                        // Get the name directly from service if it's an object with a name
+                        const displayName = typeof service === 'object' && service.name 
+                          ? service.name.toString() 
+                          : (typeof service === 'string' ? service : 'Unknown');
+                        
+                        const serviceDetails = getItemDetails(service, 'service');
+                        console.log(`Rendering service ${index}:`, serviceDetails);
+                        
+                        // Ensure we check for all possible image fields
+                        const hasImage = !!(serviceDetails.url || serviceDetails.imageUrl);
+                        const imageSrc = serviceDetails.url || serviceDetails.imageUrl || PLACEHOLDER_IMAGE;
+                        
+                        return (
+                          <div className="includes-item-card" key={`service-${index}`}>
+                            <div className="item-image">
+                              {hasImage ? (
+                                <img 
+                                  src={imageSrc} 
+                                  alt={serviceDetails.name || displayName}
+                                  onError={(e) => {
+                                    console.log(`Image error for ${displayName}:`, e);
+                                    e.target.onerror = null;
+                                    e.target.src = PLACEHOLDER_IMAGE;
+                                  }}
+                                />
+                              ) : (
+                                <div className="placeholder-image">No Image</div>
+                              )}
+                            </div>
+                            <div className="item-details">
+                              <h4>{serviceDetails.name || displayName}</h4>
+                              {serviceDetails.description && (
+                                <p>{serviceDetails.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-                
-                <div className="booking-summary">
-                  <div className="booking-total">
-                    <span>Total:</span>
-                    <span className="total-price">${totalPrice}</span>
-                  </div>
-                  <small>For {groupSize} {groupSize === 1 ? 'person' : 'people'}</small>
-                </div>
+                )}
               </div>
-              
-              <div className="pack-details-info">
-                <div className="info-item">
-                  <div className="info-icon nights-icon"></div>
-                  <div className="info-content">
-                    <h4>NIGHTS</h4>
-                    <p>{pack.nights || 'Not specified'}</p>
-                  </div>
-                </div>
-                
-                <div className="info-item">
-                  <div className="info-icon board-icon"></div>
-                  <div className="info-content">
-                    <h4>BOARD</h4>
-                    <p>{pack.board || 'Room only'}</p>
-                  </div>
-                </div>
-                
-                <div className="info-item">
-                  <div className="info-icon group-icon"></div>
-                  <div className="info-content">
-                    <h4>GROUP SIZE</h4>
-                    <p>{groupSize}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <button 
-                className="button-primary book-now-button" 
-                onClick={handleBookNow}
-                disabled={!arrivalDate}
-                style={{ margin: '0 auto', display: 'block' }}
-              >
-                BOOK NOW
-              </button>
             </div>
           </div>
         </div>
@@ -793,4 +812,4 @@ const PackDetails = () => {
   );
 };
 
-export default PackDetails; 
+export default PackDetails;
