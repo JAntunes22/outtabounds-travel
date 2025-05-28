@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useLocale } from '../../contexts/LocaleContext';
 import { db } from '../../utils/firebaseConfig';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import './Admin.css';
 
 export default function AccommodationList() {
+  const { getLocalizedPath } = useLocale();
   const [accommodations, setAccommodations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -58,8 +60,8 @@ export default function AccommodationList() {
     <div>
       <div className="admin-header">
         <h1 className="admin-title">Accommodations</h1>
-        <Link to="/admin/accommodations/new" className="admin-action-btn">
-          + Add Accommodation
+        <Link to={getLocalizedPath('/admin/accommodations/new')} className="admin-action-btn">
+          <span>+</span> Add New Accommodation
         </Link>
       </div>
       

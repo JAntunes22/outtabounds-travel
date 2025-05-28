@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useLocale } from '../../contexts/LocaleContext';
 import { db } from '../../utils/firebaseConfig';
 import { 
   collection, 
@@ -11,6 +12,7 @@ import {
 import './Admin.css';
 
 export default function ServiceList() {
+  const { getLocalizedPath } = useLocale();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -70,7 +72,7 @@ export default function ServiceList() {
     <div>
       <div className="admin-header">
         <h1 className="admin-title">Manage Services</h1>
-        <Link to="/admin/services/new" className="admin-action-btn">
+        <Link to={getLocalizedPath('/admin/services/new')} className="admin-action-btn">
           <span>+</span> Add New Service
         </Link>
       </div>
@@ -84,7 +86,7 @@ export default function ServiceList() {
           {services.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px' }}>
               <p>No services found. Add your first service to get started.</p>
-              <Link to="/admin/services/new" className="admin-action-btn" style={{ display: 'inline-block', marginTop: '15px' }}>
+              <Link to={getLocalizedPath('/admin/services/new')} className="admin-action-btn" style={{ display: 'inline-block', marginTop: '15px' }}>
                 Add New Service
               </Link>
             </div>

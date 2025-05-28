@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useLocale } from '../../contexts/LocaleContext';
 import { db } from '../../utils/firebaseConfig';
 import { 
   collection, 
@@ -14,6 +15,7 @@ import './Admin.css';
 import Logger from '../../utils/logger';
 
 export default function PackForm() {
+  const { getLocalizedPath } = useLocale();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
@@ -21,7 +23,11 @@ export default function PackForm() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    price: '',
+    prices: {
+      EUR: '',
+      USD: '',
+      GBP: ''
+    },
     imageUrl: '',
     courses: [],
     experiences: [],
@@ -52,9 +58,25 @@ export default function PackForm() {
       if (packDoc.exists()) {
         const packData = packDoc.data();
         
+        // Handle pricing structure - support both old and new formats
+        let prices = { EUR: '', USD: '', GBP: '' };
+        
+        if (packData.prices && typeof packData.prices === 'object') {
+          // New format with multiple currencies
+          prices = {
+            EUR: packData.prices.EUR ? packData.prices.EUR.toString() : '',
+            USD: packData.prices.USD ? packData.prices.USD.toString() : '',
+            GBP: packData.prices.GBP ? packData.prices.GBP.toString() : ''
+          };
+        } else if (packData.price) {
+          // Old format with single price - assume it's USD for backward compatibility
+          prices.USD = packData.price.toString();
+        }
+        
         // Ensure arrays are properly initialized
         setFormData({
           ...packData,
+          prices: prices,
           imageUrl: packData.imageUrl || '',
           courses: packData.courses || [],
           experiences: packData.experiences || [],
@@ -125,10 +147,23 @@ export default function PackForm() {
   
   function handleChange(e) {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    
+    // Handle price changes for different currencies
+    if (name.startsWith('price_')) {
+      const currency = name.split('_')[1];
+      setFormData({
+        ...formData,
+        prices: {
+          ...formData.prices,
+          [currency]: value
+        }
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
   }
   
   // Generate a slug from the pack name for SEO-friendly URLs
@@ -180,13 +215,34 @@ export default function PackForm() {
       // Generate a slug for the pack if needed
       const slug = formData.slug || generateSlug(formData.name);
       
+      // Prepare prices object with parsed numbers
+      const prices = {};
+      Object.keys(formData.prices).forEach(currency => {
+        const price = formData.prices[currency];
+        if (price && price.trim() !== '') {
+          prices[currency] = parseFloat(price);
+        }
+      });
+      
       // Prepare data for Firestore
       const packData = {
         ...formData,
         slug: slug,
-        price: formData.price ? parseFloat(formData.price) : null,
+        prices: prices,
         updatedAt: new Date()
       };
+      
+      // Remove the old price field if it exists and add backward compatibility
+      delete packData.price;
+      
+      // For backward compatibility, set the USD price as the default price
+      if (prices.USD) {
+        packData.price = prices.USD;
+      } else if (prices.EUR) {
+        packData.price = prices.EUR;
+      } else if (prices.GBP) {
+        packData.price = prices.GBP;
+      }
       
       if (!isEditing) {
         // Add created timestamp for new packs
@@ -203,7 +259,7 @@ export default function PackForm() {
       }
       
       // Navigate back to packs list
-      navigate('/admin/packs');
+      navigate(getLocalizedPath('/admin/packs'));
     } catch (error) {
       Logger.error("Error saving pack:", error);
       setError(error.message);
@@ -301,17 +357,55 @@ export default function PackForm() {
             </p>
           </div>
           
+          {/* Multi-currency pricing section */}
           <div className="admin-form-group">
-            <label>Price</label>
-            <input 
-              type="number" 
-              name="price" 
-              value={formData.price} 
-              onChange={handleChange} 
-              step="0.01" 
-              min="0"
-              placeholder="0.00" 
-            />
+            <label>Pricing (Per Person Per Night)</label>
+            <div className="currency-pricing-grid">
+              <div className="currency-price-input">
+                <label htmlFor="price_EUR">EUR (€)</label>
+                <input 
+                  type="number" 
+                  id="price_EUR"
+                  name="price_EUR" 
+                  value={formData.prices.EUR} 
+                  onChange={handleChange} 
+                  step="0.01" 
+                  min="0"
+                  placeholder="0.00" 
+                />
+              </div>
+              
+              <div className="currency-price-input">
+                <label htmlFor="price_USD">USD ($)</label>
+                <input 
+                  type="number" 
+                  id="price_USD"
+                  name="price_USD" 
+                  value={formData.prices.USD} 
+                  onChange={handleChange} 
+                  step="0.01" 
+                  min="0"
+                  placeholder="0.00" 
+                />
+              </div>
+              
+              <div className="currency-price-input">
+                <label htmlFor="price_GBP">GBP (£)</label>
+                <input 
+                  type="number" 
+                  id="price_GBP"
+                  name="price_GBP" 
+                  value={formData.prices.GBP} 
+                  onChange={handleChange} 
+                  step="0.01" 
+                  min="0"
+                  placeholder="0.00" 
+                />
+              </div>
+            </div>
+            <p className="help-text">
+              Set prices in different currencies. At least one currency must be specified.
+            </p>
           </div>
           
           <div className="admin-form-group">
@@ -442,7 +536,7 @@ export default function PackForm() {
             <button 
               type="button" 
               className="admin-action-btn cancel-btn" 
-              onClick={() => navigate('/admin/packs')}
+              onClick={() => navigate(getLocalizedPath('/admin/packs'))}
               disabled={loading}
             >
               Cancel

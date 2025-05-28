@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "../utils/firebaseConfig";
+import { useLocale } from "../contexts/LocaleContext";
+import { getRegionTier, getPackPrice } from "../utils/localeUtils";
 import "./Home.css"; // Ensure you create and style this CSS file
 
 const Home = () => {
+  const { getLocalizedPath, currentLocale } = useLocale();
   const heroContentRef = useRef(null);
   const heroRef = useRef(null);
   const [packs, setPacks] = useState([]);
@@ -58,37 +61,128 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    const fetchPacks = async () => {
+    const fetchFeaturedPacks = async () => {
       setLoading(true);
       try {
-        // Use the same approach as the Packs page but with ordering and limit
-        const packsCollection = collection(db, "packs");
-        // First get all packs to make sure we have data
-        const packsSnapshot = await getDocs(packsCollection);
-        let packsList = packsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        // Determine user's region tier
+        let detectedTier = 'rest';
         
-        // Sort by order field if it exists, otherwise just take the first 5
-        packsList = packsList.sort((a, b) => {
-          if (a.order !== undefined && b.order !== undefined) {
-            return a.order - b.order;
+        // Try to get user's country from various sources
+        try {
+          // First try to get from current URL locale
+          const currentPath = window.location.pathname;
+          const pathSegments = currentPath.split('/').filter(Boolean);
+          const urlLocale = pathSegments[0];
+          
+          if (urlLocale) {
+            // Map locale to likely country
+            const localeToCountry = {
+              'en-us': 'US',
+              'en-uk': 'UK', 
+              'fr': 'FR',
+              'pt': 'PT',
+              'es': 'ES'
+            };
+            const country = localeToCountry[urlLocale];
+            if (country) {
+              detectedTier = getRegionTier(country);
+            }
           }
-          return 0;
-        }).slice(0, 5); // Limit to 5 packs for the homepage
+          
+          // If no URL locale detected, try browser language
+          if (detectedTier === 'rest') {
+            const browserLang = navigator.language.toLowerCase();
+            
+            // More precise language detection
+            if (browserLang.startsWith('fr')) {
+              detectedTier = getRegionTier('FR');
+            } else if (browserLang.startsWith('pt')) {
+              detectedTier = getRegionTier('PT');
+            } else if (browserLang.startsWith('es')) {
+              detectedTier = getRegionTier('ES');
+            } else if (browserLang.startsWith('en-gb') || browserLang.startsWith('en-uk')) {
+              detectedTier = getRegionTier('UK');
+            } else if (browserLang.startsWith('en')) {
+              detectedTier = getRegionTier('US');
+            }
+          }
+          
+          // If still no detection, try to use a simple IP geolocation service
+          if (detectedTier === 'rest') {
+            try {
+              const response = await fetch('https://ipapi.co/json/', { timeout: 3000 });
+              if (response.ok) {
+                const data = await response.json();
+                const countryCode = data.country_code;
+                if (countryCode) {
+                  detectedTier = getRegionTier(countryCode);
+                }
+              }
+            } catch (ipError) {
+              // Silently fail IP geolocation
+            }
+          }
+          
+        } catch (err) {
+          // Silently fail region detection
+        }
         
-        console.log("Fetched packs:", packsList);
-        setPacks(packsList);
+        // Fetch featured packs configuration
+        const featuredPacksDoc = await getDoc(doc(db, 'settings', 'featuredPacks'));
+        let featuredPackIds = [];
+        
+        if (featuredPacksDoc.exists()) {
+          const featuredPacksData = featuredPacksDoc.data();
+          featuredPackIds = featuredPacksData[detectedTier] || [];
+        }
+        
+        // If no featured packs configured for this tier, fall back to order-based selection
+        if (featuredPackIds.length === 0) {
+          const packsCollection = collection(db, "packs");
+          const packsSnapshot = await getDocs(packsCollection);
+          let packsList = packsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          // Sort by order field if it exists, otherwise just take the first 5
+          packsList = packsList.sort((a, b) => {
+            if (a.order !== undefined && b.order !== undefined) {
+              return a.order - b.order;
+            }
+            return 0;
+          }).slice(0, 5);
+          
+          setPacks(packsList);
+        } else {
+          // Fetch the specific featured packs
+          const packsCollection = collection(db, "packs");
+          const packsSnapshot = await getDocs(packsCollection);
+          const allPacks = {};
+          
+          packsSnapshot.docs.forEach(doc => {
+            allPacks[doc.id] = {
+              id: doc.id,
+              ...doc.data()
+            };
+          });
+          
+          // Get featured packs in the specified order
+          const featuredPacks = featuredPackIds
+            .map(packId => allPacks[packId])
+            .filter(pack => pack); // Remove any undefined packs
+          
+          setPacks(featuredPacks);
+        }
+        
       } catch (error) {
-        console.error("Error fetching packs:", error);
         setError("Failed to fetch packs. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPacks();
+    fetchFeaturedPacks();
   }, []);
 
   return (
@@ -123,33 +217,37 @@ const Home = () => {
           </div>
         ) : (
           <div className="featured-packs">
-            {packs.map((pack, index) => (
-              <div 
-                key={pack.id} 
-                className={`pack-card ${index === 1 ? 'pack-card-large' : ''}`}
-                onClick={() => window.location.href = `/packs/${pack.id}`}
-              >
-                <div className="pack-image" style={{ backgroundImage: `url(${pack.imageUrl || 'https://via.placeholder.com/600x400?text=No+Image'})` }}>
-                  <div className="pack-title-overlay">
-                    <h3 className="pack-title">{pack.name}</h3>
-                  </div>
-                  <div className="pack-overlay">
-                    <div className="pack-price">
-                      <div className="price-amount">
-                        <span className="currency">€</span>
-                        <span className="amount">{pack.price || '---'}</span>
+            {packs.map((pack, index) => {
+              const priceInfo = getPackPrice(pack, currentLocale);
+              
+              return (
+                <div 
+                  key={pack.id} 
+                  className={`pack-card ${index === 1 ? 'pack-card-large' : ''}`}
+                  onClick={() => window.location.href = getLocalizedPath(`/packs/${pack.id}`)}
+                >
+                  <div className="pack-image" style={{ backgroundImage: `url(${pack.imageUrl || 'https://via.placeholder.com/600x400?text=No+Image'})` }}>
+                    <div className="pack-title-overlay">
+                      <h3 className="pack-title">{pack.name}</h3>
+                    </div>
+                    <div className="pack-overlay">
+                      <div className="pack-price">
+                        <div className="price-amount">
+                          <span className="currency">{priceInfo ? priceInfo.symbol : '€'}</span>
+                          <span className="amount">{priceInfo ? priceInfo.amount : '---'}</span>
+                        </div>
+                        <div className="per-night">PER NIGHT</div>
                       </div>
-                      <div className="per-night">PER NIGHT</div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
         
         <div className="view-all-packs">
-          <Link to="/packs" className="btn-secondary">View All Packs</Link>
+          <Link to={getLocalizedPath('/packs')} className="btn-secondary">View All Packs</Link>
         </div>
       </section>
     </div>

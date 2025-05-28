@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useLocale } from '../../contexts/LocaleContext';
 import { db } from '../../utils/firebaseConfig';
 import { 
   collection, 
@@ -11,6 +12,7 @@ import {
 import './Admin.css';
 
 export default function ServiceForm() {
+  const { getLocalizedPath } = useLocale();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
@@ -88,8 +90,8 @@ export default function ServiceForm() {
         await addDoc(collection(db, 'services'), serviceData);
       }
       
-      // Navigate back to service list
-      navigate('/admin/services');
+      // Navigate back to services list
+      navigate(getLocalizedPath('/admin/services'));
     } catch (error) {
       console.error("Error saving service:", error);
       setError(error.message);
@@ -168,7 +170,7 @@ export default function ServiceForm() {
             <button 
               type="button" 
               className="admin-action-btn cancel-btn" 
-              onClick={() => navigate('/admin/services')}
+              onClick={() => navigate(getLocalizedPath('/admin/services'))}
               disabled={loading}
             >
               Cancel

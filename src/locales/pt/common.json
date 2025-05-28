@@ -1,0 +1,76 @@
+{
+  "navigation": {
+    "home": "Início",
+    "about": "Sobre",
+    "courses": "Cursos",
+    "experiences": "Experiências",
+    "houses": "Casas",
+    "contact": "Contato",
+    "packs": "Pacotes",
+    "profile": "Perfil",
+    "login": "Entrar",
+    "signup": "Registrar",
+    "logout": "Sair"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "search": "Pesquisar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "price": "Preço",
+    "currency": "Moeda",
+    "language": "Idioma"
+  },
+  "packs": {
+    "title": "Pacotes de Viagem",
+    "description": "Descubra experiências de viagem incríveis",
+    "viewDetails": "Ver detalhes",
+    "bookNow": "Reservar agora",
+    "from": "A partir de",
+    "duration": "Duração",
+    "location": "Localização",
+    "availability": "Disponibilidade",
+    "includes": "Inclui",
+    "excludes": "Exclui"
+  },
+  "booking": {
+    "title": "Reserve sua experiência",
+    "selectDates": "Selecionar datas",
+    "travelers": "Viajantes",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "taxes": "Impostos e taxas",
+    "deposit": "Depósito necessário",
+    "fullPayment": "Pagamento integral",
+    "paymentMethod": "Método de pagamento",
+    "confirmBooking": "Confirmar reserva"
+  },
+  "footer": {
+    "company": "OuttaBounds Travel",
+    "description": "Criando experiências de viagem inesquecíveis ao redor do mundo",
+    "quickLinks": "Links rápidos",
+    "contact": "Entre em contato",
+    "followUs": "Siga-nos",
+    "newsletter": "Newsletter",
+    "subscribe": "Inscrever-se",
+    "allRightsReserved": "Todos os direitos reservados"
+  },
+  "errors": {
+    "pageNotFound": "Página não encontrada",
+    "serverError": "Erro do servidor",
+    "networkError": "Erro de rede",
+    "invalidInput": "Entrada inválida",
+    "unauthorized": "Acesso não autorizado",
+    "sessionExpired": "Sessão expirada"
+  }
+} 

@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLocale } from '../../contexts/LocaleContext';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import './Auth.css';
 
 export default function MultiStepSignup() {
+  const { getLocalizedPath } = useLocale();
   // State for form data
   const [formData, setFormData] = useState({
     email: '',
@@ -175,7 +177,7 @@ export default function MultiStepSignup() {
       );
       
       // Navigate to login page after successful registration with success message
-      navigate('/login', { 
+      navigate(getLocalizedPath('/login'), { 
         state: { 
           successMessage: 'Account successfully created, please login using your credentials.' 
         } 
@@ -199,7 +201,7 @@ export default function MultiStepSignup() {
       <p className="step-indicator">Step 1 of 3</p>
       
       <div className="already-member">
-        Already a member? <Link to="/login">Sign in</Link>
+        Already a member? <Link to={getLocalizedPath('/login')}>Sign in</Link>
       </div>
       
       <form onSubmit={handleEmailCheck}>

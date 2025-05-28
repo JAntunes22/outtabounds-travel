@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLocale } from '../../contexts/LocaleContext';
 import './Auth.css';
 
 export default function Login() {
@@ -13,6 +14,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const authCardRef = useRef(null);
+  const { getLocalizedPath } = useLocale();
 
   // Check for success message in location state
   useEffect(() => {
@@ -41,7 +43,7 @@ export default function Login() {
   }, []);
 
   // Redirect to intended page or homepage after login
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || getLocalizedPath('/');
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -74,7 +76,7 @@ export default function Login() {
         console.log("New user detected, redirecting to profile completion");
         // Redirect to profile completion page for new users
         // Include a flag in state to indicate this is from social login
-        navigate('/profile-completion', { 
+        navigate(getLocalizedPath('/profile-completion'), { 
           state: { fromSocialLogin: true } 
         });
       } else {
@@ -103,7 +105,7 @@ export default function Login() {
         console.log("New user detected, redirecting to profile completion");
         // Redirect to profile completion page for new users
         // Include a flag in state to indicate this is from social login
-        navigate('/profile-completion', { 
+        navigate(getLocalizedPath('/profile-completion'), { 
           state: { fromSocialLogin: true } 
         });
       } else {
@@ -161,10 +163,10 @@ export default function Login() {
         </div>
 
         <div className="auth-links">
-          <Link to="/forgot-password">Forgot Password?</Link>
+          <Link to={getLocalizedPath('/forgot-password')}>Forgot Password?</Link>
         </div>
         <div className="auth-footer">
-          Need an account? <Link to="/signup">Sign Up</Link>
+          Need an account? <Link to={getLocalizedPath('/signup')}>Sign Up</Link>
         </div>
       </div>
     </div>

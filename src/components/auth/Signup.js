@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLocale } from '../../contexts/LocaleContext';
 import './Auth.css';
 
 export default function Signup() {
+  const { getLocalizedPath } = useLocale();
   const nameRef = useRef();
   const emailRef = useRef();
   const passwordRef = useRef();
@@ -50,7 +52,7 @@ export default function Signup() {
       );
       
       console.log("Signup: Successfully created account, redirecting to home");
-      navigate('/');
+      navigate(getLocalizedPath('/'));
     } catch (error) {
       console.error("Signup: Error during account creation:", error);
       setError('Failed to create an account: ' + error.message);
@@ -67,12 +69,12 @@ export default function Signup() {
       if (result.isNewUser) {
         // Redirect to profile completion page for new users
         // Include a flag in state to indicate this is from social login
-        navigate('/profile-completion', { 
+        navigate(getLocalizedPath('/profile-completion'), { 
           state: { fromSocialLogin: true } 
         });
       } else {
         // Redirect to homepage for existing users
-        navigate('/');
+        navigate(getLocalizedPath('/'));
       }
     } catch (error) {
       setError('Failed to sign up with Google: ' + error.message);
@@ -89,12 +91,12 @@ export default function Signup() {
       if (result.isNewUser) {
         // Redirect to profile completion page for new users
         // Include a flag in state to indicate this is from social login
-        navigate('/profile-completion', { 
+        navigate(getLocalizedPath('/profile-completion'), { 
           state: { fromSocialLogin: true } 
         });
       } else {
         // Redirect to homepage for existing users
-        navigate('/');
+        navigate(getLocalizedPath('/'));
       }
     } catch (error) {
       setError('Failed to sign up with Apple: ' + error.message);
@@ -151,7 +153,7 @@ export default function Signup() {
         </div>
 
         <div className="auth-footer">
-          Already have an account? <Link to="/login">Log In</Link>
+          Already have an account? <Link to={getLocalizedPath('/login')}>Log In</Link>
         </div>
       </div>
     </div>

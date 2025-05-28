@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useLocale } from '../../contexts/LocaleContext';
 import { db } from '../../utils/firebaseConfig';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import './Admin.css';
 
 export default function ExperienceList() {
+  const { getLocalizedPath } = useLocale();
   const [experiences, setExperiences] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -59,8 +61,8 @@ export default function ExperienceList() {
     <div>
       <div className="admin-header">
         <h1 className="admin-title">Experiences</h1>
-        <Link to="/admin/experiences/new" className="admin-action-btn">
-          + Add Experience
+        <Link to={getLocalizedPath('/admin/experiences/new')} className="admin-action-btn">
+          <span>+</span> Add New Experience
         </Link>
       </div>
       

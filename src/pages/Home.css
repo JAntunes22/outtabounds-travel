@@ -154,6 +154,11 @@
   background-size: cover;
   background-position: center;
   position: relative;
+  transition: transform 0.3s ease;
+}
+
+.pack-card:hover .pack-image {
+  transform: scale(1.05);
 }
 
 .pack-image::before {

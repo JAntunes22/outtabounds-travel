@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLocale } from '../../contexts/LocaleContext';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import './Auth.css';
@@ -17,6 +18,7 @@ export default function ProfileCompletion() {
   const { currentUser, updateUserProfile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { getLocalizedPath } = useLocale();
   
   useEffect(() => {
     console.log("ProfileCompletion component mounted, current user:", !!currentUser);
@@ -25,7 +27,7 @@ export default function ProfileCompletion() {
     if (!currentUser) {
       console.log("No user logged in, redirecting to login");
       // Redirect to login if no user is logged in
-      navigate('/login');
+      navigate(getLocalizedPath('/login'));
       return;
     }
     
@@ -61,7 +63,7 @@ export default function ProfileCompletion() {
     }
 
     // No cleanup function that logs out user - we want to stay logged in
-  }, [currentUser, navigate, location.state]);
+  }, [currentUser, navigate, location.state, getLocalizedPath]);
 
   // Remove the handleBeforeUnload effect that warns users they'll be logged out
   useEffect(() => {
@@ -143,7 +145,7 @@ export default function ProfileCompletion() {
       setFormSubmitted(true);
       
       // Redirect to homepage
-      navigate('/');
+      navigate(getLocalizedPath('/'));
     } catch (error) {
       console.error("Profile completion error:", error);
       setError('Failed to complete profile: ' + (error.message || 'Unknown error occurred'));
@@ -159,7 +161,7 @@ export default function ProfileCompletion() {
       console.log("User canceled profile completion");
       
       // Redirect to homepage or the "from" location if available
-      const destination = location.state?.from?.pathname || '/';
+      const destination = location.state?.from?.pathname || getLocalizedPath('/');
       console.log("Redirecting to:", destination);
       navigate(destination);
     } catch (error) {

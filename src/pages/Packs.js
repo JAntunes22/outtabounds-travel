@@ -2,9 +2,12 @@ import React, { useEffect, useState, useRef } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../utils/firebaseConfig";
 import { useNavigate } from "react-router-dom";
+import { useLocale } from "../contexts/LocaleContext";
+import { formatPackPrice } from "../utils/localeUtils";
 import './Packs.css';
 
 const Packs = () => {
+  const { getLocalizedPath, currentLocale } = useLocale();
   const [packs, setPacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -55,9 +58,12 @@ const Packs = () => {
           ...doc.data()
         }));
         
+        // Sort packs alphabetically by name
+        packsList.sort((a, b) => a.name.localeCompare(b.name));
+        
         setPacks(packsList);
-      } catch (err) {
-        console.error("Error fetching packs:", err);
+      } catch (error) {
+        console.error("Error fetching packs:", error);
         setError("Failed to fetch packs. Please try again later.");
       } finally {
         setLoading(false);
@@ -67,10 +73,8 @@ const Packs = () => {
     fetchPacks();
   }, []);
 
-  const openPackDetails = (pack) => {
-    // Use slug if available, otherwise use ID
-    const identifier = pack.slug || pack.id;
-    navigate(`/packs/${identifier}`);
+  const handlePackClick = (packId) => {
+    navigate(getLocalizedPath(`/packs/${packId}`));
   };
 
   return (
@@ -99,34 +103,28 @@ const Packs = () => {
             {packs.length === 0 ? (
               <p className="no-packs-message">No packs available at the moment. Please check back later.</p>
             ) : (
-              <div className="pack-list">
+              <div className="packs-grid">
                 {packs.map((pack) => (
                   <div 
-                    className="pack-item" 
-                    key={pack.id}
-                    onClick={() => openPackDetails(pack)}
+                    key={pack.id} 
+                    className="pack-card"
+                    onClick={() => handlePackClick(pack.id)}
                   >
-                    <div className="pack-image-container">
-                      {pack.imageUrl ? (
-                        <img 
-                          src={pack.imageUrl} 
-                          alt={pack.name} 
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "https://via.placeholder.com/400x600?text=Pack+Image+Not+Available";
-                          }}
-                        />
-                      ) : (
-                        <img 
-                          src="https://via.placeholder.com/400x600?text=No+Image+Available" 
-                          alt="Placeholder" 
-                        />
-                      )}
+                    <div className="pack-image">
+                      <img 
+                        src={pack.imageUrl || 'https://via.placeholder.com/400x250?text=No+Image'} 
+                        alt={pack.name}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://via.placeholder.com/400x250?text=No+Image';
+                        }}
+                      />
                     </div>
+                    
                     <div className="pack-content">
                       <div className="pack-info">
                         <h2>{pack.name}</h2>
-                        <h3 className="pack-price">{pack.price ? `$${pack.price}` : 'Price upon request'}</h3>
+                        <h3 className="pack-price">{formatPackPrice(pack, currentLocale)}</h3>
                         <p>{pack.description 
                             ? (pack.description.length > 100 
                               ? `${pack.description.substring(0, 100)}...` 

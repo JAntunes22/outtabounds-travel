@@ -2,12 +2,15 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, collection, query, where, getDocs, limit } from "firebase/firestore";
 import { db } from "../utils/firebaseConfig";
+import { useLocale } from "../contexts/LocaleContext";
+import { getPackPrice } from "../utils/localeUtils";
 import { fetchIncludedItemDetails, fetchCourseById, fetchAccommodationById, fetchExperienceById, fetchServiceById } from "../utils/firebaseUtils";
 import './PackCommon.css';
 import './Packs.css';
 
 const PackDetails = () => {
   const { packId } = useParams(); // This could be either an ID or a slug
+  const { currentLocale } = useLocale();
   const navigate = useNavigate();
   const [pack, setPack] = useState(null);
   const PLACEHOLDER_IMAGE = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==";
@@ -478,6 +481,9 @@ const PackDetails = () => {
     }
   };
 
+  // Get price information for the current locale
+  const priceInfo = pack ? getPackPrice(pack, currentLocale) : null;
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -811,8 +817,8 @@ const PackDetails = () => {
             <div className="pack-booking-card">
               <div className="pack-price-container">
                 <div className="price-main">
-                  <span className="currency">$</span>
-                  <span className="amount">{pack.price || '0'}</span>
+                  <span className="currency">{priceInfo ? priceInfo.symbol : '$'}</span>
+                  <span className="amount">{priceInfo ? priceInfo.amount : '0'}</span>
                   <span className="unit">pp</span>
                 </div>
                 <p className="price-note">

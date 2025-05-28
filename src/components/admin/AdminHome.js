@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../utils/firebaseConfig';
 import { collection, query, getDocs } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
+import { useLocale } from '../../contexts/LocaleContext';
 import './Admin.css';
 
 export default function AdminHome() {
+  const { getLocalizedPath } = useLocale();
   const [stats, setStats] = useState({
     courses: 0,
     experiences: 0,
@@ -86,7 +88,7 @@ export default function AdminHome() {
                 <h3>{stats.courses}</h3>
                 <p>Golf Courses</p>
               </div>
-              <Link to="/admin/courses" className="stat-link">Manage Courses</Link>
+              <Link to={getLocalizedPath('/admin/courses')} className="stat-link">Manage Courses</Link>
             </div>
             
             <div className="stat-card">
@@ -97,7 +99,7 @@ export default function AdminHome() {
                 <h3>{stats.experiences}</h3>
                 <p>Experiences</p>
               </div>
-              <Link to="/admin/experiences" className="stat-link">Manage Experiences</Link>
+              <Link to={getLocalizedPath('/admin/experiences')} className="stat-link">Manage Experiences</Link>
             </div>
             
             <div className="stat-card">
@@ -108,29 +110,29 @@ export default function AdminHome() {
                 <h3>{stats.accommodations}</h3>
                 <p>Accommodations</p>
               </div>
-              <Link to="/admin/accommodations" className="stat-link">Manage Accommodations</Link>
+              <Link to={getLocalizedPath('/admin/accommodations')} className="stat-link">Manage Accommodations</Link>
             </div>
           </div>
           
           <div className="quick-actions">
             <h2>Quick Actions</h2>
             <div className="actions-grid">
-              <Link to="/admin/courses/new" className="action-card">
+              <Link to={getLocalizedPath('/admin/courses/new')} className="action-card">
                 <div className="action-icon">➕</div>
                 <div className="action-title">Add New Course</div>
               </Link>
               
-              <Link to="/admin/experiences/new" className="action-card">
+              <Link to={getLocalizedPath('/admin/experiences/new')} className="action-card">
                 <div className="action-icon">➕</div>
                 <div className="action-title">Add New Experience</div>
               </Link>
               
-              <Link to="/admin/accommodations/new" className="action-card">
+              <Link to={getLocalizedPath('/admin/accommodations/new')} className="action-card">
                 <div className="action-icon">➕</div>
                 <div className="action-title">Add New Accommodation</div>
               </Link>
               
-              <Link to="/admin/settings" className="action-card">
+              <Link to={getLocalizedPath('/admin/settings')} className="action-card">
                 <div className="action-icon">⚙️</div>
                 <div className="action-title">Settings</div>
               </Link>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useLocale } from '../../contexts/LocaleContext';
 import { db } from '../../utils/firebaseConfig';
 import { 
   collection, 
@@ -11,6 +12,7 @@ import {
 import './Admin.css';
 
 export default function CourseForm() {
+  const { getLocalizedPath } = useLocale();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
@@ -122,7 +124,7 @@ export default function CourseForm() {
       }
       
       // Navigate back to course list
-      navigate('/admin/courses');
+      navigate(getLocalizedPath('/admin/courses'));
     } catch (error) {
       console.error("Error saving course:", error);
       setError(error.message);
@@ -265,7 +267,8 @@ export default function CourseForm() {
             <button 
               type="button" 
               className="admin-action-btn cancel-btn" 
-              onClick={() => navigate('/admin/courses')}
+              onClick={() => navigate(getLocalizedPath('/admin/courses'))}
+              disabled={loading}
             >
               Cancel
             </button>

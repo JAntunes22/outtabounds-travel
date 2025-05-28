@@ -1,8 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useLocale } from '../../contexts/LocaleContext';
 import './Auth.css';
 
 export default function Unauthorized() {
+  const { getLocalizedPath } = useLocale();
+
   return (
     <div className="auth-container">
       <div className="auth-card">
@@ -14,7 +17,7 @@ export default function Unauthorized() {
           Please contact the site administrator if you believe you should have access.
         </p>
         <div style={{ marginTop: '30px', textAlign: 'center' }}>
-          <Link to="/" className="auth-button" style={{ display: 'inline-block', textDecoration: 'none', maxWidth: '200px' }}>
+          <Link to={getLocalizedPath('/')} className="auth-button" style={{ display: 'inline-block', textDecoration: 'none', maxWidth: '200px' }}>
             Return to Home
           </Link>
         </div>

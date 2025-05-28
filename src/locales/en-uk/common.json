@@ -1,0 +1,76 @@
+{
+  "navigation": {
+    "home": "Home",
+    "about": "About",
+    "courses": "Courses",
+    "experiences": "Experiences",
+    "houses": "Houses",
+    "contact": "Contact",
+    "packs": "Packages",
+    "profile": "Profile",
+    "login": "Log In",
+    "signup": "Sign Up",
+    "logout": "Log Out"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "price": "Price",
+    "currency": "Currency",
+    "language": "Language"
+  },
+  "packs": {
+    "title": "Travel Packages",
+    "description": "Discover brilliant travel experiences",
+    "viewDetails": "View Details",
+    "bookNow": "Book Now",
+    "from": "From",
+    "duration": "Duration",
+    "location": "Location",
+    "availability": "Availability",
+    "includes": "Includes",
+    "excludes": "Excludes"
+  },
+  "booking": {
+    "title": "Book Your Experience",
+    "selectDates": "Select Dates",
+    "travelers": "Travellers",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "taxes": "Taxes & Fees",
+    "deposit": "Deposit Required",
+    "fullPayment": "Full Payment",
+    "paymentMethod": "Payment Method",
+    "confirmBooking": "Confirm Booking"
+  },
+  "footer": {
+    "company": "OuttaBounds Travel",
+    "description": "Creating unforgettable travel experiences around the world",
+    "quickLinks": "Quick Links",
+    "contact": "Contact Us",
+    "followUs": "Follow Us",
+    "newsletter": "Newsletter",
+    "subscribe": "Subscribe",
+    "allRightsReserved": "All rights reserved"
+  },
+  "errors": {
+    "pageNotFound": "Page not found",
+    "serverError": "Server error",
+    "networkError": "Network error",
+    "invalidInput": "Invalid input",
+    "unauthorized": "Unauthorised access",
+    "sessionExpired": "Session expired"
+  }
+} 

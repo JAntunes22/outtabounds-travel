@@ -1,5 +1,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const geoip = require('geoip-lite');
 admin.initializeApp();
 
 // Rate limiting for admin creation
@@ -7,6 +8,41 @@ const adminCreationLimiter = {
   attempts: new Map(),
   maxAttempts: 3,
   windowMs: 24 * 60 * 60 * 1000, // 24 hours
+};
+
+// Locale configuration (should match frontend config)
+const localeConfig = {
+  locales: ['en-us', 'fr', 'pt', 'es', 'en-uk'],
+  defaultLocale: 'en-us',
+  regionMap: {
+    US: 'en-us',
+    FR: 'fr', 
+    PT: 'pt',
+    ES: 'es',
+    UK: 'en-uk',
+    GB: 'en-uk',
+    CA: 'en-us',
+    AU: 'en-uk',
+    DE: 'en-uk',
+    IT: 'en-uk',
+    NL: 'en-uk',
+    BE: 'fr',
+    CH: 'en-uk',
+    AT: 'en-uk',
+  },
+  currencyMap: {
+    'en-us': 'USD',
+    'fr': 'EUR',
+    'pt': 'EUR', 
+    'es': 'EUR',
+    'en-uk': 'GBP'
+  },
+  regionTiers: {
+    tier1: ['US', 'UK', 'GB', 'CA', 'AU'],
+    tier2: ['FR', 'DE', 'IT', 'NL', 'BE', 'CH', 'AT'],
+    tier3: ['PT', 'ES'],
+    rest: ['*']
+  }
 };
 
 // Function to add admin role to a user
@@ -699,5 +735,200 @@ exports.cleanupEmailDocuments = functions.https.onCall(async (data, context) => 
   } catch (error) {
     console.error('Error in cleanupEmailDocuments function:', error);
     throw new functions.https.HttpsError('internal', error.message);
+  }
+});
+
+// Function to detect user's country and suggest locale
+exports.detectLocale = functions.https.onRequest((req, res) => {
+  // Enable CORS
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Accept-Language');
+  
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+  
+  try {
+    // Get client IP
+    let clientIP = req.headers['x-forwarded-for'] || 
+                   req.headers['x-real-ip'] || 
+                   req.connection.remoteAddress || 
+                   req.socket.remoteAddress ||
+                   (req.connection.socket ? req.connection.socket.remoteAddress : null);
+    
+    // Handle IPv6 mapped IPv4 addresses
+    if (clientIP && clientIP.substr(0, 7) === '::ffff:') {
+      clientIP = clientIP.substr(7);
+    }
+    
+    // For development/localhost, use a default
+    if (!clientIP || clientIP === '127.0.0.1' || clientIP === '::1') {
+      clientIP = '8.8.8.8'; // Default to US for development
+    }
+    
+    console.log(`Detecting locale for IP: ${clientIP}`);
+    
+    // Get geo data
+    const geo = geoip.lookup(clientIP);
+    const countryCode = geo ? geo.country : null;
+    
+    console.log(`Detected country: ${countryCode}`);
+    
+    // Get Accept-Language header
+    const acceptLanguage = req.headers['accept-language'] || '';
+    
+    // Determine best locale
+    let suggestedLocale = localeConfig.defaultLocale;
+    
+    if (countryCode) {
+      suggestedLocale = localeConfig.regionMap[countryCode] || localeConfig.defaultLocale;
+    }
+    
+    // Parse Accept-Language for additional context
+    const preferredLanguages = acceptLanguage
+      .split(',')
+      .map(lang => {
+        const [locale, q = '1'] = lang.trim().split(';q=');
+        return {
+          locale: locale.toLowerCase(),
+          quality: parseFloat(q)
+        };
+      })
+      .sort((a, b) => b.quality - a.quality);
+    
+    // Try to match preferred languages with available locales
+    for (const lang of preferredLanguages) {
+      if (localeConfig.locales.includes(lang.locale)) {
+        suggestedLocale = lang.locale;
+        break;
+      }
+      
+      // Language code match (e.g., 'en' matches 'en-us')
+      const langCode = lang.locale.split('-')[0];
+      const matchingLocale = localeConfig.locales.find(locale => 
+        locale.startsWith(langCode)
+      );
+      if (matchingLocale) {
+        suggestedLocale = matchingLocale;
+        break;
+      }
+    }
+    
+    // Get region tier
+    let regionTier = 'rest';
+    if (countryCode) {
+      for (const [tier, countries] of Object.entries(localeConfig.regionTiers)) {
+        if (countries.includes(countryCode) || countries.includes('*')) {
+          regionTier = tier;
+          break;
+        }
+      }
+    }
+    
+    const response = {
+      ip: clientIP,
+      country: countryCode,
+      suggestedLocale,
+      currency: localeConfig.currencyMap[suggestedLocale],
+      regionTier,
+      acceptLanguage,
+      preferredLanguages: preferredLanguages.map(l => l.locale)
+    };
+    
+    console.log('Locale detection response:', response);
+    res.json(response);
+    
+  } catch (error) {
+    console.error('Error in detectLocale:', error);
+    res.status(500).json({
+      error: 'Failed to detect locale',
+      suggestedLocale: localeConfig.defaultLocale,
+      currency: localeConfig.currencyMap[localeConfig.defaultLocale],
+      regionTier: 'rest'
+    });
+  }
+});
+
+// Function to get packs filtered by locale/region
+exports.getPacksByLocale = functions.https.onCall(async (data, context) => {
+  try {
+    const { locale = 'en-us', regionTier } = data;
+    
+    console.log(`Getting packs for locale: ${locale}, regionTier: ${regionTier}`);
+    
+    // Validate locale
+    if (!localeConfig.locales.includes(locale)) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        `Invalid locale: ${locale}`
+      );
+    }
+    
+    // Get all packs from Firestore
+    const packsSnapshot = await admin.firestore()
+      .collection('packs')
+      .where('isActive', '==', true)
+      .get();
+    
+    const allPacks = [];
+    packsSnapshot.forEach(doc => {
+      allPacks.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    
+    // Filter packs based on region tier
+    let filteredPacks = allPacks;
+    
+    if (regionTier && regionTier !== 'rest') {
+      // Filter packs that are available for this region tier
+      filteredPacks = allPacks.filter(pack => {
+        // If pack has regionAvailability field, use it
+        if (pack.regionAvailability) {
+          return pack.regionAvailability.includes(regionTier) || 
+                 pack.regionAvailability.includes('all');
+        }
+        // Otherwise, show all packs (backward compatibility)
+        return true;
+      });
+    }
+    
+    // Convert prices to the appropriate currency
+    const currency = localeConfig.currencyMap[locale];
+    const packsWithLocalizedPrices = filteredPacks.map(pack => {
+      let localizedPack = { ...pack };
+      
+      // If pack has multiple currency prices, use the appropriate one
+      if (pack.prices && pack.prices[currency]) {
+        localizedPack.price = pack.prices[currency];
+        localizedPack.currency = currency;
+      } else if (pack.price) {
+        // Use default price (assume it's in USD and convert if needed)
+        localizedPack.price = pack.price;
+        localizedPack.currency = currency;
+        
+        // TODO: Add currency conversion logic here if needed
+        // For now, we'll just use the base price
+      }
+      
+      return localizedPack;
+    });
+    
+    console.log(`Returning ${packsWithLocalizedPrices.length} packs for locale ${locale}`);
+    
+    return {
+      packs: packsWithLocalizedPrices,
+      locale,
+      currency,
+      regionTier: regionTier || 'rest',
+      total: packsWithLocalizedPrices.length
+    };
+    
+  } catch (error) {
+    console.error('Error in getPacksByLocale:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to get packs by locale');
   }
 }); 

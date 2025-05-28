@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocale } from '../contexts/LocaleContext';
+import LocaleSwitcher from './LocaleSwitcher';
 import './Header.css';
 import logo from '../assets/logo/logo.png';
 
 export default function Header() {
   const { currentUser, isAdmin, logout, userFullname } = useAuth();
+  const { getLocalizedPath } = useLocale();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [backdropVisible, setBackdropVisible] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const backdropRef = useRef(null);
   
@@ -65,7 +67,7 @@ export default function Header() {
   async function handleLogout() {
     try {
       await logout();
-      navigate('/');
+      navigate(getLocalizedPath('/'));
       setAccountMenuOpen(false);
     } catch (error) {
       console.error('Failed to log out:', error);
@@ -84,17 +86,13 @@ export default function Header() {
           !event.target.closest('.account-menu')) {
         setAccountMenuOpen(false);
       }
-      
-      if (languageMenuOpen && !event.target.closest('.language-selector')) {
-        setLanguageMenuOpen(false);
-      }
     };
     
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [menuOpen, accountMenuOpen, languageMenuOpen]);
+  }, [menuOpen, accountMenuOpen]);
 
   // Handle hamburger menu click - completely redesigned approach
   const handleHamburgerClick = (e) => {
@@ -214,32 +212,19 @@ export default function Header() {
         {/* Center - Logo and brand name */}
         <div className="logo-container">
           <img src={logo} alt="OuttaBounds Logo" className="logo-image" />
-          <Link to="/" className="brand-name">OuttaBounds</Link>
+          <Link to={getLocalizedPath('/')} className="brand-name">OuttaBounds</Link>
         </div>
         
         {/* Right side - Functionality icons */}
         <div className="header-icons">
-          {/* Language selector */}
-          <div className="language-selector">
-            <button 
-              className="language-button" 
-              onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
-            >
-              ENG
-            </button>
-            {languageMenuOpen && (
-              <div className="language-dropdown">
-                <button className="language-option active">English</button>
-                <button className="language-option">Português</button>
-              </div>
-            )}
-          </div>
+          {/* Locale switcher - replaced basic language selector */}
+          <LocaleSwitcher className="header-locale-switcher" />
           
           {/* Account icon */}
           <div className="account-icon-container">
             <button 
               className="account-icon" 
-              onClick={() => currentUser ? setAccountMenuOpen(!accountMenuOpen) : navigate('/login')}
+              onClick={() => currentUser ? setAccountMenuOpen(!accountMenuOpen) : navigate(getLocalizedPath('/login'))}
               aria-label="Account"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -255,7 +240,7 @@ export default function Header() {
                 </div>
                 <div className="account-menu-items">
                   <Link 
-                    to="/profile" 
+                    to={getLocalizedPath('/profile')} 
                     className="account-menu-item"
                     onClick={() => setAccountMenuOpen(false)}
                   >
@@ -263,7 +248,7 @@ export default function Header() {
                   </Link>
                   {isAdmin && (
                     <Link 
-                      to="/admin" 
+                      to={getLocalizedPath('/admin')} 
                       className="account-menu-item"
                       onClick={() => setAccountMenuOpen(false)}
                     >
@@ -282,7 +267,7 @@ export default function Header() {
           </div>
           
           {/* Cart icon - Changed to a minimalist shopping bag */}
-          <Link to="/your-pack" className="cart-icon" aria-label="Your Pack">
+          <Link to={getLocalizedPath('/your-pack')} className="cart-icon" aria-label="Your Pack">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M6 2L3 6V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V6L18 2H6Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M3 6H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -311,7 +296,7 @@ export default function Header() {
           <ul>
             <li>
               <Link 
-                to="/" 
+                to={getLocalizedPath('/')} 
                 onClick={handleMenuLinkClick}
               >
                 Home
@@ -319,7 +304,7 @@ export default function Header() {
             </li>
             <li>
               <Link 
-                to="/packs" 
+                to={getLocalizedPath('/packs')} 
                 onClick={handleMenuLinkClick}
               >
                 Packs
@@ -327,7 +312,7 @@ export default function Header() {
             </li>
             <li>
               <Link 
-                to="/courses" 
+                to={getLocalizedPath('/courses')} 
                 onClick={handleMenuLinkClick}
               >
                 Courses
@@ -335,7 +320,7 @@ export default function Header() {
             </li>
             <li>
               <Link 
-                to="/experiences" 
+                to={getLocalizedPath('/experiences')} 
                 onClick={handleMenuLinkClick}
               >
                 Experiences
@@ -343,7 +328,7 @@ export default function Header() {
             </li>
             <li>
               <Link 
-                to="/houses" 
+                to={getLocalizedPath('/houses')} 
                 onClick={handleMenuLinkClick}
               >
                 Houses
@@ -351,7 +336,7 @@ export default function Header() {
             </li>
             <li>
               <Link 
-                to="/about" 
+                to={getLocalizedPath('/about')} 
                 onClick={handleMenuLinkClick}
               >
                 About
@@ -359,7 +344,7 @@ export default function Header() {
             </li>
             <li>
               <Link 
-                to="/contact" 
+                to={getLocalizedPath('/contact')} 
                 onClick={handleMenuLinkClick}
               >
                 Contact
@@ -371,17 +356,14 @@ export default function Header() {
           <div className="mobile-only-menu">
             <h3>Settings</h3>
             <div className="mobile-language-selector">
-              <p>Language</p>
-              <div className="mobile-language-options">
-                <button className="language-option active">English</button>
-                <button className="language-option">Português</button>
-              </div>
+              <p>Language & Currency</p>
+              <LocaleSwitcher className="mobile-locale-switcher" />
             </div>
             
             {!currentUser && (
               <div className="mobile-auth-links">
                 <Link 
-                  to="/login" 
+                  to={getLocalizedPath('/login')} 
                   className="mobile-auth-link"
                   onClick={handleMenuLinkClick}
                 >
@@ -397,7 +379,7 @@ export default function Header() {
                   <p className="mobile-greeting">Hello, {(userFullname || currentUser.displayName || 'User').split(' ')[0]}</p>
                 </div>
                 <Link 
-                  to="/profile" 
+                  to={getLocalizedPath('/profile')} 
                   className="mobile-account-link"
                   onClick={handleMenuLinkClick}
                 >
@@ -405,7 +387,7 @@ export default function Header() {
                 </Link>
                 {isAdmin && (
                   <Link 
-                    to="/admin" 
+                    to={getLocalizedPath('/admin')} 
                     className="mobile-account-link"
                     onClick={handleMenuLinkClick}
                   >

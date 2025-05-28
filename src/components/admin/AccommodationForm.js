@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useLocale } from '../../contexts/LocaleContext';
 import { db } from '../../utils/firebaseConfig';
 import { 
   collection, 
@@ -11,6 +12,7 @@ import {
 import './Admin.css';
 
 export default function AccommodationForm() {
+  const { getLocalizedPath } = useLocale();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
@@ -151,7 +153,7 @@ export default function AccommodationForm() {
       }
       
       // Navigate back to accommodations list
-      navigate('/admin/accommodations');
+      navigate(getLocalizedPath('/admin/accommodations'));
     } catch (error) {
       console.error("Error saving accommodation:", error);
       setError(error.message);
@@ -290,7 +292,7 @@ export default function AccommodationForm() {
             <button 
               type="button" 
               className="admin-action-btn cancel-btn" 
-              onClick={() => navigate('/admin/accommodations')}
+              onClick={() => navigate(getLocalizedPath('/admin/accommodations'))}
               disabled={loading}
             >
               Cancel

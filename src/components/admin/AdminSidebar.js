@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLocale } from '../../contexts/LocaleContext';
+import './Admin.css';
 
 export default function AdminSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { currentUser } = useAuth();
   const location = useLocation();
+  const { getLocalizedPath } = useLocale();
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -43,7 +46,7 @@ export default function AdminSidebar() {
         <ul>
           <li>
             <Link 
-              to="/admin" 
+              to={getLocalizedPath('/admin')} 
               className={`nav-link ${isActive('/admin') && location.pathname === '/admin' ? 'active' : ''}`}
             >
               <span className="icon">📊</span>
@@ -52,7 +55,7 @@ export default function AdminSidebar() {
           </li>
           <li>
             <Link 
-              to="/admin/courses" 
+              to={getLocalizedPath('/admin/courses')} 
               className={`nav-link ${isActive('/admin/courses') ? 'active' : ''}`}
             >
               <span className="icon">🏌️</span>
@@ -61,7 +64,7 @@ export default function AdminSidebar() {
           </li>
           <li>
             <Link 
-              to="/admin/experiences" 
+              to={getLocalizedPath('/admin/experiences')} 
               className={`nav-link ${isActive('/admin/experiences') ? 'active' : ''}`}
             >
               <span className="icon">🗺️</span>
@@ -70,7 +73,7 @@ export default function AdminSidebar() {
           </li>
           <li>
             <Link 
-              to="/admin/accommodations" 
+              to={getLocalizedPath('/admin/accommodations')} 
               className={`nav-link ${isActive('/admin/accommodations') ? 'active' : ''}`}
             >
               <span className="icon">🏠</span>
@@ -79,7 +82,7 @@ export default function AdminSidebar() {
           </li>
           <li>
             <Link 
-              to="/admin/services" 
+              to={getLocalizedPath('/admin/services')} 
               className={`nav-link ${isActive('/admin/services') ? 'active' : ''}`}
             >
               <span className="icon">🛎️</span>
@@ -88,7 +91,7 @@ export default function AdminSidebar() {
           </li>
           <li>
             <Link 
-              to="/admin/packs" 
+              to={getLocalizedPath('/admin/packs')} 
               className={`nav-link ${isActive('/admin/packs') ? 'active' : ''}`}
             >
               <span className="icon">📦</span>
@@ -97,7 +100,16 @@ export default function AdminSidebar() {
           </li>
           <li>
             <Link 
-              to="/admin/users" 
+              to={getLocalizedPath('/admin/packs/featured')} 
+              className={`nav-link ${isActive('/admin/packs/featured') ? 'active' : ''}`}
+            >
+              <span className="icon">⭐</span>
+              <span>Featured Packs</span>
+            </Link>
+          </li>
+          <li>
+            <Link 
+              to={getLocalizedPath('/admin/users')} 
               className={`nav-link ${isActive('/admin/users') ? 'active' : ''}`}
             >
               <span className="icon">👥</span>
@@ -106,7 +118,7 @@ export default function AdminSidebar() {
           </li>
           <li>
             <Link 
-              to="/admin/inquiries" 
+              to={getLocalizedPath('/admin/inquiries')} 
               className={`nav-link ${isActive('/admin/inquiries') ? 'active' : ''}`}
             >
               <span className="icon">📧</span>
@@ -115,7 +127,7 @@ export default function AdminSidebar() {
           </li>
           <li>
             <Link 
-              to="/admin/settings" 
+              to={getLocalizedPath('/admin/settings')} 
               className={`nav-link ${isActive('/admin/settings') ? 'active' : ''}`}
             >
               <span className="icon">⚙️</span>

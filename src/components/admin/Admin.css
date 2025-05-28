@@ -660,15 +660,6 @@
 
 .refresh-btn {
   background-color: #4a6da7;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 14px;
 }
 
 .refresh-btn:hover {
@@ -1236,93 +1227,6 @@
   margin-right: 8px;
 }
 
-/* Pack reordering styles */
-.order-column {
-  width: 120px;
-}
-
-.order-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 5px;
-}
-
-.order-number {
-  font-size: 14px;
-  font-weight: 600;
-  display: inline-block;
-  text-align: center;
-  padding: 2px 8px;
-  background-color: #f2f2f2;
-  border-radius: 4px;
-  min-width: 30px;
-}
-
-.featured-position {
-  background-color: #fff8e6;
-  border: 1px solid #ffcc00;
-  color: #d48806;
-  position: relative;
-}
-
-.featured-star {
-  color: #ffcc00;
-  font-size: 12px;
-  margin-left: 3px;
-  vertical-align: top;
-}
-
-.order-btn {
-  background-color: #e9ecef;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.order-btn:hover:not(:disabled) {
-  background-color: #d1d7dc;
-}
-
-.order-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.order-btn.up {
-  color: #186d00;
-}
-
-.order-btn.down {
-  color: #186d00;
-}
-
-/* Pack order note */
-.pack-order-note {
-  background-color: #e6f7ff;
-  border-left: 4px solid #1890ff;
-  padding: 12px 15px;
-  margin-bottom: 20px;
-  border-radius: 4px;
-}
-
-.pack-order-note p {
-  margin: 0;
-  font-size: 14px;
-  color: #333;
-}
-
-.pack-order-note strong {
-  color: #1890ff;
-}
-
 .admin-action-buttons {
   display: flex;
   align-items: center;
@@ -1537,8 +1441,287 @@
 .admin-form-actions {
   display: flex;
   gap: 15px;
-  justify-content: flex-end;
   margin-top: 30px;
   padding-top: 20px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #ddd;
+}
+
+/* Featured Packs Manager Styles */
+.featured-packs-intro {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  border-left: 4px solid #186d00;
+}
+
+.featured-packs-intro p {
+  margin: 0;
+  color: #555;
+  line-height: 1.6;
+}
+
+.tier-section {
+  background-color: white;
+  border-radius: 8px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.tier-title {
+  color: #186d00;
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.tier-countries {
+  background-color: #f8f9fa;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #666;
+}
+
+.featured-packs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-top: 20px;
+}
+
+.selected-packs h3,
+.available-packs h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.no-packs {
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+}
+
+.selected-packs-list,
+.available-packs-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+}
+
+.selected-pack-item,
+.available-pack-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s;
+}
+
+.selected-pack-item:last-child,
+.available-pack-item:last-child {
+  border-bottom: none;
+}
+
+.selected-pack-item:hover,
+.available-pack-item:hover {
+  background-color: #f8f9fa;
+}
+
+.available-pack-item.selected {
+  background-color: #e8f5e9;
+  border-left: 3px solid #186d00;
+}
+
+.pack-order {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 15px;
+  min-width: 40px;
+}
+
+.order-number {
+  font-weight: bold;
+  color: #186d00;
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.pack-info {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.pack-thumbnail {
+  width: 50px;
+  height: 35px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: 12px;
+  border: 1px solid #ddd;
+}
+
+.pack-details h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+}
+
+.pack-details p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.remove-pack-btn,
+.toggle-pack-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  font-size: 16px;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-pack-btn {
+  color: #dc3545;
+}
+
+.remove-pack-btn:hover {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.toggle-pack-btn.add {
+  color: #28a745;
+}
+
+.toggle-pack-btn.add:hover {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.toggle-pack-btn.remove {
+  color: #dc3545;
+}
+
+.toggle-pack-btn.remove:hover {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.toggle-pack-btn:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.toggle-pack-btn:disabled:hover {
+  background-color: transparent;
+}
+
+.auth-success {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border: 1px solid #c3e6cb;
+}
+
+/* Responsive design for featured packs manager */
+@media (max-width: 768px) {
+  .featured-packs-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .tier-section {
+    padding: 15px;
+  }
+  
+  .selected-pack-item,
+  .available-pack-item {
+    padding: 10px;
+  }
+  
+  .pack-thumbnail {
+    width: 40px;
+    height: 28px;
+  }
+  
+  .pack-details h4 {
+    font-size: 13px;
+  }
+  
+  .pack-details p {
+    font-size: 11px;
+  }
+}
+
+/* Multi-currency pricing styles */
+.currency-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.currency-price-input {
+  display: flex;
+  flex-direction: column;
+}
+
+.currency-price-input label {
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #333;
+  font-size: 14px;
+}
+
+.currency-price-input input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.currency-price-input input:focus {
+  outline: none;
+  border-color: #186d00;
+  box-shadow: 0 0 0 2px rgba(24, 109, 0, 0.1);
+}
+
+.currency-price-input input::placeholder {
+  color: #999;
+}
+
+/* Multi-currency price display styles */
+.price-display {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.price-display div {
+  font-weight: 500;
+  color: #186d00;
 } 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useLocale } from '../../contexts/LocaleContext';
 import { db } from '../../utils/firebaseConfig';
 import { 
   collection, 
@@ -11,6 +12,7 @@ import {
 import './Admin.css';
 
 export default function ExperienceForm() {
+  const { getLocalizedPath } = useLocale();
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
@@ -117,7 +119,7 @@ export default function ExperienceForm() {
       }
       
       // Navigate back to experiences list
-      navigate('/admin/experiences');
+      navigate(getLocalizedPath('/admin/experiences'));
     } catch (error) {
       console.error("Error saving experience:", error);
       setError(error.message);
@@ -312,8 +314,9 @@ export default function ExperienceForm() {
           <div className="admin-form-actions">
             <button 
               type="button" 
-              className="cancel-btn" 
-              onClick={() => navigate('/admin/experiences')}
+              className="admin-action-btn cancel-btn" 
+              onClick={() => navigate(getLocalizedPath('/admin/experiences'))}
+              disabled={loading}
             >
               Cancel
             </button>

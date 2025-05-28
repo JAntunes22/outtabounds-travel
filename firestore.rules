@@ -108,6 +108,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
+    // Rules for settings collection
+    match /settings/{settingId} {
+      // Anyone can read settings (for featured packs, etc.)
+      allow read: if true;
+      // Only admins can write to settings
+      allow write: if isAdmin();
+    }
+    
     // Rules for adminLogs collection
     match /adminLogs/{logId} {
       // Only admins can read admin logs

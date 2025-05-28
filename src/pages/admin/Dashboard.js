@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useLocale } from '../../contexts/LocaleContext';
 import { db } from '../../utils/firebaseConfig';
 import { collection, query, getDocs } from 'firebase/firestore';
 import '../../components/admin/Admin.css';
 
 export default function Dashboard() {
+  const { getLocalizedPath } = useLocale();
   const [stats, setStats] = useState({
     courses: 0,
     experiences: 0,
@@ -103,7 +105,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <h2 style={{ fontSize: '42px', margin: '10px 0' }}>{stats.courses}</h2>
-              <Link to="/admin/courses" style={{ 
+              <Link to={getLocalizedPath('/admin/courses')} style={{ 
                 color: '#186d00', 
                 textDecoration: 'none', 
                 fontWeight: 'bold',
@@ -134,7 +136,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <h2 style={{ fontSize: '42px', margin: '10px 0' }}>{stats.experiences}</h2>
-              <Link to="/admin/experiences" style={{ 
+              <Link to={getLocalizedPath('/admin/experiences')} style={{ 
                 color: '#186d00', 
                 textDecoration: 'none', 
                 fontWeight: 'bold',
@@ -165,7 +167,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <h2 style={{ fontSize: '42px', margin: '10px 0' }}>{stats.accommodations}</h2>
-              <Link to="/admin/accommodations" style={{ 
+              <Link to={getLocalizedPath('/admin/accommodations')} style={{ 
                 color: '#186d00', 
                 textDecoration: 'none', 
                 fontWeight: 'bold',
@@ -196,7 +198,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <h2 style={{ fontSize: '42px', margin: '10px 0' }}>{stats.services}</h2>
-              <Link to="/admin/services" style={{ 
+              <Link to={getLocalizedPath('/admin/services')} style={{ 
                 color: '#186d00', 
                 textDecoration: 'none', 
                 fontWeight: 'bold',
@@ -227,7 +229,7 @@ export default function Dashboard() {
                 </span>
               </div>
               <h2 style={{ fontSize: '42px', margin: '10px 0' }}>{stats.packs}</h2>
-              <Link to="/admin/packs" style={{ 
+              <Link to={getLocalizedPath('/admin/packs')} style={{ 
                 color: '#186d00', 
                 textDecoration: 'none', 
                 fontWeight: 'bold',
@@ -246,7 +248,7 @@ export default function Dashboard() {
           }}>
             <h2 style={{ marginBottom: '20px' }}>Quick Actions</h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
-              <Link to="/admin/courses/new" style={{ 
+              <Link to={getLocalizedPath('/admin/courses/new')} style={{ 
                 flex: '1 1 200px',
                 backgroundColor: 'white',
                 border: '1px solid #eee',
@@ -264,7 +266,7 @@ export default function Dashboard() {
                 <span>Add New Course</span>
               </Link>
               
-              <Link to="/admin/experiences/new" style={{ 
+              <Link to={getLocalizedPath('/admin/experiences/new')} style={{ 
                 flex: '1 1 200px',
                 backgroundColor: 'white',
                 border: '1px solid #eee',
@@ -282,7 +284,7 @@ export default function Dashboard() {
                 <span>Add New Experience</span>
               </Link>
               
-              <Link to="/admin/accommodations/new" style={{ 
+              <Link to={getLocalizedPath('/admin/accommodations/new')} style={{ 
                 flex: '1 1 200px',
                 backgroundColor: 'white',
                 border: '1px solid #eee',
@@ -300,7 +302,7 @@ export default function Dashboard() {
                 <span>Add New Accommodation</span>
               </Link>
               
-              <Link to="/admin/services/new" style={{ 
+              <Link to={getLocalizedPath('/admin/services/new')} style={{ 
                 flex: '1 1 200px',
                 backgroundColor: 'white',
                 border: '1px solid #eee',
@@ -318,7 +320,7 @@ export default function Dashboard() {
                 <span>Add New Service</span>
               </Link>
               
-              <Link to="/admin/packs/new" style={{ 
+              <Link to={getLocalizedPath('/admin/packs/new')} style={{ 
                 flex: '1 1 200px',
                 backgroundColor: 'white',
                 border: '1px solid #eee',
@@ -336,7 +338,25 @@ export default function Dashboard() {
                 <span>Add New Pack</span>
               </Link>
               
-              <Link to="/admin/settings" style={{ 
+              <Link to={getLocalizedPath('/admin/packs/featured')} style={{ 
+                flex: '1 1 200px',
+                backgroundColor: 'white',
+                border: '1px solid #eee',
+                borderRadius: '8px',
+                padding: '20px',
+                textAlign: 'center',
+                textDecoration: 'none',
+                color: '#333',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+              }}>
+                <span style={{ fontSize: '24px', marginBottom: '10px' }}>⭐</span>
+                <span>Manage Featured Packs</span>
+              </Link>
+              
+              <Link to={getLocalizedPath('/admin/settings')} style={{ 
                 flex: '1 1 200px',
                 backgroundColor: 'white',
                 border: '1px solid #eee',

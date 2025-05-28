@@ -95,7 +95,58 @@
   gap: 20px;
 }
 
-/* Language Selector */
+/* LocaleSwitcher Integration */
+.header-locale-switcher {
+  /* Ensure the locale switcher fits well in the header */
+}
+
+.header-locale-switcher .locale-switcher-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.header-locale-switcher .locale-switcher-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.header-locale-switcher .locale-switcher-button:focus {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.header-locale-switcher .locale-name,
+.header-locale-switcher .currency-symbol {
+  color: white;
+}
+
+.header-locale-switcher .currency-symbol {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.header-locale-switcher .locale-switcher-arrow {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* When header is scrolled, maintain the same styling */
+.scrolled .header-locale-switcher .locale-switcher-button {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.scrolled .header-locale-switcher .locale-name,
+.scrolled .header-locale-switcher .currency-symbol,
+.scrolled .header-locale-switcher .locale-switcher-arrow {
+  color: white;
+}
+
+.scrolled .header-locale-switcher .currency-symbol {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Language Selector - Legacy styles (can be removed if not needed) */
 .language-selector {
   position: relative;
 }
@@ -337,6 +388,75 @@
   font-size: 14px;
 }
 
+/* Mobile LocaleSwitcher Integration */
+.mobile-locale-switcher {
+  margin-top: 15px;
+}
+
+.mobile-locale-switcher .locale-switcher-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 100%;
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+
+.mobile-locale-switcher .locale-switcher-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.mobile-locale-switcher .locale-switcher-button:focus {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.mobile-locale-switcher .locale-name,
+.mobile-locale-switcher .currency-symbol {
+  color: white;
+}
+
+.mobile-locale-switcher .currency-symbol {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.mobile-locale-switcher .locale-switcher-arrow {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.mobile-locale-switcher .locale-switcher-dropdown {
+  background-color: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.mobile-locale-switcher .locale-switcher-option {
+  color: white;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.mobile-locale-switcher .locale-switcher-option:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.mobile-locale-switcher .locale-switcher-option.selected {
+  background-color: rgba(24, 109, 0, 0.3);
+}
+
+.mobile-locale-switcher .locale-option-name {
+  color: white;
+}
+
+.mobile-locale-switcher .locale-option-currency {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.mobile-locale-switcher .locale-option-check {
+  color: #186d00;
+}
+
+/* Legacy mobile language options - can be removed */
 .mobile-language-options {
   display: flex;
   gap: 12px;

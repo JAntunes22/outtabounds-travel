@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useLocale } from '../contexts/LocaleContext';
 import './Footer.css';
 
-export default function Footer() {
+const Footer = () => {
+  const { getLocalizedPath } = useLocale();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -33,20 +35,20 @@ export default function Footer() {
           <div className="footer-section">
             <h3>Explore</h3>
             <ul>
-              <li><Link to="/courses">Golf Courses</Link></li>
-              <li><Link to="/experiences">Experiences</Link></li>
-              <li><Link to="/houses">Accommodations</Link></li>
-              <li><Link to="/about">About Us</Link></li>
+              <li><Link to={getLocalizedPath('/courses')}>Golf Courses</Link></li>
+              <li><Link to={getLocalizedPath('/experiences')}>Experiences</Link></li>
+              <li><Link to={getLocalizedPath('/houses')}>Accommodations</Link></li>
+              <li><Link to={getLocalizedPath('/about')}>About Us</Link></li>
             </ul>
           </div>
           
           <div className="footer-section">
             <h3>Support</h3>
             <ul>
-              <li><Link to="/contact">Contact Us</Link></li>
-              <li><Link to="/privacy">Privacy Policy</Link></li>
-              <li><Link to="/terms">Terms of Service</Link></li>
-              <li><Link to="/faq">FAQs</Link></li>
+              <li><Link to={getLocalizedPath('/contact')}>Contact Us</Link></li>
+              <li><Link to={getLocalizedPath('/privacy')}>Privacy Policy</Link></li>
+              <li><Link to={getLocalizedPath('/terms')}>Terms of Service</Link></li>
+              <li><Link to={getLocalizedPath('/faq')}>FAQs</Link></li>
             </ul>
           </div>
           
@@ -67,3 +69,5 @@ export default function Footer() {
     </footer>
   );
 }
+
+export default Footer;

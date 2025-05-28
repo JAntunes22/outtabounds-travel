@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useLocale } from '../../contexts/LocaleContext';
 import { db } from '../../utils/firebaseConfig';
 import { 
   collection, 
@@ -11,6 +12,7 @@ import {
 import './Admin.css';
 
 export default function CourseList() {
+  const { getLocalizedPath } = useLocale();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -70,7 +72,7 @@ export default function CourseList() {
     <div>
       <div className="admin-header">
         <h1 className="admin-title">Manage Courses</h1>
-        <Link to="/admin/courses/new" className="admin-action-btn">
+        <Link to={getLocalizedPath('/admin/courses/new')} className="admin-action-btn">
           <span>+</span> Add New Course
         </Link>
       </div>
@@ -84,7 +86,7 @@ export default function CourseList() {
           {courses.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px' }}>
               <p>No courses found. Add your first course to get started.</p>
-              <Link to="/admin/courses/new" className="admin-action-btn" style={{ display: 'inline-block', marginTop: '15px' }}>
+              <Link to={getLocalizedPath('/admin/courses/new')} className="admin-action-btn" style={{ display: 'inline-block', marginTop: '15px' }}>
                 Add New Course
               </Link>
             </div>

@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useLocale } from '../../contexts/LocaleContext';
 import { db } from '../../utils/firebaseConfig';
 import { 
   collection, 
   getDocs, 
   doc, 
-  deleteDoc,
-  updateDoc
+  deleteDoc
 } from 'firebase/firestore';
 import './Admin.css';
 import Logger from '../../utils/logger';
 
 export default function PackList() {
+  const { getLocalizedPath } = useLocale();
   const [packs, setPacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [packToDelete, setPackToDelete] = useState(null);
-  const [reordering, setReordering] = useState(false);
   const [debug, setDebug] = useState(false);
   const [debugInfo, setDebugInfo] = useState(null);
   const navigate = useNavigate();
@@ -33,7 +33,6 @@ export default function PackList() {
       const querySnapshot = await getDocs(packsCollection);
       
       const packList = [];
-      let maxOrder = 0;
       
       // Check if we have any documents
       if (querySnapshot.empty) {
@@ -48,25 +47,14 @@ export default function PackList() {
         const packData = doc.data();
         Logger.log("Fetched pack:", doc.id, packData);
         
-        // Ensure all packs have an order field
-        if (packData.order === undefined) {
-          packData.order = maxOrder + 1;
-          // Update the document in Firestore with the new order
-          updateDoc(doc.ref, { order: packData.order });
-        }
-        
-        if (packData.order > maxOrder) {
-          maxOrder = packData.order;
-        }
-        
         packList.push({
           id: doc.id,
           ...packData
         });
       });
       
-      // Sort by order
-      packList.sort((a, b) => a.order - b.order);
+      // Sort by name for consistent display
+      packList.sort((a, b) => a.name.localeCompare(b.name));
       Logger.log("Total packs loaded:", packList.length);
       setPacks(packList);
     } catch (error) {
@@ -76,80 +64,8 @@ export default function PackList() {
     }
   }
   
-  async function movePackUp(index) {
-    if (index <= 0) return; // Already at the top
-    
-    // Create a copy of the packs array
-    const newPacks = [...packs];
-    
-    // Get the current pack and the one above it
-    const packToMove = newPacks[index];
-    const packAbove = newPacks[index - 1];
-    
-    // Swap their orders
-    const tempOrder = packToMove.order;
-    packToMove.order = packAbove.order;
-    packAbove.order = tempOrder;
-    
-    // Swap their positions in the array
-    newPacks[index] = packAbove;
-    newPacks[index - 1] = packToMove;
-    
-    // Update the state
-    setPacks(newPacks);
-    setReordering(true);
-    
-    // Update in Firestore
-    try {
-      await updateDoc(doc(db, 'packs', packToMove.id), { order: packToMove.order });
-      await updateDoc(doc(db, 'packs', packAbove.id), { order: packAbove.order });
-      setReordering(false);
-    } catch (error) {
-      Logger.error("Error updating pack order:", error);
-      setReordering(false);
-      // Revert to original order if there's an error
-      fetchPacks();
-    }
-  }
-  
-  async function movePackDown(index) {
-    if (index >= packs.length - 1) return; // Already at the bottom
-    
-    // Create a copy of the packs array
-    const newPacks = [...packs];
-    
-    // Get the current pack and the one below it
-    const packToMove = newPacks[index];
-    const packBelow = newPacks[index + 1];
-    
-    // Swap their orders
-    const tempOrder = packToMove.order;
-    packToMove.order = packBelow.order;
-    packBelow.order = tempOrder;
-    
-    // Swap their positions in the array
-    newPacks[index] = packBelow;
-    newPacks[index + 1] = packToMove;
-    
-    // Update the state
-    setPacks(newPacks);
-    setReordering(true);
-    
-    // Update in Firestore
-    try {
-      await updateDoc(doc(db, 'packs', packToMove.id), { order: packToMove.order });
-      await updateDoc(doc(db, 'packs', packBelow.id), { order: packBelow.order });
-      setReordering(false);
-    } catch (error) {
-      Logger.error("Error updating pack order:", error);
-      setReordering(false);
-      // Revert to original order if there's an error
-      fetchPacks();
-    }
-  }
-  
   function handleEditPack(packId) {
-    navigate(`/admin/packs/edit/${packId}`);
+    navigate(getLocalizedPath(`/admin/packs/edit/${packId}`));
   }
   
   function confirmDelete(pack) {
@@ -212,10 +128,13 @@ export default function PackList() {
           >
             Refresh Packs
           </button>
-          <Link to="/admin/packs/add-samples" className="admin-action-btn" style={{ marginLeft: '10px' }}>
+          <Link to={getLocalizedPath('/admin/packs/add-samples')} className="admin-action-btn" style={{ marginLeft: '10px' }}>
             Add Sample Packs
           </Link>
-          <Link to="/admin/packs/new" className="admin-action-btn" style={{ marginLeft: '10px' }}>
+          <Link to={getLocalizedPath('/admin/packs/featured')} className="admin-action-btn" style={{ marginLeft: '10px' }}>
+            ⭐ Manage Featured
+          </Link>
+          <Link to={getLocalizedPath('/admin/packs/new')} className="admin-action-btn" style={{ marginLeft: '10px' }}>
             <span>+</span> Add New Pack
           </Link>
           <button
@@ -250,10 +169,6 @@ export default function PackList() {
         </div>
       )}
       
-      <div className="pack-order-note">
-        <p><strong>Note:</strong> The order of packs determines how they appear on the homepage. The pack in position #2 will be displayed larger than the others.</p>
-      </div>
-      
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px' }}>
           Loading packs...
@@ -264,10 +179,10 @@ export default function PackList() {
             <div style={{ textAlign: 'center', padding: '30px' }}>
               <p>No packs found. Add your first pack to get started.</p>
               <div style={{ marginTop: '15px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                <Link to="/admin/packs/new" className="admin-action-btn">
+                <Link to={getLocalizedPath('/admin/packs/new')} className="admin-action-btn">
                   Add New Pack
                 </Link>
-                <Link to="/admin/packs/add-samples" className="admin-action-btn">
+                <Link to={getLocalizedPath('/admin/packs/add-samples')} className="admin-action-btn">
                   Add Sample Packs
                 </Link>
               </div>
@@ -280,12 +195,11 @@ export default function PackList() {
                   <th>Name</th>
                   <th>Description</th>
                   <th>Price</th>
-                  <th>Order</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {packs.map((pack, index) => (
+                {packs.map((pack) => (
                   <tr key={pack.id}>
                     <td style={{ width: '80px' }}>
                       {pack.imageUrl ? (
@@ -322,30 +236,18 @@ export default function PackList() {
                     </td>
                     <td>{pack.name}</td>
                     <td>{pack.description ? (pack.description.length > 100 ? pack.description.substring(0, 100) + '...' : pack.description) : 'No description'}</td>
-                    <td>{pack.price ? `$${pack.price}` : 'Not set'}</td>
-                    <td className="order-column">
-                      <div className="order-actions">
-                        <button 
-                          className="order-btn up" 
-                          onClick={() => movePackUp(index)}
-                          disabled={reordering || index === 0}
-                          title="Move Up"
-                        >
-                          ↑
-                        </button>
-                        <span className={`order-number ${pack.order === 2 ? 'featured-position' : ''}`}>
-                          {pack.order}
-                          {pack.order === 2 && <span className="featured-star">★</span>}
-                        </span>
-                        <button 
-                          className="order-btn down" 
-                          onClick={() => movePackDown(index)}
-                          disabled={reordering || index === packs.length - 1}
-                          title="Move Down"
-                        >
-                          ↓
-                        </button>
-                      </div>
+                    <td>
+                      {pack.prices && typeof pack.prices === 'object' ? (
+                        <div className="price-display">
+                          {pack.prices.EUR && <div>€{pack.prices.EUR}</div>}
+                          {pack.prices.USD && <div>${pack.prices.USD}</div>}
+                          {pack.prices.GBP && <div>£{pack.prices.GBP}</div>}
+                        </div>
+                      ) : pack.price ? (
+                        `$${pack.price}`
+                      ) : (
+                        'Not set'
+                      )}
                     </td>
                     <td>
                       <div className="table-actions">

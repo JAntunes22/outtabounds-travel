@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePack } from '../contexts/PackContext';
+import { useLocale } from '../contexts/LocaleContext';
 import './PackCommon.css';
 import './YourPack.css';
 
@@ -8,6 +9,7 @@ export default function YourPack() {
   const { packItems, removeFromPack, clearPack } = usePack();
   const navigate = useNavigate();
   const [isEmptyAlert, setIsEmptyAlert] = useState(false);
+  const { getLocalizedPath } = useLocale();
 
   // Group pack items by type
   const courseItems = packItems.filter(item => item.type === 'course');
@@ -46,9 +48,9 @@ export default function YourPack() {
               <h2>Your pack is empty</h2>
               <p>Browse our courses, experiences, and accommodations to create your perfect golf adventure.</p>
               <div className="empty-pack-links">
-                <Link to="/courses" className="pack-browse-link">Browse Courses</Link>
-                <Link to="/experiences" className="pack-browse-link">Browse Experiences</Link>
-                <Link to="/houses" className="pack-browse-link">Browse Houses</Link>
+                <Link to={getLocalizedPath('/courses')} className="pack-browse-link">Browse Courses</Link>
+                <Link to={getLocalizedPath('/experiences')} className="pack-browse-link">Browse Experiences</Link>
+                <Link to={getLocalizedPath('/houses')} className="pack-browse-link">Browse Houses</Link>
               </div>
             </div>
           ) : (

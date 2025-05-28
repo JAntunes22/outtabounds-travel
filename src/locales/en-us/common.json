@@ -1,0 +1,76 @@
+{
+  "navigation": {
+    "home": "Home",
+    "about": "About",
+    "courses": "Courses",
+    "experiences": "Experiences",
+    "houses": "Houses",
+    "contact": "Contact",
+    "packs": "Packs",
+    "profile": "Profile",
+    "login": "Login",
+    "signup": "Sign Up",
+    "logout": "Logout"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "price": "Price",
+    "currency": "Currency",
+    "language": "Language"
+  },
+  "packs": {
+    "title": "Travel Packs",
+    "description": "Discover amazing travel experiences",
+    "viewDetails": "View Details",
+    "bookNow": "Book Now",
+    "from": "From",
+    "duration": "Duration",
+    "location": "Location",
+    "availability": "Availability",
+    "includes": "Includes",
+    "excludes": "Excludes"
+  },
+  "booking": {
+    "title": "Book Your Experience",
+    "selectDates": "Select Dates",
+    "travelers": "Travelers",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "taxes": "Taxes & Fees",
+    "deposit": "Deposit Required",
+    "fullPayment": "Full Payment",
+    "paymentMethod": "Payment Method",
+    "confirmBooking": "Confirm Booking"
+  },
+  "footer": {
+    "company": "OuttaBounds Travel",
+    "description": "Creating unforgettable travel experiences around the world",
+    "quickLinks": "Quick Links",
+    "contact": "Contact Us",
+    "followUs": "Follow Us",
+    "newsletter": "Newsletter",
+    "subscribe": "Subscribe",
+    "allRightsReserved": "All rights reserved"
+  },
+  "errors": {
+    "pageNotFound": "Page not found",
+    "serverError": "Server error",
+    "networkError": "Network error",
+    "invalidInput": "Invalid input",
+    "unauthorized": "Unauthorized access",
+    "sessionExpired": "Session expired"
+  }
+} 

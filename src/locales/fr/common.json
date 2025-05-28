@@ -1,0 +1,76 @@
+{
+  "navigation": {
+    "home": "Accueil",
+    "about": "À propos",
+    "courses": "Cours",
+    "experiences": "Expériences",
+    "houses": "Maisons",
+    "contact": "Contact",
+    "packs": "Forfaits",
+    "profile": "Profil",
+    "login": "Connexion",
+    "signup": "S'inscrire",
+    "logout": "Déconnexion"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "price": "Prix",
+    "currency": "Devise",
+    "language": "Langue"
+  },
+  "packs": {
+    "title": "Forfaits Voyage",
+    "description": "Découvrez des expériences de voyage incroyables",
+    "viewDetails": "Voir les détails",
+    "bookNow": "Réserver maintenant",
+    "from": "À partir de",
+    "duration": "Durée",
+    "location": "Lieu",
+    "availability": "Disponibilité",
+    "includes": "Inclus",
+    "excludes": "Exclus"
+  },
+  "booking": {
+    "title": "Réservez votre expérience",
+    "selectDates": "Sélectionner les dates",
+    "travelers": "Voyageurs",
+    "total": "Total",
+    "subtotal": "Sous-total",
+    "taxes": "Taxes et frais",
+    "deposit": "Acompte requis",
+    "fullPayment": "Paiement intégral",
+    "paymentMethod": "Méthode de paiement",
+    "confirmBooking": "Confirmer la réservation"
+  },
+  "footer": {
+    "company": "OuttaBounds Travel",
+    "description": "Créer des expériences de voyage inoubliables à travers le monde",
+    "quickLinks": "Liens rapides",
+    "contact": "Nous contacter",
+    "followUs": "Suivez-nous",
+    "newsletter": "Newsletter",
+    "subscribe": "S'abonner",
+    "allRightsReserved": "Tous droits réservés"
+  },
+  "errors": {
+    "pageNotFound": "Page non trouvée",
+    "serverError": "Erreur serveur",
+    "networkError": "Erreur réseau",
+    "invalidInput": "Saisie invalide",
+    "unauthorized": "Accès non autorisé",
+    "sessionExpired": "Session expirée"
+  }
+} 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLocale } from '../../contexts/LocaleContext';
 import Logger from '../../utils/logger';
 import "./Auth.css";
 
@@ -20,6 +21,7 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
   const [adminVerified, setAdminVerified] = useState(isAdmin);
   const [checkingProfile, setCheckingProfile] = useState(requireProfileCompletion);
   const [showProfileReminder, setShowProfileReminder] = useState(false);
+  const { getLocalizedPath } = useLocale();
 
   // When component loads, force check admin status if required
   useEffect(() => {
@@ -82,7 +84,7 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
   const goToProfileCompletion = () => {
     setShowProfileReminder(false);
     markProfileReminderSeen();
-    navigate('/profile-completion', { 
+    navigate(getLocalizedPath('/profile-completion'), { 
       state: { 
         from: location,
         fromSocialLogin: true
@@ -111,13 +113,13 @@ export default function PrivateRoute({ requireAdmin, requireProfileCompletion = 
     }
     
     // Return 403 Forbidden for unauthorized admin access
-    return <Navigate to="/unauthorized" state={{ from: location, status: 403 }} replace />;
+    return <Navigate to={getLocalizedPath('/unauthorized')} state={{ from: location, status: 403 }} replace />;
   }
 
   // If no user, redirect to login with the current location for redirect after login
   if (!currentUser) {
     // Return 401 Unauthorized for unauthenticated access
-    return <Navigate to="/login" state={{ from: location, status: 401 }} replace />;
+    return <Navigate to={getLocalizedPath('/login')} state={{ from: location, status: 401 }} replace />;
   }
 
   // If profile completion is required and not completed, show reminder

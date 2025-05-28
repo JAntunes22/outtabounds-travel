@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLocale } from '../../contexts/LocaleContext';
 import './Auth.css';
 
 export default function ForgotPassword() {
+  const { getLocalizedPath } = useLocale();
   const emailRef = useRef();
   const { resetPassword } = useAuth();
   const [error, setError] = useState('');
@@ -60,10 +62,10 @@ export default function ForgotPassword() {
           </button>
         </form>
         <div className="auth-links">
-          <Link to="/login">Back to Login</Link>
+          <Link to={getLocalizedPath('/login')}>Back to Login</Link>
         </div>
         <div className="auth-footer">
-          Need an account? <Link to="/signup">Sign Up</Link>
+          Need an account? <Link to={getLocalizedPath('/signup')}>Sign Up</Link>
         </div>
       </div>
     </div>
