@@ -49,11 +49,6 @@ const PackDetails = () => {
             setGroupSize(parseInt(packData.recommendedGroup, 10));
           }
           
-          // Calculate initial total price
-          if (packData.price) {
-            setTotalPrice(calculateTotalPrice(packData.price, groupSize));
-          }
-          
           // Fetch details for included items
           await fetchItemDetails(packData);
         } else {
@@ -75,11 +70,6 @@ const PackDetails = () => {
               setGroupSize(parseInt(packData.recommendedGroup, 10));
             }
             
-            // Calculate initial total price
-            if (packData.price) {
-              setTotalPrice(calculateTotalPrice(packData.price, groupSize));
-            }
-            
             // Fetch details for included items
             await fetchItemDetails(packData);
           } else {
@@ -98,7 +88,14 @@ const PackDetails = () => {
     if (packId) {
       fetchPack();
     }
-  }, [packId, calculateTotalPrice, groupSize]);
+  }, [packId, calculateTotalPrice]);
+  
+  // Separate useEffect to handle total price calculation when pack or groupSize changes
+  useEffect(() => {
+    if (pack && pack.price) {
+      setTotalPrice(calculateTotalPrice(pack.price, groupSize));
+    }
+  }, [pack, groupSize, calculateTotalPrice]);
   
   // Fetch details for included items
   const fetchItemDetails = async (packData) => {
@@ -393,9 +390,6 @@ const PackDetails = () => {
   const handleGroupSizeChange = (newSize) => {
     if (newSize >= 1 && newSize <= 20) {
       setGroupSize(newSize);
-      if (pack && pack.price) {
-        setTotalPrice(calculateTotalPrice(pack.price, newSize));
-      }
     }
   };
 

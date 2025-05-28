@@ -1388,6 +1388,16 @@ body.modal-open {
   font-size: 1rem;
   font-weight: 600;
   padding: 0;
+  /* Hide number input spinner arrows */
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+
+/* Hide spinner arrows for WebKit browsers (Chrome, Safari, Edge) */
+.number-input-control input::-webkit-outer-spin-button,
+.number-input-control input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .number-input-control input:focus {
