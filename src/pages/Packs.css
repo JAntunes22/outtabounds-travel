@@ -59,16 +59,16 @@
 
 .pack-content {
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
-  padding: 20px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0) 100%);
+  bottom: 0;
+  padding: 25px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.1) 60%, rgba(0, 0, 0, 0.8) 100%);
   color: white;
-  text-align: left;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  justify-content: space-between;
   z-index: 10;
   pointer-events: none;
   transition: background 0.3s ease;
@@ -77,20 +77,32 @@
 .pack-info {
   cursor: pointer;
   pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 80px;
+  padding-top: 15px;
+}
+
+.pack-info h2 {
+  font-family: 'Racing Sans One', cursive;
+  font-size: 2.2rem;
+  margin: 0;
+  color: white;
+  font-weight: 400;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
+  cursor: pointer;
+  pointer-events: auto;
 }
 
 .pack-actions {
   display: flex;
   justify-content: flex-end;
   pointer-events: auto;
-}
-
-.pack-item h2 {
-  font-size: 1.5rem;
-  margin: 5px 0;
-  color: white;
-  font-weight: 600;
-  transition: color 0.3s ease;
 }
 
 .pack-item .pack-price {
@@ -301,7 +313,7 @@
   }
   
   .packs-content {
-    padding: 0 10px;
+    padding: 0 10px 40px;
   }
   
   .packs-container {
@@ -1002,13 +1014,6 @@ body.modal-open {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 }
 
-.includes-section h3 {
-  color: #186d00;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #eee;
-}
-
 .includes-list {
   list-style-type: none;
   padding: 0;
@@ -1537,5 +1542,278 @@ body.modal-open {
     width: 100%;
     height: 180px;
     min-height: 180px;
+  }
+}
+
+/* Packs grid layout - specific to packs page */
+.packs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 30px;
+  padding: 0 20px;
+  margin-top: 20px;
+}
+
+/* Pack card styles specific to packs page - overlay content on image */
+.packs .pack-card {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  border-radius: 15px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  height: auto;
+  min-height: 500px;
+  position: relative;
+  /* Reset any inherited grid positioning */
+  grid-column: unset !important;
+  grid-row: unset !important;
+}
+
+.packs .pack-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.packs .pack-image {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.packs .pack-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.packs .pack-card:hover .pack-image img {
+  transform: scale(1.08);
+}
+
+/* Pack content styles - repositioned layout */
+.packs .pack-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 25px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.1) 60%, rgba(0, 0, 0, 0.8) 100%);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 10;
+  pointer-events: none;
+  transition: background 0.3s ease;
+}
+
+.packs .pack-card:hover .pack-content {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.2) 60%, rgba(0, 0, 0, 0.9) 100%);
+}
+
+/* Pack name at the top - centered and consistent positioning */
+.packs .pack-info {
+  cursor: pointer;
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 80px;
+  padding-top: 40px;
+}
+
+.packs .pack-info h2 {
+  font-family: 'Racing Sans One', cursive;
+  font-size: 2.2rem;
+  margin: 0;
+  color: white;
+  font-weight: 400;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* Bottom section with includes and price */
+.packs .pack-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 15px;
+}
+
+.packs .pack-includes-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.packs .pack-includes-summary span {
+  background-color: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  color: #ffffff;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  width: fit-content;
+}
+
+.packs .pack-card:hover .pack-includes-summary span {
+  background-color: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+.packs .pack-price {
+  font-family: 'Racing Sans One', cursive;
+  font-size: 2rem;
+  font-weight: 400;
+  color: white;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  text-align: right;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+
+/* Remove the old pack-info and pack-action styles */
+.packs .pack-info {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.packs .pack-info p {
+  display: none;
+}
+
+.packs .pack-action {
+  display: none;
+}
+
+.packs .view-details-button {
+  display: none;
+}
+
+/* Responsive adjustments for packs grid */
+@media (max-width: 1200px) {
+  .packs-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
+  }
+  
+  .packs .pack-card {
+    min-height: 450px;
+  }
+  
+  .packs .pack-info h2 {
+    font-size: 2rem;
+  }
+  
+  .packs .pack-price {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .packs-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 0 15px;
+  }
+  
+  .packs .pack-card {
+    min-height: 400px;
+  }
+  
+  .packs .pack-content {
+    padding: 20px;
+  }
+  
+  .packs .pack-info {
+    min-height: 70px;
+    padding-top: 10px;
+  }
+  
+  .packs .pack-info h2 {
+    font-size: 1.8rem;
+  }
+  
+  .packs .pack-price {
+    font-size: 1.6rem;
+  }
+  
+  .packs .pack-includes-summary span {
+    font-size: 0.75rem;
+    padding: 5px 12px;
+  }
+  
+  .packs .pack-bottom {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .packs-grid {
+    grid-template-columns: 1fr;
+    padding: 0 10px;
+  }
+  
+  .packs .pack-card {
+    min-height: 350px;
+  }
+  
+  .packs .pack-content {
+    padding: 18px;
+  }
+  
+  .packs .pack-info {
+    min-height: 60px;
+    padding-top: 8px;
+  }
+  
+  .packs .pack-info h2 {
+    font-size: 1.5rem;
+    letter-spacing: 0.5px;
+  }
+  
+  .packs .pack-price {
+    font-size: 1.3rem;
+  }
+  
+  .packs .pack-includes-summary {
+    gap: 4px;
+  }
+  
+  .packs .pack-includes-summary span {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+  }
+  
+  .packs .pack-bottom {
+    gap: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .packs .pack-price {
+    text-align: left;
+    align-self: flex-end;
   }
 } 

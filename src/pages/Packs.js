@@ -124,21 +124,15 @@ const Packs = () => {
                     <div className="pack-content">
                       <div className="pack-info">
                         <h2>{pack.name}</h2>
-                        <h3 className="pack-price">{formatPackPrice(pack, currentLocale)}</h3>
-                        <p>{pack.description 
-                            ? (pack.description.length > 100 
-                              ? `${pack.description.substring(0, 100)}...` 
-                              : pack.description)
-                            : 'No description available'}</p>
+                      </div>
+                      <div className="pack-bottom">
                         <div className="pack-includes-summary">
                           {pack.courses && pack.courses.length > 0 && <span>{pack.courses.length} Course{pack.courses.length > 1 ? 's' : ''}</span>}
                           {pack.experiences && pack.experiences.length > 0 && <span>{pack.experiences.length} Experience{pack.experiences.length > 1 ? 's' : ''}</span>}
                           {pack.accommodations && pack.accommodations.length > 0 && <span>{pack.accommodations.length} Accommodation{pack.accommodations.length > 1 ? 's' : ''}</span>}
                           {pack.services && pack.services.length > 0 && <span>{pack.services.length} Service{pack.services.length > 1 ? 's' : ''}</span>}
                         </div>
-                      </div>
-                      <div className="pack-action">
-                        <button className="view-details-button">View Details</button>
+                        <h3 className="pack-price">{formatPackPrice(pack, currentLocale)} pp</h3>
                       </div>
                     </div>
                   </div>

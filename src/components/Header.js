@@ -15,6 +15,7 @@ export default function Header() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const backdropRef = useRef(null);
+  const shouldRestoreScroll = useRef(true);
   
   // Handle scroll event to change navbar style
   useEffect(() => {
@@ -140,20 +141,39 @@ export default function Header() {
         }
         
         // Only unlock scrolling after both menu and backdrop are hidden
-        const scrollY = document.body.style.top;
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        
-        if (scrollY) {
-          window.scrollTo(0, parseInt(scrollY.replace('-', '').replace('px', '')));
+        // And only restore scroll position if shouldRestoreScroll is true
+        if (shouldRestoreScroll.current) {
+          const scrollY = document.body.style.top;
+          document.body.style.position = '';
+          document.body.style.top = '';
+          document.body.style.width = '';
+          document.body.style.overflow = '';
+          
+          if (scrollY) {
+            window.scrollTo(0, parseInt(scrollY.replace('-', '').replace('px', '')));
+          }
+        } else {
+          // If not restoring scroll, just unlock scroll without restoring position
+          document.body.style.position = '';
+          document.body.style.top = '';
+          document.body.style.width = '';
+          document.body.style.overflow = '';
+          // Reset the flag for next time
+          shouldRestoreScroll.current = true;
         }
       }, 300); // Wait for menu animation to complete
     }
     
     // Return false to prevent any other handlers
     return false;
+  };
+
+  // Handler for mobile menu links
+  const handleMenuLinkClick = () => {
+    // Disable scroll restoration for this menu close
+    shouldRestoreScroll.current = false;
+    // Just close the menu
+    handleCloseMenu({});
   };
 
   // Handler for closing the menu
@@ -177,26 +197,30 @@ export default function Header() {
         backdropRef.current.style.pointerEvents = 'none';
       }
       
-      // Restore scrolling only after both menu and backdrop are hidden
-      const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = '';
-      
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY.replace('-', '').replace('px', '')));
+      // Only restore scrolling if shouldRestoreScroll is true
+      if (shouldRestoreScroll.current) {
+        const scrollY = document.body.style.top;
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        
+        if (scrollY) {
+          window.scrollTo(0, parseInt(scrollY.replace('-', '').replace('px', '')));
+        }
+      } else {
+        // If not restoring scroll, just unlock scroll without restoring position
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        // Reset the flag for next time
+        shouldRestoreScroll.current = true;
       }
     }, 300);
     
     // Return false to prevent any other handlers
     return false;
-  };
-
-  // Handler for mobile menu links
-  const handleMenuLinkClick = () => {
-    // Just close the menu
-    handleCloseMenu({});
   };
 
   return (
@@ -217,9 +241,6 @@ export default function Header() {
         
         {/* Right side - Functionality icons */}
         <div className="header-icons">
-          {/* Locale switcher - replaced basic language selector */}
-          <LocaleSwitcher className="header-locale-switcher" />
-          
           {/* Account icon */}
           <div className="account-icon-container">
             <button 

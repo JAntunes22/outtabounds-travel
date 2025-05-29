@@ -48,6 +48,31 @@
   font-size: 14px;
 }
 
+.footer-language-selector {
+  margin-bottom: 25px;
+}
+
+.footer-language-selector .locale-switcher-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: white;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.footer-language-selector .locale-switcher-button:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.footer-language-selector .locale-switcher-button:focus {
+  outline: none;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: #186d00;
+}
+
 .social-links {
   display: flex;
   gap: 15px;

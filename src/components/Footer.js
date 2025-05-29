@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLocale } from '../contexts/LocaleContext';
+import LocaleSwitcher from './LocaleSwitcher';
 import './Footer.css';
 
 const Footer = () => {
@@ -14,6 +15,9 @@ const Footer = () => {
           <div className="footer-section">
             <h3>OuttaBounds</h3>
             <p>Unforgettable golf experiences in Europe's most breathtaking destinations.</p>
+            <div className="footer-language-selector">
+              <LocaleSwitcher className="footer-locale-switcher" />
+            </div>
             <div className="social-links">
               <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="Youtube">
                 <span className="social-icon">
