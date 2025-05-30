@@ -25,7 +25,7 @@ export default function YourPack() {
       setTimeout(() => setIsEmptyAlert(false), 3000);
       return;
     }
-    navigate('/booking-details');
+    navigate(getLocalizedPath('/booking-details'));
   };
 
   return (

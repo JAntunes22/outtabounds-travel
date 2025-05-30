@@ -158,7 +158,7 @@ export default function ExperienceList() {
                       <div className="table-actions">
                         <button 
                           className="action-btn edit" 
-                          onClick={() => navigate(`/admin/experiences/edit/${experience.id}`)}
+                          onClick={() => navigate(getLocalizedPath(`/admin/experiences/edit/${experience.id}`))}
                           title="Edit"
                         >
                           ✏️

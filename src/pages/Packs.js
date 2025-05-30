@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, getDoc, doc } from "firebase/firestore";
 import { db } from "../utils/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { useLocale } from "../contexts/LocaleContext";
@@ -51,17 +51,62 @@ const Packs = () => {
     const fetchPacks = async () => {
       setLoading(true);
       try {
+        // First, try to get featured packs for the current locale
+        const featuredPacksDoc = await getDoc(doc(db, 'settings', 'featuredPacks'));
+        let featuredPackIds = [];
+        
+        if (featuredPacksDoc.exists()) {
+          const featuredPacksData = featuredPacksDoc.data();
+          // Map current locale to tier
+          const getRegionTier = (locale) => {
+            const tierMap = {
+              'en-us': 'tier1',
+              'en-uk': 'tier1', 
+              'fr': 'tier2',
+              'pt': 'tier3',
+              'es': 'tier3'
+            };
+            return tierMap[locale] || 'rest';
+          };
+          
+          const tier = getRegionTier(currentLocale);
+          featuredPackIds = featuredPacksData[tier] || [];
+        }
+
+        // Fetch all packs
         const packsCollection = collection(db, "packs");
         const packsSnapshot = await getDocs(packsCollection);
-        const packsList = packsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        const allPacks = {};
         
-        // Sort packs alphabetically by name
-        packsList.sort((a, b) => a.name.localeCompare(b.name));
+        packsSnapshot.docs.forEach(doc => {
+          allPacks[doc.id] = {
+            id: doc.id,
+            ...doc.data()
+          };
+        });
+
+        // Get featured packs in order
+        const featuredPacks = featuredPackIds
+          .map(packId => allPacks[packId])
+          .filter(pack => pack); // Remove any undefined packs
+
+        // Get remaining packs (not featured) and sort by order field
+        const remainingPacks = Object.values(allPacks)
+          .filter(pack => !featuredPackIds.includes(pack.id))
+          .sort((a, b) => {
+            // Sort by order field first, then by name
+            if (a.order !== undefined && b.order !== undefined) {
+              return a.order - b.order;
+            }
+            if (a.order !== undefined) return -1;
+            if (b.order !== undefined) return 1;
+            return a.name.localeCompare(b.name);
+          });
+
+        // Combine: featured packs first, then remaining packs
+        const finalPacksList = [...featuredPacks, ...remainingPacks];
         
-        setPacks(packsList);
+        setPacks(finalPacksList);
       } catch (error) {
         console.error("Error fetching packs:", error);
         setError("Failed to fetch packs. Please try again later.");
@@ -71,10 +116,12 @@ const Packs = () => {
     };
 
     fetchPacks();
-  }, []);
+  }, [currentLocale]);
 
-  const handlePackClick = (packId) => {
-    navigate(getLocalizedPath(`/packs/${packId}`));
+  const handlePackClick = (pack) => {
+    // Use slug if available, otherwise fall back to ID
+    const packIdentifier = pack.slug || pack.id;
+    navigate(getLocalizedPath(`/packs/${packIdentifier}`));
   };
 
   return (
@@ -108,7 +155,7 @@ const Packs = () => {
                   <div 
                     key={pack.id} 
                     className="pack-card"
-                    onClick={() => handlePackClick(pack.id)}
+                    onClick={() => handlePackClick(pack)}
                   >
                     <div className="pack-image">
                       <img 

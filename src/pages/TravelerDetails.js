@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePack } from '../contexts/PackContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocale } from '../contexts/LocaleContext';
+import CountryCodeSelector from '../components/CountryCodeSelector';
 import './PackCommon.css';
 import './TravelerDetails.css';
 
@@ -20,8 +22,9 @@ const lookupUserByEmail = async (email) => {
 };
 
 export default function TravelerDetails() {
-  const { packItems, bookingDetails, updateTraveler, addTraveler, removeTraveler } = usePack();
+  const { packItems, bookingDetails, updateTraveler, addTraveler, removeTraveler, updateReservationHolder } = usePack();
   const { currentUser } = useAuth();
+  const { getLocalizedPath } = useLocale();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -29,7 +32,7 @@ export default function TravelerDetails() {
   // Make sure the number of travelers matches the number set in booking details
   useEffect(() => {
     if (packItems.length === 0) {
-      navigate('/your-pack');
+      navigate(getLocalizedPath('/your-pack'));
       return;
     }
     
@@ -47,25 +50,90 @@ export default function TravelerDetails() {
         removeTraveler(i);
       }
     }
-  }, [packItems, bookingDetails.numberOfPeople, navigate, addTraveler, removeTraveler, bookingDetails.travelers.length]);
+  }, [packItems, bookingDetails.numberOfPeople, navigate, getLocalizedPath, addTraveler, removeTraveler, bookingDetails.travelers.length]);
   
   // Fill in current user's info if available
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (currentUser && bookingDetails.travelers.length > 0) {
-      // Only autofill if the first traveler's fields are empty
-      const firstTraveler = bookingDetails.travelers[0];
-      if (!firstTraveler.email && !firstTraveler.firstName) {
-        updateTraveler(0, {
-          email: currentUser.email || '',
-          firstName: currentUser.displayName ? currentUser.displayName.split(' ')[0] : '',
-          lastName: currentUser.displayName ? currentUser.displayName.split(' ').slice(1).join(' ') : ''
+    // Ensure reservationHolder exists with default values
+    if (!bookingDetails.reservationHolder) {
+      updateReservationHolder({
+        email: '',
+        firstName: '',
+        lastName: '',
+        age: '',
+        gender: '',
+        mobile: '',
+        countryCode: '+1'
+      });
+      return; // Exit early to prevent further updates in this cycle
+    }
+    
+    // Only auto-fill if currentUser exists and reservoir holder data is empty (first time load)
+    if (currentUser && 
+        (!bookingDetails.reservationHolder?.email || !bookingDetails.reservationHolder?.firstName) &&
+        currentUser.email && // Ensure user has an email
+        bookingDetails.reservationHolder?.email !== currentUser.email) { // Prevent duplicate updates
+      
+      // Autofill reservation holder with current user info
+      updateReservationHolder({
+        email: currentUser.email || '',
+        firstName: currentUser.displayName ? currentUser.displayName.split(' ')[0] : '',
+        lastName: currentUser.displayName ? currentUser.displayName.split(' ').slice(1).join(' ') : '',
+        mobile: currentUser.phoneNumber || '',
+        // Try to extract additional info from user profile if available
+        age: currentUser.age || '',
+        gender: currentUser.gender || ''
+      });
+    }
+  }, [currentUser?.uid, currentUser?.email, currentUser?.displayName, updateReservationHolder]); // More specific dependencies
+
+  const handleReservationHolderChange = (field, value) => {
+    updateReservationHolder({ [field]: value });
+    
+    // Clear error when field is changed
+    if (errors[`reservationHolder-${field}`]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[`reservationHolder-${field}`];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleTravelerChange = (index, field, value) => {
+    // If changing sameAsReservationHolder, copy data or clear it
+    if (field === 'sameAsReservationHolder') {
+      if (value) {
+        // Copy data from reservation holder (except mobile) - ensure holder exists
+        const holder = bookingDetails.reservationHolder || {};
+        updateTraveler(index, {
+          sameAsReservationHolder: true,
+          email: '', // Email is optional for travelers
+          firstName: holder.firstName || '',
+          lastName: holder.lastName || '',
+          age: holder.age || '',
+          gender: holder.gender || ''
+        });
+      } else {
+        // Clear the data and allow manual entry
+        updateTraveler(index, {
+          sameAsReservationHolder: false,
+          firstName: '',
+          lastName: '',
+          age: '',
+          gender: ''
         });
       }
+    } else {
+      updateTraveler(index, { [field]: value });
+      
+      // Special logic for golf-related fields
+      if (field === 'playingGolf' && !value) {
+        // If "Will not play golf" is selected, hide and uncheck equipment rental
+        updateTraveler(index, { requiresEquipment: false });
+      }
     }
-  }, [currentUser, bookingDetails.travelers, updateTraveler]);
-
-  const handleChange = (index, field, value) => {
-    updateTraveler(index, { [field]: value });
     
     // Clear error when field is changed
     if (errors[`traveler${index}-${field}`]) {
@@ -114,29 +182,62 @@ export default function TravelerDetails() {
 
   const validateForm = () => {
     const newErrors = {};
+    
+    // Validate reservation holder - ensure it exists
+    const holder = bookingDetails.reservationHolder || {};
+    if (!holder.email) {
+      newErrors['reservationHolder-email'] = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(holder.email)) {
+      newErrors['reservationHolder-email'] = 'Invalid email format';
+    }
+    
+    if (!holder.firstName) {
+      newErrors['reservationHolder-firstName'] = 'First name is required';
+    }
+    
+    if (!holder.lastName) {
+      newErrors['reservationHolder-lastName'] = 'Last name is required';
+    }
+    
+    if (!holder.age) {
+      newErrors['reservationHolder-age'] = 'Age is required';
+    } else if (isNaN(holder.age) || parseInt(holder.age) < 1) {
+      newErrors['reservationHolder-age'] = 'Please enter a valid age';
+    }
+    
+    if (!holder.gender) {
+      newErrors['reservationHolder-gender'] = 'Gender is required';
+    }
+    
+    if (!holder.mobile) {
+      newErrors['reservationHolder-mobile'] = 'Mobile number is required';
+    }
+    
+    // Validate travelers
     bookingDetails.travelers.forEach((traveler, index) => {
-      if (!traveler.email) {
-        newErrors[`traveler${index}-email`] = 'Email is required';
-      } else if (!/\S+@\S+\.\S+/.test(traveler.email)) {
+      // Email is optional for travelers
+      if (traveler.email && !/\S+@\S+\.\S+/.test(traveler.email)) {
         newErrors[`traveler${index}-email`] = 'Invalid email format';
       }
       
-      if (!traveler.firstName) {
-        newErrors[`traveler${index}-firstName`] = 'First name is required';
-      }
-      
-      if (!traveler.lastName) {
-        newErrors[`traveler${index}-lastName`] = 'Last name is required';
-      }
-      
-      if (!traveler.age) {
-        newErrors[`traveler${index}-age`] = 'Age is required';
-      } else if (isNaN(traveler.age) || parseInt(traveler.age) < 1) {
-        newErrors[`traveler${index}-age`] = 'Please enter a valid age';
-      }
-      
-      if (!traveler.gender) {
-        newErrors[`traveler${index}-gender`] = 'Gender is required';
+      if (!traveler.sameAsReservationHolder) {
+        if (!traveler.firstName) {
+          newErrors[`traveler${index}-firstName`] = 'First name is required';
+        }
+        
+        if (!traveler.lastName) {
+          newErrors[`traveler${index}-lastName`] = 'Last name is required';
+        }
+        
+        if (!traveler.age) {
+          newErrors[`traveler${index}-age`] = 'Age is required';
+        } else if (isNaN(traveler.age) || parseInt(traveler.age) < 1) {
+          newErrors[`traveler${index}-age`] = 'Please enter a valid age';
+        }
+        
+        if (!traveler.gender) {
+          newErrors[`traveler${index}-gender`] = 'Gender is required';
+        }
       }
     });
     
@@ -147,7 +248,7 @@ export default function TravelerDetails() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      navigate('/review-inquiry');
+      navigate(getLocalizedPath('/special-requests'));
     }
   };
 
@@ -156,106 +257,233 @@ export default function TravelerDetails() {
       <div className="pack-container traveler-details-container">
         <div className="traveler-details-header">
           <h1>Traveler Information</h1>
-          <p>Please provide details for each traveler in your group</p>
+          <p>Please provide details for the reservation holder and each traveler in your group</p>
         </div>
 
         <div className="traveler-details-content">
           <form onSubmit={handleSubmit} className="traveler-form">
+            
+            {/* Reservation Holder Section */}
+            <div className="reservation-holder-section">
+              <h2>Reservation Holder</h2>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="holder-email">Email Address *</label>
+                  <input 
+                    type="email" 
+                    id="holder-email" 
+                    value={bookingDetails.reservationHolder?.email || ''}
+                    onChange={(e) => handleReservationHolderChange('email', e.target.value)}
+                    className={errors['reservationHolder-email'] ? 'error' : ''}
+                  />
+                  {errors['reservationHolder-email'] && 
+                    <span className="error-message">{errors['reservationHolder-email']}</span>}
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="holder-firstName">First Name *</label>
+                  <input 
+                    type="text" 
+                    id="holder-firstName" 
+                    value={bookingDetails.reservationHolder?.firstName || ''}
+                    onChange={(e) => handleReservationHolderChange('firstName', e.target.value)}
+                    className={errors['reservationHolder-firstName'] ? 'error' : ''}
+                  />
+                  {errors['reservationHolder-firstName'] && 
+                    <span className="error-message">{errors['reservationHolder-firstName']}</span>}
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="holder-lastName">Last Name *</label>
+                  <input 
+                    type="text" 
+                    id="holder-lastName" 
+                    value={bookingDetails.reservationHolder?.lastName || ''}
+                    onChange={(e) => handleReservationHolderChange('lastName', e.target.value)}
+                    className={errors['reservationHolder-lastName'] ? 'error' : ''}
+                  />
+                  {errors['reservationHolder-lastName'] && 
+                    <span className="error-message">{errors['reservationHolder-lastName']}</span>}
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="holder-age">Age *</label>
+                  <input 
+                    type="number" 
+                    id="holder-age" 
+                    value={bookingDetails.reservationHolder?.age || ''}
+                    onChange={(e) => handleReservationHolderChange('age', e.target.value)}
+                    min="1"
+                    max="120"
+                    className={errors['reservationHolder-age'] ? 'error' : ''}
+                  />
+                  {errors['reservationHolder-age'] && 
+                    <span className="error-message">{errors['reservationHolder-age']}</span>}
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="holder-gender">Gender *</label>
+                  <select 
+                    id="holder-gender" 
+                    value={bookingDetails.reservationHolder?.gender || ''}
+                    onChange={(e) => handleReservationHolderChange('gender', e.target.value)}
+                    className={errors['reservationHolder-gender'] ? 'error' : ''}
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer-not-to-say">Prefer not to say</option>
+                  </select>
+                  {errors['reservationHolder-gender'] && 
+                    <span className="error-message">{errors['reservationHolder-gender']}</span>}
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="holder-mobile">Mobile Number *</label>
+                  <div className="mobile-input-container">
+                    <CountryCodeSelector 
+                      value={bookingDetails.reservationHolder?.countryCode || '+1'}
+                      onChange={(code) => handleReservationHolderChange('countryCode', code)}
+                    />
+                    <input 
+                      type="tel" 
+                      id="holder-mobile" 
+                      value={bookingDetails.reservationHolder?.mobile || ''}
+                      onChange={(e) => handleReservationHolderChange('mobile', e.target.value)}
+                      placeholder="123 456 7890"
+                      className={errors['reservationHolder-mobile'] ? 'error' : ''}
+                    />
+                  </div>
+                  {errors['reservationHolder-mobile'] && 
+                    <span className="error-message">{errors['reservationHolder-mobile']}</span>}
+                </div>
+              </div>
+            </div>
+
+            {/* Travelers Section */}
             {bookingDetails.travelers.map((traveler, index) => (
               <div key={index} className="traveler-section">
                 <h2>Traveler {index + 1}</h2>
                 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor={`email-${index}`}>Email Address</label>
-                    <div className="email-lookup-container">
-                      <input 
-                        type="email" 
-                        id={`email-${index}`} 
-                        value={traveler.email}
-                        onChange={(e) => handleChange(index, 'email', e.target.value)}
-                        onBlur={() => handleEmailLookup(index)}
-                        className={errors[`traveler${index}-email`] ? 'error' : ''}
-                      />
-                      {isLoading && <div className="loading-spinner"></div>}
+                {/* Same as Reservation Holder Option - only for first traveler */}
+                {index === 0 && (
+                  <div className="form-row same-as-holder-row">
+                    <div className="form-group checkbox-group">
+                      <label className="checkbox-label">
+                        <input 
+                          type="checkbox" 
+                          checked={traveler.sameAsReservationHolder}
+                          onChange={(e) => handleTravelerChange(index, 'sameAsReservationHolder', e.target.checked)}
+                        />
+                        Same as Reservation Holder
+                      </label>
                     </div>
-                    {errors[`traveler${index}-email`] && 
-                      <span className="error-message">{errors[`traveler${index}-email`]}</span>}
                   </div>
-                </div>
+                )}
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor={`firstName-${index}`}>First Name</label>
-                    <input 
-                      type="text" 
-                      id={`firstName-${index}`} 
-                      value={traveler.firstName}
-                      onChange={(e) => handleChange(index, 'firstName', e.target.value)}
-                      className={errors[`traveler${index}-firstName`] ? 'error' : ''}
-                    />
-                    {errors[`traveler${index}-firstName`] && 
-                      <span className="error-message">{errors[`traveler${index}-firstName`]}</span>}
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor={`lastName-${index}`}>Last Name</label>
-                    <input 
-                      type="text" 
-                      id={`lastName-${index}`} 
-                      value={traveler.lastName}
-                      onChange={(e) => handleChange(index, 'lastName', e.target.value)}
-                      className={errors[`traveler${index}-lastName`] ? 'error' : ''}
-                    />
-                    {errors[`traveler${index}-lastName`] && 
-                      <span className="error-message">{errors[`traveler${index}-lastName`]}</span>}
-                  </div>
-                </div>
+                {!traveler.sameAsReservationHolder && (
+                  <>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor={`email-${index}`}>Email Address</label>
+                        <div className="email-lookup-container">
+                          <input 
+                            type="email" 
+                            id={`email-${index}`} 
+                            value={traveler.email}
+                            onChange={(e) => handleTravelerChange(index, 'email', e.target.value)}
+                            onBlur={() => handleEmailLookup(index)}
+                            className={errors[`traveler${index}-email`] ? 'error' : ''}
+                          />
+                          {isLoading && <div className="loading-spinner"></div>}
+                        </div>
+                        {errors[`traveler${index}-email`] && 
+                          <span className="error-message">{errors[`traveler${index}-email`]}</span>}
+                      </div>
+                    </div>
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor={`age-${index}`}>Age</label>
-                    <input 
-                      type="number" 
-                      id={`age-${index}`} 
-                      value={traveler.age}
-                      onChange={(e) => handleChange(index, 'age', e.target.value)}
-                      min="1"
-                      max="120"
-                      className={errors[`traveler${index}-age`] ? 'error' : ''}
-                    />
-                    {errors[`traveler${index}-age`] && 
-                      <span className="error-message">{errors[`traveler${index}-age`]}</span>}
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor={`gender-${index}`}>Gender</label>
-                    <select 
-                      id={`gender-${index}`} 
-                      value={traveler.gender}
-                      onChange={(e) => handleChange(index, 'gender', e.target.value)}
-                      className={errors[`traveler${index}-gender`] ? 'error' : ''}
-                    >
-                      <option value="">Select Gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                      <option value="prefer-not-to-say">Prefer not to say</option>
-                    </select>
-                    {errors[`traveler${index}-gender`] && 
-                      <span className="error-message">{errors[`traveler${index}-gender`]}</span>}
-                  </div>
-                </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor={`firstName-${index}`}>First Name *</label>
+                        <input 
+                          type="text" 
+                          id={`firstName-${index}`} 
+                          value={traveler.firstName}
+                          onChange={(e) => handleTravelerChange(index, 'firstName', e.target.value)}
+                          className={errors[`traveler${index}-firstName`] ? 'error' : ''}
+                        />
+                        {errors[`traveler${index}-firstName`] && 
+                          <span className="error-message">{errors[`traveler${index}-firstName`]}</span>}
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor={`lastName-${index}`}>Last Name *</label>
+                        <input 
+                          type="text" 
+                          id={`lastName-${index}`} 
+                          value={traveler.lastName}
+                          onChange={(e) => handleTravelerChange(index, 'lastName', e.target.value)}
+                          className={errors[`traveler${index}-lastName`] ? 'error' : ''}
+                        />
+                        {errors[`traveler${index}-lastName`] && 
+                          <span className="error-message">{errors[`traveler${index}-lastName`]}</span>}
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor={`age-${index}`}>Age *</label>
+                        <input 
+                          type="number" 
+                          id={`age-${index}`} 
+                          value={traveler.age}
+                          onChange={(e) => handleTravelerChange(index, 'age', e.target.value)}
+                          min="1"
+                          max="120"
+                          className={errors[`traveler${index}-age`] ? 'error' : ''}
+                        />
+                        {errors[`traveler${index}-age`] && 
+                          <span className="error-message">{errors[`traveler${index}-age`]}</span>}
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor={`gender-${index}`}>Gender *</label>
+                        <select 
+                          id={`gender-${index}`} 
+                          value={traveler.gender}
+                          onChange={(e) => handleTravelerChange(index, 'gender', e.target.value)}
+                          className={errors[`traveler${index}-gender`] ? 'error' : ''}
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                          <option value="prefer-not-to-say">Prefer not to say</option>
+                        </select>
+                        {errors[`traveler${index}-gender`] && 
+                          <span className="error-message">{errors[`traveler${index}-gender`]}</span>}
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="form-row golf-options">
                   <div className="form-group checkbox-group">
                     <label className="checkbox-label">
                       <input 
                         type="checkbox" 
-                        checked={traveler.playingGolf}
-                        onChange={(e) => handleChange(index, 'playingGolf', e.target.checked)}
+                        checked={!traveler.playingGolf}
+                        onChange={(e) => handleTravelerChange(index, 'playingGolf', !e.target.checked)}
                       />
-                      Will play golf
+                      Will not play golf
                     </label>
                   </div>
                   
@@ -265,8 +493,7 @@ export default function TravelerDetails() {
                         <input 
                           type="checkbox" 
                           checked={traveler.requiresEquipment}
-                          onChange={(e) => handleChange(index, 'requiresEquipment', e.target.checked)}
-                          disabled={!traveler.playingGolf}
+                          onChange={(e) => handleTravelerChange(index, 'requiresEquipment', e.target.checked)}
                         />
                         Requires equipment rental
                       </label>
@@ -280,12 +507,12 @@ export default function TravelerDetails() {
               <button 
                 type="button" 
                 className="back-button"
-                onClick={() => navigate('/booking-details')}
+                onClick={() => navigate(getLocalizedPath('/booking-details'))}
               >
                 Back to Travel Details
               </button>
               <button type="submit" className="next-button">
-                Review Inquiry
+                Next: Special Requests
               </button>
             </div>
           </form>
@@ -293,4 +520,4 @@ export default function TravelerDetails() {
       </div>
     </div>
   );
-} 
+}

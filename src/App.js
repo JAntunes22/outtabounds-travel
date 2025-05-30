@@ -26,6 +26,7 @@ import Contact from "./pages/Contact";
 import YourPack from "./pages/YourPack";
 import BookingDetails from "./pages/BookingDetails";
 import TravelerDetails from "./pages/TravelerDetails";
+import SpecialRequests from "./pages/SpecialRequests";
 import ReviewInquiry from "./pages/ReviewInquiry";
 import Profile from "./pages/Profile";
 import Packs from "./pages/Packs";
@@ -100,6 +101,7 @@ const LocaleRoutes = () => {
         <Route path="/your-pack" element={<YourPack />} />
         <Route path="/booking-details" element={<BookingDetails />} />
         <Route path="/traveler-details" element={<TravelerDetails />} />
+        <Route path="/special-requests" element={<SpecialRequests />} />
         <Route path="/review-inquiry" element={<ReviewInquiry />} />
         
         {/* Auth Routes */}

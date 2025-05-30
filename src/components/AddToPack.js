@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePack } from '../contexts/PackContext';
+import { useLocale } from '../contexts/LocaleContext';
 import './AddToPack.css';
 
 const AddToPack = ({ item, type, buttonStyle = 'primary', showFeedback = true }) => {
   const { packItems, addToPack } = usePack();
+  const { getLocalizedPath } = useLocale();
   const navigate = useNavigate();
   const [showSuccess, setShowSuccess] = useState(false);
   
@@ -16,7 +18,7 @@ const AddToPack = ({ item, type, buttonStyle = 'primary', showFeedback = true })
     e.stopPropagation();
     
     if (isInPack) {
-      navigate('/your-pack');
+      navigate(getLocalizedPath('/your-pack'));
       return;
     }
     
@@ -60,7 +62,7 @@ const AddToPack = ({ item, type, buttonStyle = 'primary', showFeedback = true })
       
       {showFeedback && showSuccess && (
         <div className="add-success-message">
-          Added to your pack! <button onClick={() => navigate('/your-pack')}>View Pack</button>
+          Added to your pack! <button onClick={() => navigate(getLocalizedPath('/your-pack'))}>View Pack</button>
         </div>
       )}
     </div>

@@ -47,7 +47,7 @@ export default function ServiceList() {
   }
   
   function handleEditService(serviceId) {
-    navigate(`/admin/services/edit/${serviceId}`);
+    navigate(getLocalizedPath(`/admin/services/edit/${serviceId}`));
   }
   
   function confirmDelete(service) {

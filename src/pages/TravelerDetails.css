@@ -197,4 +197,45 @@
   .back-button, .next-button {
     width: 100%;
   }
+}
+
+.reservation-holder-section {
+  margin-bottom: 40px;
+  padding-bottom: 30px;
+  border-bottom: 2px solid #186d00;
+  background-color: #f8faf8;
+  padding: 25px;
+  border-radius: 8px;
+}
+
+.reservation-holder-section h2 {
+  font-size: 1.5rem;
+  color: #186d00;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.mobile-input-container {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.mobile-input-container input[type="tel"] {
+  flex: 2;
+  height: 48px;
+  box-sizing: border-box;
+}
+
+.same-as-holder-row {
+  background-color: #f0f8f0;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  border-left: 4px solid #186d00;
+}
+
+.same-as-holder-row .checkbox-group {
+  margin: 0;
 } 

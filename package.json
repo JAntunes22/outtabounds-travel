@@ -24,6 +24,10 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
+    "emulators": "firebase emulators:start",
+    "dev:emulators": "concurrently \"firebase emulators:start\" \"npm start\"",
+    "dev:safe": "firebase emulators:start",
+    "seed:emulator": "node scripts/seedEmulator.js",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build"
   },
@@ -46,6 +50,7 @@
     ]
   },
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "gh-pages": "^6.3.0"
   }
 }

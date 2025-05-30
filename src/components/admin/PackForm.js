@@ -36,7 +36,8 @@ export default function PackForm() {
     slug: '',
     nights: '',
     board: 'Room only',
-    recommendedGroup: '2'
+    recommendedGroup: '2',
+    order: ''
   });
   
   const [loading, setLoading] = useState(false);
@@ -85,7 +86,8 @@ export default function PackForm() {
           slug: packData.slug || '',
           nights: packData.nights || '',
           board: packData.board || 'Room only',
-          recommendedGroup: packData.recommendedGroup || '2'
+          recommendedGroup: packData.recommendedGroup || '2',
+          order: packData.order || ''
         });
       } else {
         setError('Pack not found');
@@ -159,21 +161,39 @@ export default function PackForm() {
         }
       });
     } else {
-      setFormData({
+      const updatedFormData = {
         ...formData,
         [name]: value
-      });
+      };
+      
+      // Auto-generate slug when name changes, but only if slug is empty or matches the previous auto-generated slug
+      if (name === 'name' && value) {
+        const newSlug = generateSlug(value);
+        const currentSlugFromName = formData.name ? generateSlug(formData.name) : '';
+        
+        // Update slug if it's empty or if it matches the auto-generated slug from the current name
+        if (!formData.slug || formData.slug === currentSlugFromName) {
+          updatedFormData.slug = newSlug;
+        }
+      }
+      
+      setFormData(updatedFormData);
     }
   }
   
   // Generate a slug from the pack name for SEO-friendly URLs
   function generateSlug(name) {
+    if (!name || typeof name !== 'string') {
+      return '';
+    }
+    
     return name
       .toLowerCase()
       .replace(/[^\w\s-]/g, '') // Remove non-word chars (except spaces and hyphens)
       .replace(/\s+/g, '-')     // Replace spaces with hyphens
       .replace(/--+/g, '-')     // Replace multiple hyphens with single hyphen
-      .trim();                  // Trim leading/trailing spaces/hyphens
+      .replace(/^-+|-+$/g, '')  // Remove leading and trailing hyphens
+      .trim();                  // Trim leading/trailing spaces
   }
   
   function handleItemToggle(type, item) {
@@ -231,7 +251,12 @@ export default function PackForm() {
         prices: prices,
         updatedAt: new Date()
       };
-      
+
+      // Parse and set order field if provided
+      if (formData.order && formData.order.trim() !== '') {
+        packData.order = parseInt(formData.order, 10);
+      }
+
       // Remove the old price field if it exists and add backward compatibility
       delete packData.price;
       
@@ -354,6 +379,21 @@ export default function PackForm() {
             />
             <p className="help-text">
               The recommended number of people for optimal pricing.
+            </p>
+          </div>
+
+          <div className="admin-form-group">
+            <label>Display Order</label>
+            <input 
+              type="number" 
+              name="order" 
+              value={formData.order} 
+              onChange={handleChange} 
+              min="0"
+              placeholder="e.g., 1" 
+            />
+            <p className="help-text">
+              Controls the order this pack appears in the packs page (after featured packs). Lower numbers appear first.
             </p>
           </div>
           

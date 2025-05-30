@@ -10,7 +10,7 @@ import './Packs.css';
 
 const PackDetails = () => {
   const { packId } = useParams(); // This could be either an ID or a slug
-  const { currentLocale } = useLocale();
+  const { currentLocale, getLocalizedPath } = useLocale();
   const navigate = useNavigate();
   const [pack, setPack] = useState(null);
   const PLACEHOLDER_IMAGE = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==";
@@ -498,7 +498,7 @@ const PackDetails = () => {
       <div className="error-container">
         <h2>Error</h2>
         <p>{error || "Pack not found"}</p>
-        <button onClick={() => navigate('/packs')} className="button-primary">
+        <button onClick={() => navigate(getLocalizedPath('/packs'))} className="button-primary">
           Back to Packs
         </button>
       </div>

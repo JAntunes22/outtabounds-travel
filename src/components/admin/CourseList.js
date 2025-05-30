@@ -47,7 +47,7 @@ export default function CourseList() {
   }
   
   function handleEditCourse(courseId) {
-    navigate(`/admin/courses/edit/${courseId}`);
+    navigate(getLocalizedPath(`/admin/courses/edit/${courseId}`));
   }
   
   function confirmDelete(course) {

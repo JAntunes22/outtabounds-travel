@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../utils/firebaseConfig';
 import { useAuth } from './AuthContext';
@@ -7,7 +7,11 @@ import Logger from '../utils/logger';
 const PackContext = createContext();
 
 export function usePack() {
-  return useContext(PackContext);
+  const context = useContext(PackContext);
+  if (!context) {
+    throw new Error('usePack must be used within a PackProvider');
+  }
+  return context;
 }
 
 export function PackProvider({ children }) {
@@ -17,10 +21,39 @@ export function PackProvider({ children }) {
       startDate: '',
       endDate: ''
     },
+    dateFlexibility: 'no-flexibility',
     numberOfPeople: 1,
-    travelers: [{ email: '', firstName: '', lastName: '', age: '', gender: '', playingGolf: false, requiresEquipment: false }]
+    reservationHolder: {
+      email: '',
+      firstName: '',
+      lastName: '',
+      age: '',
+      gender: '',
+      mobile: '',
+      countryCode: '+1'
+    },
+    travelers: [{ 
+      email: '', 
+      firstName: '', 
+      lastName: '', 
+      age: '', 
+      gender: '', 
+      playingGolf: true, 
+      requiresEquipment: false,
+      sameAsReservationHolder: false
+    }],
+    specialRequests: {
+      golfRounds: 0,
+      notes: '',
+      budgetMin: 0,
+      budgetMax: 5000
+    }
   });
   const { currentUser } = useAuth();
+
+  // Add refs to track if we're in the middle of updating to prevent loops
+  const isUpdatingBookingDetails = useRef(false);
+  const isUpdatingPackItems = useRef(false);
 
   // Load user's pack items from Firestore or localStorage on component mount/user change
   const loadUserPack = useCallback(async () => {
@@ -49,8 +82,24 @@ export function PackProvider({ children }) {
                   startDate: '',
                   endDate: ''
                 },
+                dateFlexibility: 'no-flexibility',
                 numberOfPeople: 1,
-                travelers: [{ email: '', firstName: '', lastName: '', age: '', gender: '', playingGolf: false, requiresEquipment: false }]
+                reservationHolder: {
+                  email: '',
+                  firstName: '',
+                  lastName: '',
+                  age: '',
+                  gender: '',
+                  mobile: '',
+                  countryCode: '+1'
+                },
+                travelers: [{ email: '', firstName: '', lastName: '', age: '', gender: '', playingGolf: true, requiresEquipment: false, sameAsReservationHolder: false }],
+                specialRequests: {
+                  golfRounds: 0,
+                  notes: '',
+                  budgetMin: 0,
+                  budgetMax: 5000
+                }
               } 
             });
             Logger.debug("Created new user document with empty pack");
@@ -78,8 +127,33 @@ export function PackProvider({ children }) {
               startDate: '',
               endDate: ''
             },
+            dateFlexibility: 'no-flexibility',
             numberOfPeople: 1,
-            travelers: [{ email: '', firstName: '', lastName: '', age: '', gender: '', playingGolf: false, requiresEquipment: false }]
+            reservationHolder: {
+              email: '',
+              firstName: '',
+              lastName: '',
+              age: '',
+              gender: '',
+              mobile: '',
+              countryCode: '+1'
+            },
+            travelers: [{ 
+              email: '', 
+              firstName: '', 
+              lastName: '', 
+              age: '', 
+              gender: '', 
+              playingGolf: true, 
+              requiresEquipment: false,
+              sameAsReservationHolder: false
+            }],
+            specialRequests: {
+              golfRounds: 0,
+              notes: '',
+              budgetMin: 0,
+              budgetMax: 5000
+            }
           };
           
           // Update the document with empty booking details
@@ -136,7 +210,12 @@ export function PackProvider({ children }) {
 
   // Save pack items whenever they change
   useEffect(() => {
-    const saveUserPack = async () => {
+    // Prevent multiple simultaneous saves
+    if (isUpdatingPackItems.current) return;
+    
+    // Debounce the save operation to prevent excessive Firebase writes
+    const timeoutId = setTimeout(async () => {
+      isUpdatingPackItems.current = true;
       try {
         if (currentUser) {
           // User is logged in, save to Firestore
@@ -157,8 +236,24 @@ export function PackProvider({ children }) {
                   startDate: '',
                   endDate: ''
                 },
+                dateFlexibility: 'no-flexibility',
                 numberOfPeople: 1,
-                travelers: [{ email: '', firstName: '', lastName: '', age: '', gender: '', playingGolf: false, requiresEquipment: false }]
+                reservationHolder: {
+                  email: '',
+                  firstName: '',
+                  lastName: '',
+                  age: '',
+                  gender: '',
+                  mobile: '',
+                  countryCode: '+1'
+                },
+                travelers: [{ email: '', firstName: '', lastName: '', age: '', gender: '', playingGolf: true, requiresEquipment: false, sameAsReservationHolder: false }],
+                specialRequests: {
+                  golfRounds: 0,
+                  notes: '',
+                  budgetMin: 0,
+                  budgetMax: 5000
+                }
               }
             });
           }
@@ -168,19 +263,32 @@ export function PackProvider({ children }) {
           localStorage.setItem('userPack', JSON.stringify(packItems));
         }
       } catch (error) {
-        Logger.error('Error saving pack items:', error);
-        // Fall back to localStorage
-        localStorage.setItem('userPack', JSON.stringify(packItems));
+        // Handle quota exhausted errors gracefully
+        if (error.code === 'resource-exhausted') {
+          Logger.warn('Firebase quota exceeded, falling back to localStorage');
+          localStorage.setItem('userPack', JSON.stringify(packItems));
+        } else {
+          Logger.error('Error saving pack items:', error);
+          // Fall back to localStorage for any error
+          localStorage.setItem('userPack', JSON.stringify(packItems));
+        }
+      } finally {
+        isUpdatingPackItems.current = false;
       }
-    };
+    }, 1000); // Increased debounce to 1 second for better protection
     
-    // Always save when the pack changes or user changes
-    saveUserPack();
+    // Cleanup timeout on unmount or dependency change
+    return () => clearTimeout(timeoutId);
   }, [packItems, currentUser]);
 
   // Save booking details whenever they change
   useEffect(() => {
-    const saveBookingDetails = async () => {
+    // Prevent multiple simultaneous saves
+    if (isUpdatingBookingDetails.current) return;
+    
+    // Debounce the save operation to prevent excessive Firebase writes
+    const timeoutId = setTimeout(async () => {
+      isUpdatingBookingDetails.current = true;
       try {
         if (currentUser) {
           // User is logged in, save to Firestore
@@ -203,14 +311,22 @@ export function PackProvider({ children }) {
           localStorage.setItem('bookingDetails', JSON.stringify(bookingDetails));
         }
       } catch (error) {
-        Logger.error('Error saving booking details:', error);
-        // Fall back to localStorage
-        localStorage.setItem('bookingDetails', JSON.stringify(bookingDetails));
+        // Handle quota exhausted errors gracefully
+        if (error.code === 'resource-exhausted') {
+          Logger.warn('Firebase quota exceeded, falling back to localStorage');
+          localStorage.setItem('bookingDetails', JSON.stringify(bookingDetails));
+        } else {
+          Logger.error('Error saving booking details:', error);
+          // Fall back to localStorage for any error
+          localStorage.setItem('bookingDetails', JSON.stringify(bookingDetails));
+        }
+      } finally {
+        isUpdatingBookingDetails.current = false;
       }
-    };
+    }, 1000); // Increased debounce to 1 second for better protection
     
-    // Always save when booking details change
-    saveBookingDetails();
+    // Cleanup timeout on unmount or dependency change
+    return () => clearTimeout(timeoutId);
   }, [bookingDetails, currentUser]);
 
   // Add an item to the pack
@@ -254,10 +370,59 @@ export function PackProvider({ children }) {
 
   // Update booking details
   const updateBookingDetails = (details) => {
-    setBookingDetails(prevDetails => ({
-      ...prevDetails,
-      ...details
-    }));
+    setBookingDetails(prevDetails => {
+      // Only update if there are actual changes
+      const hasChanges = Object.keys(details).some(key => {
+        if (typeof details[key] === 'object' && details[key] !== null) {
+          return JSON.stringify(details[key]) !== JSON.stringify(prevDetails[key]);
+        }
+        return details[key] !== prevDetails[key];
+      });
+      
+      if (!hasChanges) {
+        return prevDetails; // No changes, return the same reference
+      }
+      
+      // Ensure we have the full structure before updating
+      const fullStructure = {
+        travelDates: prevDetails.travelDates || {
+          startDate: '',
+          endDate: ''
+        },
+        dateFlexibility: prevDetails.dateFlexibility || 'no-flexibility',
+        numberOfPeople: prevDetails.numberOfPeople || 1,
+        reservationHolder: prevDetails.reservationHolder || {
+          email: '',
+          firstName: '',
+          lastName: '',
+          age: '',
+          gender: '',
+          mobile: '',
+          countryCode: '+1'
+        },
+        travelers: prevDetails.travelers || [{ 
+          email: '', 
+          firstName: '', 
+          lastName: '', 
+          age: '', 
+          gender: '', 
+          playingGolf: true, 
+          requiresEquipment: false,
+          sameAsReservationHolder: false
+        }],
+        specialRequests: prevDetails.specialRequests || {
+          golfRounds: 0,
+          notes: '',
+          budgetMin: 0,
+          budgetMax: 5000
+        }
+      };
+      
+      return {
+        ...fullStructure,
+        ...details // Apply new changes
+      };
+    });
   };
 
   // Add or update a traveler
@@ -281,7 +446,7 @@ export function PackProvider({ children }) {
       ...prevDetails,
       travelers: [
         ...prevDetails.travelers, 
-        { email: '', firstName: '', lastName: '', age: '', gender: '', playingGolf: false, requiresEquipment: false }
+        { email: '', firstName: '', lastName: '', age: '', gender: '', playingGolf: true, requiresEquipment: false, sameAsReservationHolder: false }
       ]
     }));
   };
@@ -298,6 +463,28 @@ export function PackProvider({ children }) {
     });
   };
 
+  // Update reservation holder
+  const updateReservationHolder = (holderData) => {
+    setBookingDetails(prevDetails => ({
+      ...prevDetails,
+      reservationHolder: {
+        ...prevDetails.reservationHolder,
+        ...holderData
+      }
+    }));
+  };
+
+  // Update special requests
+  const updateSpecialRequests = (requestsData) => {
+    setBookingDetails(prevDetails => ({
+      ...prevDetails,
+      specialRequests: {
+        ...prevDetails.specialRequests,
+        ...requestsData
+      }
+    }));
+  };
+
   const value = {
     packItems,
     bookingDetails,
@@ -307,7 +494,9 @@ export function PackProvider({ children }) {
     updateBookingDetails,
     updateTraveler,
     addTraveler,
-    removeTraveler
+    removeTraveler,
+    updateReservationHolder,
+    updateSpecialRequests
   };
 
   return (

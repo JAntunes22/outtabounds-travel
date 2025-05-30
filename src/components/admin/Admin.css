@@ -275,32 +275,57 @@
 
 .table-actions {
   display: flex;
-  gap: 10px;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
 }
 
 .action-btn {
-  background: none;
+  padding: 6px 8px;
   border: none;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
   border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  min-width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.3s;
 }
 
 .action-btn.edit {
-  color: #2196f3;
+  background-color: #2196f3;
+  color: white;
+}
+
+.action-btn.edit:hover {
+  background-color: #1976d2;
 }
 
 .action-btn.delete {
-  color: #f44336;
+  background-color: #f44336;
+  color: white;
 }
 
-.action-btn:hover {
-  background-color: #f0f0f0;
+.action-btn.delete:hover {
+  background-color: #d32f2f;
+}
+
+.action-btn.move {
+  background-color: #ff9800;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.action-btn.move:hover:not(:disabled) {
+  background-color: #f57c00;
+}
+
+.action-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* Form Styles */

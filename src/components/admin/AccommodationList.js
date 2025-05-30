@@ -122,7 +122,7 @@ export default function AccommodationList() {
                       <div className="table-actions">
                         <button 
                           className="action-btn edit" 
-                          onClick={() => navigate(`/admin/accommodations/edit/${accommodation.id}`)}
+                          onClick={() => navigate(getLocalizedPath(`/admin/accommodations/edit/${accommodation.id}`))}
                           title="Edit"
                         >
                           ✏️

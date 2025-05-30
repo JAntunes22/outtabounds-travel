@@ -1,25 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePack } from '../contexts/PackContext';
+import { useLocale } from '../contexts/LocaleContext';
 import './PackCommon.css';
 import './BookingDetails.css';
 
 export default function BookingDetails() {
   const { packItems, bookingDetails, updateBookingDetails } = usePack();
+  const { getLocalizedPath } = useLocale();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     startDate: bookingDetails.travelDates.startDate || '',
     endDate: bookingDetails.travelDates.endDate || '',
-    numberOfPeople: bookingDetails.numberOfPeople || 1
+    numberOfPeople: bookingDetails.numberOfPeople || 1,
+    dateFlexibility: bookingDetails.dateFlexibility || 'no-flexibility'
   });
   const [errors, setErrors] = useState({});
 
   // Redirect if pack is empty
   useEffect(() => {
     if (packItems.length === 0) {
-      navigate('/your-pack');
+      navigate(getLocalizedPath('/your-pack'));
     }
-  }, [packItems, navigate]);
+  }, [packItems, navigate, getLocalizedPath]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -52,9 +55,10 @@ export default function BookingDetails() {
           startDate: formData.startDate,
           endDate: formData.endDate
         },
-        numberOfPeople: parseInt(formData.numberOfPeople, 10)
+        numberOfPeople: parseInt(formData.numberOfPeople, 10),
+        dateFlexibility: formData.dateFlexibility
       });
-      navigate('/traveler-details');
+      navigate(getLocalizedPath('/traveler-details'));
     }
   };
 
@@ -112,6 +116,40 @@ export default function BookingDetails() {
                   {errors.endDate && <span className="error-message">{errors.endDate}</span>}
                 </div>
               </div>
+              
+              <div className="date-flexibility-section">
+                <h3>Date flexibility:</h3>
+                <div className="flexibility-buttons">
+                  <button 
+                    type="button"
+                    className={`flexibility-btn ${formData.dateFlexibility === 'no-flexibility' ? 'active' : ''}`}
+                    onClick={() => setFormData(prev => ({ ...prev, dateFlexibility: 'no-flexibility' }))}
+                  >
+                    No flexibility
+                  </button>
+                  <button 
+                    type="button"
+                    className={`flexibility-btn ${formData.dateFlexibility === 'plus-minus-3-days' ? 'active' : ''}`}
+                    onClick={() => setFormData(prev => ({ ...prev, dateFlexibility: 'plus-minus-3-days' }))}
+                  >
+                    +/- 3 days
+                  </button>
+                  <button 
+                    type="button"
+                    className={`flexibility-btn ${formData.dateFlexibility === 'plus-minus-1-week' ? 'active' : ''}`}
+                    onClick={() => setFormData(prev => ({ ...prev, dateFlexibility: 'plus-minus-1-week' }))}
+                  >
+                    +/- 1 week
+                  </button>
+                  <button 
+                    type="button"
+                    className={`flexibility-btn ${formData.dateFlexibility === 'plus-minus-1-month' ? 'active' : ''}`}
+                    onClick={() => setFormData(prev => ({ ...prev, dateFlexibility: 'plus-minus-1-month' }))}
+                  >
+                    +/- 1 month
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="form-section">
@@ -136,7 +174,7 @@ export default function BookingDetails() {
               <button 
                 type="button" 
                 className="back-button"
-                onClick={() => navigate('/your-pack')}
+                onClick={() => navigate(getLocalizedPath('/your-pack'))}
               >
                 Back to Pack
               </button>

@@ -1,0 +1,212 @@
+[debug] [2025-05-30T16:54:46.757Z] ----------------------------------------------------------------------
+[debug] [2025-05-30T16:54:46.759Z] Command:       /opt/homebrew/Cellar/node/23.11.0/bin/node /opt/homebrew/bin/firebase emulators:start
+[debug] [2025-05-30T16:54:46.759Z] CLI Version:   13.30.0
+[debug] [2025-05-30T16:54:46.759Z] Platform:      darwin
+[debug] [2025-05-30T16:54:46.759Z] Node Version:  v23.11.0
+[debug] [2025-05-30T16:54:46.759Z] Time:          Fri May 30 2025 18:54:46 GMT+0200 (Central European Summer Time)
+[debug] [2025-05-30T16:54:46.760Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-05-30T16:54:46.845Z] Object "/emulators/firestore" in "firebase.json" has unknown property: {"additionalProperty":"rules"}
+[debug] [2025-05-30T16:54:46.847Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-05-30T16:54:46.847Z] > authorizing via signed-in user (jpc.antunes22@gmail.com)
+[debug] [2025-05-30T16:54:46.958Z] java version "22.0.2" 2024-07-16
+Java(TM) SE Runtime Environment (build 22.0.2+9-70)
+
+[debug] [2025-05-30T16:54:46.958Z] Java HotSpot(TM) 64-Bit Server VM (build 22.0.2+9-70, mixed mode, sharing)
+
+[debug] [2025-05-30T16:54:46.966Z] Parsed Java major version: 22
+[info] i  emulators: Starting emulators: auth, functions, firestore, database, hosting, storage, extensions {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: auth, functions, firestore, database, hosting, storage, extensions"}}
+[debug] [2025-05-30T16:54:46.967Z] Checked if tokens are valid: true, expires at: 1748626379208
+[debug] [2025-05-30T16:54:46.967Z] Checked if tokens are valid: true, expires at: 1748626379208
+[debug] [2025-05-30T16:54:46.967Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/outtaboundstravel [none]
+[debug] [2025-05-30T16:54:47.277Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/outtaboundstravel 200
+[debug] [2025-05-30T16:54:47.278Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/outtaboundstravel {"projectNumber":"334709055897","projectId":"outtaboundstravel","lifecycleState":"ACTIVE","name":"OuttaBounds","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-02-08T10:56:18.751244Z"}
+[debug] [2025-05-30T16:54:47.629Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-05-30T16:54:47.630Z] [auth] Authentication Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-05-30T16:54:47.630Z] [firestore] Firestore Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-05-30T16:54:47.630Z] [firestore.websocket] websocket server for firestore only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-05-30T16:54:47.630Z] [database] Database Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-05-30T16:54:47.630Z] [hosting] Hosting Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-05-30T16:54:47.630Z] [storage] Storage Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-05-30T16:54:47.630Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"auth":[{"address":"127.0.0.1","family":"IPv4","port":9099}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8080}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}],"database":[{"address":"127.0.0.1","family":"IPv4","port":9000}],"hosting":[{"address":"127.0.0.1","family":"IPv4","port":5002}],"storage":[{"address":"127.0.0.1","family":"IPv4","port":9199}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2025-05-30T16:54:47.631Z] [hub] writing locator at /var/folders/tg/7sjv8r_94bsdb5mwtky4rvfm0000gn/T/hub-outtaboundstravel.json
+[debug] [2025-05-30T16:54:47.633Z] [Extensions] Started Extensions emulator, this is a noop.
+[debug] [2025-05-30T16:54:47.737Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-05-30T16:54:47.737Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-05-30T16:54:47.737Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-05-30T16:54:47.737Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"auth":[{"address":"127.0.0.1","family":"IPv4","port":9099}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8080}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}],"database":[{"address":"127.0.0.1","family":"IPv4","port":9000}],"hosting":[{"address":"127.0.0.1","family":"IPv4","port":5002}],"storage":[{"address":"127.0.0.1","family":"IPv4","port":9199}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
+[warn] ⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, pubsub, dataconnect {"metadata":{"emulator":{"name":"functions"},"message":"The following emulators are not running, calls to these services from the Functions emulator will affect production: \u001b[1mapphosting, pubsub, dataconnect\u001b[22m"}}
+[debug] [2025-05-30T16:54:47.738Z] defaultcredentials: writing to file /Users/antunes/.config/firebase/jpc_antunes22_gmail.com_application_default_credentials.json
+[debug] [2025-05-30T16:54:47.739Z] Setting GAC to /Users/antunes/.config/firebase/jpc_antunes22_gmail.com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to /Users/antunes/.config/firebase/jpc_antunes22_gmail.com_application_default_credentials.json"}}
+[debug] [2025-05-30T16:54:47.739Z] Checked if tokens are valid: true, expires at: 1748626379208
+[debug] [2025-05-30T16:54:47.739Z] Checked if tokens are valid: true, expires at: 1748626379208
+[debug] [2025-05-30T16:54:47.739Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/outtaboundstravel/adminSdkConfig [none]
+[debug] [2025-05-30T16:54:48.429Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/outtaboundstravel/adminSdkConfig 200
+[debug] [2025-05-30T16:54:48.429Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/outtaboundstravel/adminSdkConfig {"projectId":"outtaboundstravel","storageBucket":"outtaboundstravel.firebasestorage.app"}
+[debug] [2025-05-30T16:54:48.440Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2025-05-30T16:54:48.440Z] Ignoring unsupported arg: single_project_mode_error {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: single_project_mode_error"}}
+[debug] [2025-05-30T16:54:48.440Z] Starting Firestore Emulator with command {"binary":"java","args":["-Dgoogle.cloud_firestore.debug_log_level=FINE","-Duser.language=en","-jar","/Users/antunes/.cache/firebase/emulators/cloud-firestore-emulator-v1.19.8.jar","--host","127.0.0.1","--port",8080,"--websocket_port",9150,"--project_id","outtaboundstravel","--rules","/Users/antunes/Desktop/OuttaBounds/website/OuttaBounds/outtabounds-travel/firestore.rules","--single_project_mode",true,"--functions_emulator","127.0.0.1:5001"],"optionalArgs":["port","webchannel_port","host","rules","websocket_port","functions_emulator","seed_from_export","project_id","single_project_mode"],"joinArgs":false,"shell":false,"port":8080} {"metadata":{"emulator":{"name":"firestore"},"message":"Starting Firestore Emulator with command {\"binary\":\"java\",\"args\":[\"-Dgoogle.cloud_firestore.debug_log_level=FINE\",\"-Duser.language=en\",\"-jar\",\"/Users/antunes/.cache/firebase/emulators/cloud-firestore-emulator-v1.19.8.jar\",\"--host\",\"127.0.0.1\",\"--port\",8080,\"--websocket_port\",9150,\"--project_id\",\"outtaboundstravel\",\"--rules\",\"/Users/antunes/Desktop/OuttaBounds/website/OuttaBounds/outtabounds-travel/firestore.rules\",\"--single_project_mode\",true,\"--functions_emulator\",\"127.0.0.1:5001\"],\"optionalArgs\":[\"port\",\"webchannel_port\",\"host\",\"rules\",\"websocket_port\",\"functions_emulator\",\"seed_from_export\",\"project_id\",\"single_project_mode\"],\"joinArgs\":false,\"shell\":false,\"port\":8080}"}}
+[info] i  firestore: Firestore Emulator logging to firestore-debug.log {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator logging to \u001b[1mfirestore-debug.log\u001b[22m"}}
+[debug] [2025-05-30T16:54:49.115Z] May 30, 2025 6:54:49 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
+INFO: Started WebSocket server on ws://127.0.0.1:9150
+ {"metadata":{"emulator":{"name":"firestore"},"message":"May 30, 2025 6:54:49 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start\nINFO: Started WebSocket server on ws://127.0.0.1:9150\n"}}
+[debug] [2025-05-30T16:54:49.132Z] API endpoint: http://127.0.0.1:8080 {"metadata":{"emulator":{"name":"firestore"},"message":"API endpoint: http://127.0.0.1:8080"}}
+[debug] [2025-05-30T16:54:49.133Z] 
+If you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:
+
+   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
+
+If you are running a Firestore in Datastore Mode project, run:
+
+   export DATASTORE_EMULATOR_HOST=127.0.0.1:8080
+
+Note: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.
+Dev App Server is now running.
+
+ {"metadata":{"emulator":{"name":"firestore"},"message":"\nIf you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:\n\n   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8080\n\nIf you are running a Firestore in Datastore Mode project, run:\n\n   export DATASTORE_EMULATOR_HOST=127.0.0.1:8080\n\nNote: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.\nDev App Server is now running.\n\n"}}
+[info] ✔  firestore: Firestore Emulator UI websocket is running on 9150. {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator UI websocket is running on 9150."}}
+[debug] [2025-05-30T16:54:49.250Z] Checked if tokens are valid: true, expires at: 1748626379208
+[debug] [2025-05-30T16:54:49.250Z] Checked if tokens are valid: true, expires at: 1748626379208
+[debug] [2025-05-30T16:54:49.250Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/outtaboundstravel [none]
+[debug] [2025-05-30T16:54:49.529Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/outtaboundstravel 200
+[debug] [2025-05-30T16:54:49.529Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/outtaboundstravel {"projectId":"outtaboundstravel","projectNumber":"334709055897","displayName":"OuttaBounds","name":"projects/outtaboundstravel","resources":{"hostingSite":"outtaboundstravel"},"state":"ACTIVE","etag":"1_616e36a6-3bd1-4733-a288-ffeab8489c38"}
+[debug] [2025-05-30T16:54:49.530Z] database rules config:  []
+[warn] ⚠  database: Did not find a Realtime Database rules file specified in a firebase.json config file. The emulator will default to allowing all reads and writes. Learn more about this option: https://firebase.google.com/docs/emulator-suite/install_and_configure#security_rules_configuration. {"metadata":{"emulator":{"name":"database"},"message":"Did not find a Realtime Database rules file specified in a firebase.json config file. The emulator will default to allowing all reads and writes. Learn more about this option: https://firebase.google.com/docs/emulator-suite/install_and_configure#security_rules_configuration."}}
+[debug] [2025-05-30T16:54:49.531Z] Ignoring unsupported arg: projectId {"metadata":{"emulator":{"name":"database"},"message":"Ignoring unsupported arg: projectId"}}
+[debug] [2025-05-30T16:54:49.531Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"database"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2025-05-30T16:54:49.532Z] Ignoring unsupported arg: rules {"metadata":{"emulator":{"name":"database"},"message":"Ignoring unsupported arg: rules"}}
+[debug] [2025-05-30T16:54:49.532Z] Starting Database Emulator with command {"binary":"java","args":["-Duser.language=en","-jar","/Users/antunes/.cache/firebase/emulators/firebase-database-emulator-v4.11.2.jar","--host","127.0.0.1","--port",9000,"--single_project_mode","Warning","--functions_emulator_host","127.0.0.1","--functions_emulator_port",5001],"optionalArgs":["port","host","functions_emulator_port","functions_emulator_host","single_project_mode"],"joinArgs":false,"shell":false,"port":9000} {"metadata":{"emulator":{"name":"database"},"message":"Starting Database Emulator with command {\"binary\":\"java\",\"args\":[\"-Duser.language=en\",\"-jar\",\"/Users/antunes/.cache/firebase/emulators/firebase-database-emulator-v4.11.2.jar\",\"--host\",\"127.0.0.1\",\"--port\",9000,\"--single_project_mode\",\"Warning\",\"--functions_emulator_host\",\"127.0.0.1\",\"--functions_emulator_port\",5001],\"optionalArgs\":[\"port\",\"host\",\"functions_emulator_port\",\"functions_emulator_host\",\"single_project_mode\"],\"joinArgs\":false,\"shell\":false,\"port\":9000}"}}
+[info] i  database: Database Emulator logging to database-debug.log {"metadata":{"emulator":{"name":"database"},"message":"Database Emulator logging to \u001b[1mdatabase-debug.log\u001b[22m"}}
+[debug] [2025-05-30T16:54:50.180Z] 18:54:50.179 [NamespaceSystem-akka.actor.default-dispatcher-5] INFO akka.event.slf4j.Slf4jLogger - Slf4jLogger started
+ {"metadata":{"emulator":{"name":"database"},"message":"18:54:50.179 [NamespaceSystem-akka.actor.default-dispatcher-5] INFO akka.event.slf4j.Slf4jLogger - Slf4jLogger started\n"}}
+[debug] [2025-05-30T16:54:50.279Z] 18:54:50.279 [main] INFO com.firebase.server.forge.App$ - Listening at 127.0.0.1:9000
+ {"metadata":{"emulator":{"name":"database"},"message":"18:54:50.279 [main] INFO com.firebase.server.forge.App$ - Listening at 127.0.0.1:9000\n"}}
+[debug] [2025-05-30T16:54:53.014Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"storage"},"message":"Ignoring unsupported arg: port"}}
+[debug] [2025-05-30T16:54:53.561Z] Temp file directory for storage emulator: /var/folders/tg/7sjv8r_94bsdb5mwtky4rvfm0000gn/T/firebase/storage/blobs {"metadata":{"emulator":{"name":"storage"},"message":"Temp file directory for storage emulator: /var/folders/tg/7sjv8r_94bsdb5mwtky4rvfm0000gn/T/firebase/storage/blobs"}}
+[debug] [2025-05-30T16:54:53.562Z] Checked if tokens are valid: true, expires at: 1748626379208
+[debug] [2025-05-30T16:54:53.562Z] Checked if tokens are valid: true, expires at: 1748626379208
+[debug] [2025-05-30T16:54:53.562Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/outtaboundstravel/sites 
+[debug] [2025-05-30T16:54:54.728Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/outtaboundstravel/sites 200
+[debug] [2025-05-30T16:54:54.728Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/outtaboundstravel/sites {"sites":[{"name":"projects/outtaboundstravel/sites/outtaboundstravel","defaultUrl":"https://outtaboundstravel.web.app","appId":"1:334709055897:web:b6a00825698ae13a93f308","type":"DEFAULT_SITE"}]}
+[debug] [2025-05-30T16:54:54.728Z] Checked if tokens are valid: true, expires at: 1748626379208
+[debug] [2025-05-30T16:54:54.729Z] Checked if tokens are valid: true, expires at: 1748626379208
+[debug] [2025-05-30T16:54:54.729Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/outtaboundstravel/webApps/1:334709055897:web:b6a00825698ae13a93f308/config [none]
+[debug] [2025-05-30T16:54:54.871Z] May 30, 2025 6:54:54 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+INFO: Connected to new websocket client
+ {"metadata":{"emulator":{"name":"firestore"},"message":"May 30, 2025 6:54:54 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel\nINFO: Connected to new websocket client\n"}}
+[debug] [2025-05-30T16:54:55.528Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/outtaboundstravel/webApps/1:334709055897:web:b6a00825698ae13a93f308/config 200
+[debug] [2025-05-30T16:54:55.529Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/outtaboundstravel/webApps/1:334709055897:web:b6a00825698ae13a93f308/config {"projectId":"outtaboundstravel","appId":"1:334709055897:web:b6a00825698ae13a93f308","storageBucket":"outtaboundstravel.firebasestorage.app","apiKey":"AIzaSyCuRCMAOWuzJkO5hHr_aplckutm3Uro4UU","authDomain":"outtaboundstravel.firebaseapp.com","messagingSenderId":"334709055897","measurementId":"G-S0CPBMCFHZ"}
+[debug] [2025-05-30T16:54:55.542Z] Checked if tokens are valid: true, expires at: 1748626379208
+[debug] [2025-05-30T16:54:55.543Z] Checked if tokens are valid: true, expires at: 1748626379208
+[debug] [2025-05-30T16:54:55.543Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/outtaboundstravel [none]
+[debug] [2025-05-30T16:54:55.753Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/outtaboundstravel 200
+[debug] [2025-05-30T16:54:55.753Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/outtaboundstravel {"projectId":"outtaboundstravel","projectNumber":"334709055897","displayName":"OuttaBounds","name":"projects/outtaboundstravel","resources":{"hostingSite":"outtaboundstravel"},"state":"ACTIVE","etag":"1_616e36a6-3bd1-4733-a288-ffeab8489c38"}
+[info] i  hosting[outtaboundstravel]: Serving hosting files from: build {"metadata":{"emulator":{"name":"hosting"},"message":"Serving hosting files from: \u001b[1mbuild\u001b[22m"}}
+[info] ✔  hosting[outtaboundstravel]: Local server: http://127.0.0.1:5002 {"metadata":{"emulator":{"name":"hosting"},"message":"Local server: \u001b[4m\u001b[1mhttp://127.0.0.1:5002\u001b[22m\u001b[24m"}}
+[debug] [2025-05-30T16:54:55.793Z] [Extensions] Connecting Extensions emulator, this is a noop.
+[info] i  functions: Watching "/Users/antunes/Desktop/OuttaBounds/website/OuttaBounds/outtabounds-travel/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/Users/antunes/Desktop/OuttaBounds/website/OuttaBounds/outtabounds-travel/functions\" for Cloud Functions..."}}
+[debug] [2025-05-30T16:54:55.796Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2025-05-30T16:54:56.337Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "lint": "echo \"No linting configured\"",
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^11.8.0",
+    "firebase-functions": "^4.3.1",
+    "geoip-lite": "^1.4.10"
+  },
+  "private": true
+}
+[debug] [2025-05-30T16:54:56.337Z] Building nodejs source
+[debug] [2025-05-30T16:54:56.337Z] Failed to find version of module node: reached end of search path /Users/antunes/Desktop/OuttaBounds/website/OuttaBounds/outtabounds-travel/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "18" doesn't match your global version "23". Using node@23 from host. 
+[info] i  functions: You are using a version of firebase-functions SDK (4.9.0) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2025-05-30T16:54:56.339Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-05-30T16:54:56.343Z] Found firebase-functions binary at '/Users/antunes/Desktop/OuttaBounds/website/OuttaBounds/outtabounds-travel/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8605
+
+[debug] [2025-05-30T16:54:56.687Z] Got response from /__/functions.yaml {"endpoints":{"addAdminRole":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"addAdminRole"},"removeAdminRole":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"removeAdminRole"},"createInitialAdmin":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"createInitialAdmin"},"createUserProfile":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"createUserProfile"},"createUserOnSignup":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"eventTrigger":{"eventType":"providers/firebase.auth/eventTypes/user.create","eventFilters":{"resource":"projects/outtaboundstravel"},"retry":false},"labels":{},"entryPoint":"createUserOnSignup"},"deleteUserAccount":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"deleteUserAccount"},"linkUserAccounts":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"linkUserAccounts"},"updateUserEmail":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"updateUserEmail"},"cleanupEmailDocuments":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"cleanupEmailDocuments"},"detectLocale":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"httpsTrigger":{},"entryPoint":"detectLocale"},"getPacksByLocale":{"platform":"gcfv1","labels":{},"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"callableTrigger":{},"entryPoint":"getPacksByLocale"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[info] ✔  functions: Loaded functions definitions from source: addAdminRole, removeAdminRole, createInitialAdmin, createUserProfile, createUserOnSignup, deleteUserAccount, linkUserAccounts, updateUserEmail, cleanupEmailDocuments, detectLocale, getPacksByLocale. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: addAdminRole, removeAdminRole, createInitialAdmin, createUserProfile, createUserOnSignup, deleteUserAccount, linkUserAccounts, updateUserEmail, cleanupEmailDocuments, detectLocale, getPacksByLocale."}}
+[info] ✔  functions[us-central1-addAdminRole]: http function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/addAdminRole). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/addAdminRole)."}}
+[info] ✔  functions[us-central1-removeAdminRole]: http function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/removeAdminRole). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/removeAdminRole)."}}
+[info] ✔  functions[us-central1-createInitialAdmin]: http function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/createInitialAdmin). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/createInitialAdmin)."}}
+[info] ✔  functions[us-central1-createUserProfile]: http function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/createUserProfile). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/createUserProfile)."}}
+[debug] [2025-05-30T16:55:00.744Z] addAuthTrigger {"eventTrigger":{"eventType":"providers/firebase.auth/eventTypes/user.create","resource":"projects/outtaboundstravel"}}
+[info] ✔  functions[us-central1-createUserOnSignup]: auth function initialized. {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mauth\u001b[22m function initialized."}}
+[info] ✔  functions[us-central1-deleteUserAccount]: http function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/deleteUserAccount). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/deleteUserAccount)."}}
+[info] ✔  functions[us-central1-linkUserAccounts]: http function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/linkUserAccounts). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/linkUserAccounts)."}}
+[info] ✔  functions[us-central1-updateUserEmail]: http function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/updateUserEmail). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/updateUserEmail)."}}
+[info] ✔  functions[us-central1-cleanupEmailDocuments]: http function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/cleanupEmailDocuments). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/cleanupEmailDocuments)."}}
+[info] ✔  functions[us-central1-detectLocale]: http function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/detectLocale). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/detectLocale)."}}
+[info] ✔  functions[us-central1-getPacksByLocale]: http function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/getPacksByLocale). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/outtaboundstravel/us-central1/getPacksByLocale)."}}
+[debug] [2025-05-30T16:55:00.756Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌────────────────┬────────────────┬──────────────────────────────────┐
+│ Emulator       │ Host:Port      │ View in Emulator UI              │
+├────────────────┼────────────────┼──────────────────────────────────┤
+│ Authentication │ 127.0.0.1:9099 │ http://127.0.0.1:4000/auth       │
+├────────────────┼────────────────┼──────────────────────────────────┤
+│ Functions      │ 127.0.0.1:5001 │ http://127.0.0.1:4000/functions  │
+├────────────────┼────────────────┼──────────────────────────────────┤
+│ Firestore      │ 127.0.0.1:8080 │ http://127.0.0.1:4000/firestore  │
+├────────────────┼────────────────┼──────────────────────────────────┤
+│ Database       │ 127.0.0.1:9000 │ http://127.0.0.1:4000/database   │
+├────────────────┼────────────────┼──────────────────────────────────┤
+│ Hosting        │ 127.0.0.1:5002 │ n/a                              │
+├────────────────┼────────────────┼──────────────────────────────────┤
+│ Storage        │ 127.0.0.1:9199 │ http://127.0.0.1:4000/storage    │
+├────────────────┼────────────────┼──────────────────────────────────┤
+│ Extensions     │ 127.0.0.1:5001 │ http://127.0.0.1:4000/extensions │
+└────────────────┴────────────────┴──────────────────────────────────┘
+  Emulator Hub running at 127.0.0.1:4400
+  Other reserved ports: 4500, 9150
+┌─────────────────────────┬───────────────┬─────────────────────┐
+│ Extension Instance Name │ Extension Ref │ View in Emulator UI │
+└─────────────────────────┴───────────────┴─────────────────────┘
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[debug] [2025-05-30T16:55:20.459Z] May 30, 2025 6:55:20 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+INFO: Connected to new websocket client
+ {"metadata":{"emulator":{"name":"firestore"},"message":"May 30, 2025 6:55:20 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel\nINFO: Connected to new websocket client\n"}}
+[debug] [2025-05-30T16:55:51.283Z] May 30, 2025 6:55:51 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"May 30, 2025 6:55:51 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-05-30T16:55:52.140Z] May 30, 2025 6:55:52 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"May 30, 2025 6:55:52 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-05-30T16:55:52.162Z] May 30, 2025 6:55:52 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"May 30, 2025 6:55:52 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-05-30T16:56:16.180Z] May 30, 2025 6:56:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"May 30, 2025 6:56:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-05-30T16:56:16.304Z] May 30, 2025 6:56:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"May 30, 2025 6:56:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-05-30T16:56:16.322Z] May 30, 2025 6:56:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"May 30, 2025 6:56:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-05-30T16:56:16.329Z] May 30, 2025 6:56:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"May 30, 2025 6:56:16 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-05-30T16:56:46.344Z] May 30, 2025 6:56:46 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"May 30, 2025 6:56:46 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}

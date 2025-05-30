@@ -63,7 +63,22 @@ const Home = () => {
   useEffect(() => {
     const fetchFeaturedPacks = async () => {
       setLoading(true);
+      setError(null);
+      
       try {
+        // Check for cached packs first (cache for 10 minutes)
+        const cachedData = localStorage.getItem('outtabounds_featured_packs');
+        const cacheTimestamp = localStorage.getItem('outtabounds_featured_packs_timestamp');
+        const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+        
+        if (cachedData && cacheTimestamp && 
+            (Date.now() - parseInt(cacheTimestamp)) < CACHE_DURATION) {
+          console.log('Using cached packs data');
+          setPacks(JSON.parse(cachedData));
+          setLoading(false);
+          return;
+        }
+
         // Determine user's region tier
         let detectedTier = 'rest';
         
@@ -127,55 +142,81 @@ const Home = () => {
           // Silently fail region detection
         }
         
-        // Fetch featured packs configuration
-        const featuredPacksDoc = await getDoc(doc(db, 'settings', 'featuredPacks'));
-        let featuredPackIds = [];
+        let featuredPacks = [];
         
-        if (featuredPacksDoc.exists()) {
-          const featuredPacksData = featuredPacksDoc.data();
-          featuredPackIds = featuredPacksData[detectedTier] || [];
-        }
-        
-        // If no featured packs configured for this tier, fall back to order-based selection
-        if (featuredPackIds.length === 0) {
-          const packsCollection = collection(db, "packs");
-          const packsSnapshot = await getDocs(packsCollection);
-          let packsList = packsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
+        try {
+          // Fetch featured packs configuration
+          const featuredPacksDoc = await getDoc(doc(db, 'settings', 'featuredPacks'));
+          let featuredPackIds = [];
           
-          // Sort by order field if it exists, otherwise just take the first 5
-          packsList = packsList.sort((a, b) => {
-            if (a.order !== undefined && b.order !== undefined) {
-              return a.order - b.order;
-            }
-            return 0;
-          }).slice(0, 5);
+          if (featuredPacksDoc.exists()) {
+            const featuredPacksData = featuredPacksDoc.data();
+            featuredPackIds = featuredPacksData[detectedTier] || [];
+          }
           
-          setPacks(packsList);
-        } else {
-          // Fetch the specific featured packs
-          const packsCollection = collection(db, "packs");
-          const packsSnapshot = await getDocs(packsCollection);
-          const allPacks = {};
-          
-          packsSnapshot.docs.forEach(doc => {
-            allPacks[doc.id] = {
+          // If no featured packs configured for this tier, fall back to order-based selection
+          if (featuredPackIds.length === 0) {
+            const packsCollection = collection(db, "packs");
+            const packsSnapshot = await getDocs(packsCollection);
+            let packsList = packsSnapshot.docs.map(doc => ({
               id: doc.id,
               ...doc.data()
-            };
-          });
+            }));
+            
+            // Sort by order field if it exists, otherwise just take the first 5
+            packsList = packsList.sort((a, b) => {
+              if (a.order !== undefined && b.order !== undefined) {
+                return a.order - b.order;
+              }
+              return 0;
+            }).slice(0, 5);
+            
+            featuredPacks = packsList;
+          } else {
+            // Fetch the specific featured packs
+            const packsCollection = collection(db, "packs");
+            const packsSnapshot = await getDocs(packsCollection);
+            const allPacks = {};
+            
+            packsSnapshot.docs.forEach(doc => {
+              allPacks[doc.id] = {
+                id: doc.id,
+                ...doc.data()
+              };
+            });
+            
+            // Get featured packs in the specified order
+            featuredPacks = featuredPackIds
+              .map(packId => allPacks[packId])
+              .filter(pack => pack); // Remove any undefined packs
+          }
           
-          // Get featured packs in the specified order
-          const featuredPacks = featuredPackIds
-            .map(packId => allPacks[packId])
-            .filter(pack => pack); // Remove any undefined packs
+          // Cache the results
+          localStorage.setItem('outtabounds_featured_packs', JSON.stringify(featuredPacks));
+          localStorage.setItem('outtabounds_featured_packs_timestamp', Date.now().toString());
           
           setPacks(featuredPacks);
+          
+        } catch (firestoreError) {
+          console.error('Firestore error:', firestoreError);
+          
+          // Check if it's a quota exceeded error
+          if (firestoreError.code === 'resource-exhausted') {
+            setError("Our service is temporarily experiencing high traffic. Please try again in a few minutes.");
+            
+            // Try to load fallback data from cache if available (even if expired)
+            const fallbackData = localStorage.getItem('outtabounds_featured_packs');
+            if (fallbackData) {
+              console.log('Loading fallback cached data due to quota exceeded');
+              setPacks(JSON.parse(fallbackData));
+            }
+          } else {
+            setError("Unable to load travel packs at the moment. Please try again later.");
+          }
         }
         
       } catch (error) {
+        console.error('General error fetching packs:', error);
         setError("Failed to fetch packs. Please try again later.");
       } finally {
         setLoading(false);
@@ -205,7 +246,19 @@ const Home = () => {
         </div>
 
         {error ? (
-          <div className="error-message">{error}</div>
+          <div className="error-message">
+            <p>{error}</p>
+            {packs.length === 0 && (
+              <div className="fallback-content">
+                <p>In the meantime, explore our travel destinations:</p>
+                <div className="fallback-links">
+                  <Link to={getLocalizedPath('/courses')} className="btn-secondary">Golf Courses</Link>
+                  <Link to={getLocalizedPath('/experiences')} className="btn-secondary">Experiences</Link>
+                  <Link to={getLocalizedPath('/houses')} className="btn-secondary">Accommodations</Link>
+                </div>
+              </div>
+            )}
+          </div>
         ) : loading ? (
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -224,7 +277,10 @@ const Home = () => {
                 <div 
                   key={pack.id} 
                   className={`pack-card ${index === 1 ? 'pack-card-large' : ''}`}
-                  onClick={() => window.location.href = getLocalizedPath(`/packs/${pack.id}`)}
+                  onClick={() => {
+                    const packIdentifier = pack.slug || pack.id;
+                    window.location.href = getLocalizedPath(`/packs/${packIdentifier}`);
+                  }}
                 >
                   <div className="pack-image" style={{ backgroundImage: `url(${pack.imageUrl || 'https://via.placeholder.com/600x400?text=No+Image'})` }}>
                     <div className="pack-title-overlay">

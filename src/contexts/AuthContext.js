@@ -164,8 +164,16 @@ export function AuthProvider({ children }) {
           // If the document exists but has no email and we have one, update it
           if (userData.email === '' && email) {
             Logger.debug(`fetchUserData: Updating missing email in document to: ${email}`);
-            await updateDoc(uidRef, { email: email });
-            userData.email = email;
+            try {
+              await updateDoc(uidRef, { email: email });
+              userData.email = email;
+            } catch (updateError) {
+              if (updateError.code === 'resource-exhausted') {
+                Logger.warn("fetchUserData: Firebase quota exceeded, skipping email update");
+              } else {
+                Logger.error("fetchUserData: Error updating email:", updateError);
+              }
+            }
           }
         } else {
           Logger.debug("fetchUserData: No document found by UID");
@@ -190,9 +198,22 @@ export function AuthProvider({ children }) {
           };
           
           Logger.debug("fetchUserData: Creating document with UID as ID:", user.uid);
-          await setDoc(uidRef, newUserData);
-          userData = { id: user.uid, ...newUserData };
-          Logger.debug("fetchUserData: Successfully created document with UID");
+          try {
+            const uidRef = doc(db, 'users', user.uid);
+            await setDoc(uidRef, newUserData);
+            userData = { id: user.uid, ...newUserData };
+            Logger.debug("fetchUserData: Successfully created document with UID");
+          } catch (createError) {
+            // Handle quota exhausted errors gracefully
+            if (createError.code === 'resource-exhausted') {
+              Logger.warn("fetchUserData: Firebase quota exceeded, skipping user document creation");
+              // Set userData to prevent further issues
+              userData = { id: user.uid, ...newUserData };
+            } else {
+              Logger.error("fetchUserData: Error creating user document:", createError);
+              throw createError;
+            }
+          }
         }
       } catch (getError) {
         Logger.error("fetchUserData: Error getting user document:", getError);
@@ -225,8 +246,15 @@ export function AuthProvider({ children }) {
           userData = { id: user.uid, ...newUserData };
           Logger.debug("fetchUserData: Successfully created document with UID");
         } catch (createError) {
-          Logger.error("fetchUserData: Error creating user document:", createError);
-          throw createError;
+          // Handle quota exhausted errors gracefully
+          if (createError.code === 'resource-exhausted') {
+            Logger.warn("fetchUserData: Firebase quota exceeded, skipping user document creation");
+            // Set userData to prevent further issues
+            userData = { id: user.uid, ...newUserData };
+          } else {
+            Logger.error("fetchUserData: Error creating user document:", createError);
+            throw createError;
+          }
         }
       }
       
@@ -254,7 +282,12 @@ export function AuthProvider({ children }) {
           });
           Logger.debug("fetchUserData: Updated last login on UID document");
         } catch (updateError) {
-          Logger.error("fetchUserData: Error updating last login:", updateError);
+          // Handle quota exhausted errors gracefully
+          if (updateError.code === 'resource-exhausted') {
+            Logger.warn("fetchUserData: Firebase quota exceeded, skipping last login update");
+          } else {
+            Logger.error("fetchUserData: Error updating last login:", updateError);
+          }
           // Continue anyway, this is not critical
         }
       } else {
@@ -335,7 +368,13 @@ export function AuthProvider({ children }) {
         setUserFullname(userDataForFirestore.fullname);
         Logger.debug("Signup: User document created successfully");
       } catch (firestoreError) {
-        Logger.error("Signup: Error creating user documents:", firestoreError);
+        // Handle quota exhausted errors gracefully
+        if (firestoreError.code === 'resource-exhausted') {
+          Logger.warn("Signup: Firebase quota exceeded, user document creation skipped");
+          setUserFullname(userDataForFirestore.fullname);
+        } else {
+          Logger.error("Signup: Error creating user documents:", firestoreError);
+        }
         // Even if Firestore fails, we don't want to throw here
         // User is already authenticated, so we can repair the documents later
         // Just log the error but continue
