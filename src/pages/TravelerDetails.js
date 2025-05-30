@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { usePack } from '../contexts/PackContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocale } from '../contexts/LocaleContext';
-import CountryCodeSelector from '../components/CountryCodeSelector';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 import './PackCommon.css';
 import './TravelerDetails.css';
 
@@ -63,7 +64,7 @@ export default function TravelerDetails() {
         lastName: '',
         age: '',
         gender: '',
-        mobile: '',
+        mobile: '+1',
         countryCode: '+1'
       });
       return; // Exit early to prevent further updates in this cycle
@@ -75,18 +76,35 @@ export default function TravelerDetails() {
         currentUser.email && // Ensure user has an email
         bookingDetails.reservationHolder?.email !== currentUser.email) { // Prevent duplicate updates
       
+      // Extract gender from title if available
+      let gender = currentUser.gender || '';
+      if (!gender && currentUser.title) {
+        const title = currentUser.title.toLowerCase();
+        if (title === 'mr') gender = 'male';
+        else if (title === 'mrs' || title === 'ms' || title === 'miss') gender = 'female';
+      }
+
+      // Extract names from displayName or use individual fields
+      let firstName = currentUser.firstName || '';
+      let lastName = currentUser.lastName || '';
+      
+      if (!firstName && currentUser.displayName) {
+        const nameParts = currentUser.displayName.split(' ');
+        firstName = nameParts[0] || '';
+        lastName = nameParts.slice(1).join(' ') || '';
+      }
+      
       // Autofill reservation holder with current user info
       updateReservationHolder({
         email: currentUser.email || '',
-        firstName: currentUser.displayName ? currentUser.displayName.split(' ')[0] : '',
-        lastName: currentUser.displayName ? currentUser.displayName.split(' ').slice(1).join(' ') : '',
-        mobile: currentUser.phoneNumber || '',
-        // Try to extract additional info from user profile if available
+        firstName: firstName,
+        lastName: lastName,
+        mobile: currentUser.phoneNumber || '+1',
         age: currentUser.age || '',
-        gender: currentUser.gender || ''
+        gender: gender
       });
     }
-  }, [currentUser?.uid, currentUser?.email, currentUser?.displayName, updateReservationHolder]); // More specific dependencies
+  }, [currentUser?.uid, currentUser?.email, currentUser?.displayName, currentUser?.phoneNumber, currentUser?.title, currentUser?.firstName, currentUser?.lastName, currentUser?.gender, updateReservationHolder]);
 
   const handleReservationHolderChange = (field, value) => {
     updateReservationHolder({ [field]: value });
@@ -211,6 +229,15 @@ export default function TravelerDetails() {
     
     if (!holder.mobile) {
       newErrors['reservationHolder-mobile'] = 'Mobile number is required';
+    } else if (!holder.mobile.startsWith('+')) {
+      newErrors['reservationHolder-mobile'] = 'Please select a country code for your phone number';
+    } else {
+      const digitsOnly = holder.mobile.replace(/\D/g, '');
+      if (digitsOnly.length < 7) {
+        newErrors['reservationHolder-mobile'] = 'Phone number is too short';
+      } else if (digitsOnly.length > 15) {
+        newErrors['reservationHolder-mobile'] = 'Phone number is too long';
+      }
     }
     
     // Validate travelers
@@ -349,17 +376,14 @@ export default function TravelerDetails() {
                 <div className="form-group">
                   <label htmlFor="holder-mobile">Mobile Number *</label>
                   <div className="mobile-input-container">
-                    <CountryCodeSelector 
-                      value={bookingDetails.reservationHolder?.countryCode || '+1'}
-                      onChange={(code) => handleReservationHolderChange('countryCode', code)}
-                    />
-                    <input 
-                      type="tel" 
-                      id="holder-mobile" 
-                      value={bookingDetails.reservationHolder?.mobile || ''}
-                      onChange={(e) => handleReservationHolderChange('mobile', e.target.value)}
-                      placeholder="123 456 7890"
-                      className={errors['reservationHolder-mobile'] ? 'error' : ''}
+                    <PhoneInput 
+                      international
+                      defaultCountry="US"
+                      value={bookingDetails.reservationHolder?.mobile || '+1'}
+                      onChange={(value) => handleReservationHolderChange('mobile', value || '+1')}
+                      className={`phone-input-with-flags ${errors['reservationHolder-mobile'] ? 'error' : ''}`}
+                      placeholder="Enter phone number with country code"
+                      countrySelectProps={{ unicodeFlags: true }}
                     />
                   </div>
                   {errors['reservationHolder-mobile'] && 

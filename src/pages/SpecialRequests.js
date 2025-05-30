@@ -107,7 +107,7 @@ export default function SpecialRequests() {
                     +
                   </button>
                 </div>
-                <p className="help-text">
+                <p className="golf-rounds-help">
                   Based on your selected courses: {totalGolfCourses} course{totalGolfCourses !== 1 ? 's' : ''}
                 </p>
               </div>

@@ -228,6 +228,77 @@
   box-sizing: border-box;
 }
 
+/* Phone input with flags styling for traveler details */
+.mobile-input-container .PhoneInput {
+  width: 100%;
+  max-width: 280px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: white;
+  padding: 0 10px 0 15px;
+  height: 48px;
+}
+
+.mobile-input-container .PhoneInput:focus-within {
+  border-color: #186d00;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(24, 109, 0, 0.1);
+}
+
+.mobile-input-container .PhoneInput.error {
+  border-color: #dc3545;
+}
+
+/* Country dropdown section */
+.mobile-input-container .PhoneInputCountry {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  padding-right: 10px;
+  border-right: none;
+}
+
+.mobile-input-container .PhoneInputCountrySelect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.mobile-input-container .PhoneInputCountryIcon {
+  width: 24px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-input-container .PhoneInputCountryIcon--border {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+/* Input field */
+.mobile-input-container .PhoneInputInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  padding: 0 5px;
+  height: 43px;
+  font-size: 16px;
+  background: transparent;
+  outline: none;
+}
+
 .same-as-holder-row {
   background-color: #f0f8f0;
   padding: 15px;
